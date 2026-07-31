@@ -1,0 +1,23 @@
+{
+  "name": "ai-gilbet-frontend",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "AI 길벗 · 교통약자 음성 AI 이동상담 프론트엔드 (KT디인재 X 교통안전공단 2026)",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  },
+  "devDependencies": {
+    "@types/react": "^18.3.12",
+    "@types/react-dom": "^18.3.1",
+    "@vitejs/plugin-react": "^4.3.4",
+    "typescript": "^5.6.3",
+    "vite": "^5.4.11"
+  }
+}

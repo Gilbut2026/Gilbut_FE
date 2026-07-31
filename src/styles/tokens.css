@@ -1,0 +1,46 @@
+/* ============================================================
+ *  디자인 토큰 — 6차 와이어프레임(:root)에서 그대로 추출
+ *  색/그림자는 여기서만 정의하고 global.css 가 변수로 사용한다.
+ * ============================================================ */
+:root {
+  --violet: #6755F5;
+  --violet-deep: #5040D8;
+  --violet-soft: #EEEAFE;
+  --blue: #3488F4;
+  --blue-soft: #E8F3FF;
+  --cyan: #42C5D9;
+  --green: #167A55;
+  --green-soft: #E9F8F1;
+  --amber: #A95C00;
+  --amber-soft: #FFF4DA;
+  --red: #C9363E;
+  --red-soft: #FFF0F1;
+  --ink: #15213B;
+  --ink-2: #35415B;
+  --ink-3: #4B5468;
+  --line: rgba(100, 116, 139, 0.22);
+  --glass: rgba(255, 255, 255, 0.72);
+  --glass-strong: rgba(255, 255, 255, 0.9);
+  --phone-bg: #F0F4FF;
+  --shadow: 0 28px 80px -28px rgba(30, 41, 84, 0.38),
+    0 12px 28px -18px rgba(31, 41, 55, 0.28);
+}
+
+/* 고대비 모드 — app-shell 에 .high-contrast 클래스로 토글 */
+#app-shell.high-contrast {
+  --ink: #070D1B;
+  --ink-2: #172033;
+  --ink-3: #3D485F;
+  --line: rgba(15, 23, 42, 0.36);
+  --glass: rgba(255, 255, 255, 0.9);
+  --glass-strong: #fff;
+}
+
+/* 글자 크기 5단계 — 와이어프레임 --ui-scale 과 BE FontSize enum 을 일치시킴.
+   EXTRA_SMALL / SMALL / NORMAL / LARGE / EXTRA_LARGE */
+#app-shell { --ui-scale: 1.0; }
+#app-shell.font-EXTRA_SMALL { --ui-scale: 0.92; }
+#app-shell.font-SMALL { --ui-scale: 0.96; }
+#app-shell.font-NORMAL { --ui-scale: 1.0; }
+#app-shell.font-LARGE { --ui-scale: 1.07; }
+#app-shell.font-EXTRA_LARGE { --ui-scale: 1.14; }

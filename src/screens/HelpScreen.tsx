@@ -1,0 +1,77 @@
+/** 도움말 — 6차 와이어프레임 #screen-help 이식. 사용법 4단계 + 음성으로 듣기. */
+
+function BackIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path d="m15 5-7 7 7 7" stroke="currentColor" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  )
+}
+
+const STEPS = [
+  { n: 1, title: '기본 설정에 답하세요', desc: '걷기·계단 등 몇 가지를 먼저 정해요.' },
+  { n: 2, title: '홈에서 목적지를 말하세요', desc: '버튼을 누르거나 음성으로 말하면 돼요.' },
+  { n: 3, title: '필요할 때 대화로 길을 찾아요', desc: '목적지·출발지·시간·오늘 상태를 말로 정해요.' },
+  { n: 4, title: '편한 길로 안내받으세요', desc: '오늘 편한 길을 확인하고 안내를 시작해요.' },
+]
+
+export function HelpScreen({
+  onBack,
+  onSos,
+  onToast,
+}: {
+  onBack: () => void
+  onSos: () => void
+  onToast: (msg: string) => void
+}) {
+  function speakHelp() {
+    if (!('speechSynthesis' in window)) {
+      onToast('이 기기에서는 음성 안내를 쓸 수 없어요')
+      return
+    }
+    window.speechSynthesis.cancel()
+    const text = 'AI 길벗 사용 방법입니다. ' + STEPS.map((s) => `${s.n}. ${s.title}. ${s.desc}`).join(' ')
+    const utter = new SpeechSynthesisUtterance(text)
+    utter.lang = 'ko-KR'
+    utter.rate = 0.9
+    window.speechSynthesis.speak(utter)
+  }
+
+  return (
+    <section className="screen">
+      <header className="topbar">
+        <button className="back-btn" onClick={onBack} aria-label="설정으로 돌아가기">
+          <BackIcon />
+        </button>
+        <div className="topbar-title">
+          <span className="brand-dot" />
+          도움말
+        </div>
+        <button className="sos-btn-top" onClick={onSos}>
+          SOS
+        </button>
+      </header>
+
+      <div className="screen-body">
+        <h2 className="screen-title" style={{ fontSize: 27 }}>
+          AI 길벗 사용 방법
+        </h2>
+        <p className="screen-lead">기본 설정부터 길 안내까지 네 단계로 이용해요.</p>
+
+        <button className="btn secondary" style={{ marginBottom: 12 }} onClick={speakHelp}>
+          🔊 사용법 음성으로 듣기
+        </button>
+
+        {STEPS.map((s) => (
+          <div key={s.n} className="help-card glass">
+            <span className="help-num">{s.n}</span>
+            <div>
+              <b>{s.title}</b>
+              <p>{s.desc}</p>
+            </div>
+          </div>
+        ))}
+      </div>
+    </section>
+  )
+}

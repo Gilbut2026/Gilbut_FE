@@ -1,0 +1,15 @@
+node_modules
+dist
+dist-ssr
+*.local
+.env.local
+.DS_Store
+logs
+*.log
+npm-debug.log*
+.vite
+
+# build cache / emitted config
+*.tsbuildinfo
+vite.config.js
+vite.config.d.ts
