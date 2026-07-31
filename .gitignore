@@ -8,8 +8,3 @@ logs
 *.log
 npm-debug.log*
 .vite
-
-# build cache / emitted config
-*.tsbuildinfo
-vite.config.js
-vite.config.d.ts
