@@ -1,7 +1,7 @@
 @import './tokens.css';
 
 /* ============================================================
- *  6차 와이어프레임 스타일시트를 실앱으로 이식.
+ *  7차 와이어프레임 스타일시트를 실앱으로 이식.
  *  · 데스크톱 미리보기용 갤러리 껍데기(.page/.hero/.journey/.phone/
  *    .selector/가짜 상태바/사이드 노트)는 제거.
  *  · 와이어프레임의 .device → #app-shell (실제 모바일 셸).
@@ -169,7 +169,8 @@ button { color: inherit; }
 .toast.show { opacity: 1; transform: translate(-50%, 0); }
 
 /* MOCK 배지 */
-.mock-badge { position: absolute; left: 50%; top: 6px; transform: translateX(-50%); z-index: 40; padding: 3px 10px; border-radius: 999px; background: rgba(21, 33, 59, 0.82); color: #fff; font-size: 11.5px; font-weight: 800; letter-spacing: 0.03em; pointer-events: none; }
+/* 도메인별로 Mock/실서버가 섞일 수 있어 문구가 길어진다 ("MOCK: 경로·대화·기록") */
+.mock-badge { position: absolute; left: 50%; top: 6px; transform: translateX(-50%); z-index: 40; max-width: calc(100% - 24px); padding: 3px 10px; border-radius: 999px; background: rgba(21, 33, 59, 0.82); color: #fff; font-size: 11.5px; font-weight: 800; letter-spacing: 0.03em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; pointer-events: none; }
 
 /* ---------- 안내 박스 ---------- */
 .reason-box, .notice-box { display: flex; gap: 10px; padding: 14px; border-radius: 17px; margin-top: 10px; font-size: 18px; font-weight: 690; line-height: 1.5; word-break: keep-all; }
@@ -244,7 +245,26 @@ button { color: inherit; }
 .route-empty-actions { display: flex; flex-direction: column; gap: 9px; margin-top: 22px; }
 .route-empty-hint { margin: 16px 1px 0; padding: 14px 15px; border-radius: 15px; background: rgba(238, 234, 254, 0.6); color: var(--violet-deep); font-size: 18px; font-weight: 800; line-height: 1.5; text-align: center; }
 
-/* ---------- 똑버스 (drt) ---------- */
+/* ---------- 계단 선택 (stairs) ----------
+   7/31 회의: 계단 회피 경로와 일반 경로를 나란히 놓고 걷는 거리·시간 차이를 직접 비교하게 한다.
+   어느 쪽도 primary 로 강조하지 않는다 — 오늘 무엇이 덜 힘든지는 본인만 안다. */
+.stair-diff { margin-top: 14px; padding: 15px 16px; border-radius: 19px; background: rgba(254, 239, 225, 0.72); border: 1px solid rgba(214, 138, 60, 0.22); }
+.stair-diff > b { display: block; font-size: 20px; font-weight: 900; color: #8A4C12; letter-spacing: -0.03em; }
+.stair-diff > span { display: block; margin-top: 5px; font-size: 17px; font-weight: 680; color: #8A4C12; line-height: 1.55; }
+.stair-opt { margin-top: 13px; padding: 17px 16px 15px; border-radius: 22px; border: 2px solid rgba(148, 163, 184, 0.22); background: rgba(255, 255, 255, 0.74); }
+.stair-opt-head { display: flex; align-items: center; gap: 9px; }
+.stair-opt-head i { width: 34px; height: 34px; border-radius: 12px; display: grid; place-items: center; flex: 0 0 auto; font-style: normal; font-size: 18px; background: rgba(255, 255, 255, 0.9); }
+.stair-opt-head b { font-size: 20px; font-weight: 900; letter-spacing: -0.03em; }
+/* 3칸 그리드 — 시간·시간·거리를 한 줄에서 견주게 한다(flex 나열은 큰 글자에서 넘침) */
+.stair-metrics { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 11px; }
+.stair-metrics > div { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.stair-metrics span { font-size: 15px; color: var(--ink-3); font-weight: 700; }
+.stair-metrics strong { font-size: 20px; font-weight: 900; letter-spacing: -0.03em; font-variant-numeric: tabular-nums; }
+.stair-facts { margin-top: 11px; display: flex; flex-direction: column; gap: 6px; }
+.stair-facts > div { display: flex; align-items: flex-start; gap: 7px; font-size: 17px; font-weight: 700; line-height: 1.45; }
+.stair-opt .btn { width: 100%; margin-top: 13px; }
+
+/* ---------- 똑버스 (drt) · 장애인 콜택시 (calltaxi) ---------- */
 .drt-hero { border-radius: 27px; padding: 20px; background: linear-gradient(145deg, rgba(233, 248, 241, 0.95), rgba(232, 243, 255, 0.82)); border: 1px solid rgba(255, 255, 255, 0.9); box-shadow: 0 18px 42px -34px rgba(21, 33, 59, 0.65); }
 .drt-symbol { width: 58px; height: 58px; border-radius: 19px; display: grid; place-items: center; background: var(--green); color: #fff; box-shadow: 0 12px 24px -15px rgba(22, 122, 85, 0.74); }
 .drt-symbol svg { width: 30px; height: 30px; }

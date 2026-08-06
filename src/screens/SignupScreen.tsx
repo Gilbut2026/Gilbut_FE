@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { kakaoLogin } from '../api/auth'
 
 /**
- * 시작 · 카카오 회원가입 (첫 진입) — 6차 와이어프레임 #screen-signup 이식.
+ * 시작 · 카카오 회원가입 (첫 진입) — 7차 와이어프레임 #screen-signup 이식.
  * Mock 모드에선 카카오 버튼이 가짜 토큰을 발급하고 바로 온보딩으로 넘어간다.
  * 실서버 모드에선 실제 카카오 OAuth 리다이렉트로 대체될 자리.
  */
@@ -39,7 +39,7 @@ export function SignupScreen({ onSignedIn }: { onSignedIn: () => void }) {
           <em>편한 길</em>로 모실게요
         </h1>
         <p className="signup-lead">
-          계단·오르막을 피하고
+          계단이 적은 길로
           <br />
           어르신께 맞는 길을 찾아드려요.
         </p>

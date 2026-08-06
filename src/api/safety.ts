@@ -14,13 +14,15 @@ import {
   mockUpdateContact,
 } from '../mock/safety'
 
-const USE_MOCK: boolean = import.meta.env.VITE_USE_MOCK !== 'false'
+import { useMock } from './mode'
+
+const USE_MOCK = () => useMock('safety')
 
 const CONTACTS = '/api/users/me/emergency-contacts'
 
 /** 비상 연락처 목록 (우선순위 순) */
 export function listContacts(): Promise<EmergencyContactResponse[]> {
-  return USE_MOCK
+  return USE_MOCK()
     ? mockListContacts()
     : api.get<EmergencyContactResponse[]>(CONTACTS)
 }
@@ -29,7 +31,7 @@ export function listContacts(): Promise<EmergencyContactResponse[]> {
 export function addContact(
   req: EmergencyContactSaveRequest,
 ): Promise<EmergencyContactResponse> {
-  return USE_MOCK
+  return USE_MOCK()
     ? mockAddContact(req)
     : api.post<EmergencyContactResponse>(CONTACTS, req)
 }
@@ -39,12 +41,12 @@ export function updateContact(
   id: number,
   req: EmergencyContactSaveRequest,
 ): Promise<EmergencyContactResponse> {
-  return USE_MOCK
+  return USE_MOCK()
     ? mockUpdateContact(id, req)
     : api.put<EmergencyContactResponse>(`${CONTACTS}/${id}`, req)
 }
 
 /** 비상 연락처 삭제 */
 export function deleteContact(id: number): Promise<void> {
-  return USE_MOCK ? mockDeleteContact(id) : api.del<void>(`${CONTACTS}/${id}`)
+  return USE_MOCK() ? mockDeleteContact(id) : api.del<void>(`${CONTACTS}/${id}`)
 }

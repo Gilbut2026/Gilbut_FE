@@ -1,0 +1,386 @@
+<style>
+  :root{
+    color-scheme: light dark;
+    --page-bg:#eceaf3; --page-panel:#ffffff; --page-text:#1a1f33; --page-text2:#5a6178;
+    --page-line:rgba(90,97,120,.16); --page-accent:#6755F5;
+    --sys:"Pretendard Variable",Pretendard,"Apple SD Gothic Neo","Malgun Gothic",system-ui,-apple-system,sans-serif;
+  }
+  @media (prefers-color-scheme:dark){:root{--page-bg:#0f1020;--page-panel:#181a2b;--page-text:#ecebf7;--page-text2:#a2a7c0;--page-line:rgba(150,140,240,.16);--page-accent:#8f80f8}}
+  :root[data-theme="light"]{--page-bg:#eceaf3;--page-panel:#fff;--page-text:#1a1f33;--page-text2:#5a6178;--page-line:rgba(90,97,120,.16);--page-accent:#6755F5}
+  :root[data-theme="dark"]{--page-bg:#0f1020;--page-panel:#181a2b;--page-text:#ecebf7;--page-text2:#a2a7c0;--page-line:rgba(150,140,240,.16);--page-accent:#8f80f8}
+
+  *{box-sizing:border-box}
+  .ds{margin:0;font-family:var(--sys);color:var(--page-text);background:var(--page-bg);min-height:100vh;-webkit-font-smoothing:antialiased;padding-bottom:80px}
+  .ds :is(h1,h2,h3,h4,p){margin:0}
+  .wrap{max-width:1180px;margin:0 auto;padding:0 24px}
+
+  .head{padding:52px 24px 22px;max-width:1180px;margin:0 auto}
+  .eyebrow{display:inline-flex;gap:8px;align-items:center;font-size:12.5px;font-weight:900;letter-spacing:.09em;text-transform:uppercase;color:var(--page-accent)}
+  .eyebrow::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--page-accent)}
+  .head h1{font-size:clamp(30px,4.5vw,46px);font-weight:900;letter-spacing:-.04em;line-height:1.1;margin:14px 0 0;text-wrap:balance}
+  .head .lead{font-size:17px;font-weight:600;color:var(--page-text2);margin:14px 0 0;max-width:64ch;line-height:1.6}
+  .constraints{display:flex;flex-wrap:wrap;gap:8px;margin-top:20px}
+  .cst{font-size:12.5px;font-weight:800;padding:7px 12px;border-radius:999px;border:1px solid var(--page-line);background:var(--page-panel);color:var(--page-text2)}
+  .cst b{color:var(--page-accent)}
+
+  /* direction band */
+  .dir{padding:34px 0;border-top:1px solid var(--page-line)}
+  .dir-grid{display:grid;grid-template-columns:250px 1fr;gap:28px;align-items:start}
+  .dir-info{position:sticky;top:20px}
+  .dir-tag{display:inline-block;font-family:ui-monospace,Menlo,monospace;font-size:13px;font-weight:700;color:#fff;background:var(--page-accent);padding:3px 10px;border-radius:7px}
+  .dir-info h2{font-size:23px;font-weight:900;letter-spacing:-.02em;margin:12px 0 0}
+  .dir-info .persona{font-size:14px;font-weight:650;color:var(--page-text2);line-height:1.55;margin-top:8px}
+  .swrow{display:flex;gap:7px;margin-top:14px}
+  .sw{width:30px;height:30px;border-radius:8px;border:1px solid rgba(0,0,0,.08)}
+  .toks{margin-top:12px;font-size:12px;font-weight:600;color:var(--page-text2);line-height:1.7}
+  .toks b{color:var(--page-text);font-weight:800}
+  .dir-phones{display:flex;gap:22px;flex-wrap:wrap}
+  .phone-wrap{display:flex;flex-direction:column;gap:8px}
+  .phone-cap{font-size:12.5px;font-weight:800;color:var(--page-text2);text-align:center;letter-spacing:.02em}
+
+  /* ===== phone frame (shared) ===== */
+  .pf{width:326px;border-radius:40px;padding:9px;background:linear-gradient(160deg,#20262f,#11151d);box-shadow:0 30px 70px -34px rgba(15,20,35,.6),inset 0 1px 1px rgba(255,255,255,.15)}
+  .scr{border-radius:32px;overflow:hidden;display:flex;flex-direction:column;min-height:634px;background:var(--bg);font-family:var(--font,var(--sys));color:var(--text)}
+  .scr *{box-sizing:border-box}
+
+  .mtop{display:flex;align-items:center;gap:10px;padding:13px 16px 12px;background:var(--top,transparent);border-bottom:var(--top-line,none)}
+  .mback{font-size:26px;font-weight:800;color:var(--text);line-height:1}
+  .mbrand,.mtitle{font-size:17px;font-weight:900;letter-spacing:-.01em;flex:1}
+  .mbrand .dot{display:inline-block;width:10px;height:10px;border-radius:50%;background:var(--p);margin-right:7px;vertical-align:middle}
+  .msos{border:0;font-family:inherit;background:var(--danger);color:#fff;font-size:14px;font-weight:900;padding:9px 14px;border-radius:var(--rbtn);cursor:default}
+
+  .mbody{flex:1;padding:16px 16px 14px;display:flex;flex-direction:column}
+  .mkicker{font-size:14px;font-weight:850;color:var(--p-ink)}
+  .mh{font-size:27px;font-weight:900;letter-spacing:-.03em;margin-top:3px;line-height:1.2}
+  .mh2{font-size:24px;font-weight:900;letter-spacing:-.03em;line-height:1.2}
+  .msub2{font-size:14.5px;font-weight:650;color:var(--text2);margin-top:5px}
+
+  .mmic{display:flex;flex-direction:column;align-items:center;margin:20px 0 6px}
+  .mmic-btn{width:104px;height:104px;border-radius:var(--mic-r,50%);display:grid;place-items:center;font-size:44px;color:#fff;background:var(--p-grad);box-shadow:var(--mic-shadow,0 16px 30px -14px rgba(0,0,0,.35))}
+  .mmic-label{font-size:19px;font-weight:900;margin-top:15px}
+  .mmic-help{font-size:14px;font-weight:650;color:var(--text2);margin-top:4px;text-align:center}
+
+  .msection{font-size:15px;font-weight:850;margin:20px 2px 10px;color:var(--text)}
+  .mplaces{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+  .mplace{display:flex;align-items:center;gap:10px;min-height:60px;padding:11px 12px;font-family:inherit;font-size:17px;font-weight:800;text-align:left;color:var(--text);background:var(--card);border:var(--cborder);border-radius:var(--r);box-shadow:var(--cshadow,none);cursor:default}
+  .mp-emoji{width:36px;height:36px;border-radius:11px;display:grid;place-items:center;font-size:20px;background:var(--p-soft);flex:0 0 auto}
+
+  .mnav{display:flex;padding:9px 8px 12px;gap:4px;background:var(--nav,var(--card));border-top:var(--nav-line,1px solid var(--line))}
+  .mnav-i{flex:1;text-align:center;font-size:11.5px;font-weight:800;color:var(--text2);line-height:1.35}
+  .mnav-i .ic{font-size:21px;display:block}
+  .mnav-i.on{color:var(--p-ink)}
+
+  .mtabs{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin:14px 0 12px;padding:var(--tabpad,4px);background:var(--tabbg,transparent);border-radius:var(--r)}
+  .mtab{text-align:center;font-size:13.5px;font-weight:850;padding:10px 4px;border-radius:calc(var(--r) - 4px);color:var(--text2);background:transparent}
+  .mtab.on{color:var(--p-ink);background:var(--tabon,#fff);box-shadow:var(--tabon-shadow,none)}
+
+  .mcard{position:relative;padding:16px;border-radius:var(--rlg);background:var(--card);border:var(--cborder);box-shadow:var(--cshadow,none);overflow:hidden}
+  .mcard.accentbar{border-left:5px solid var(--p)}
+  .mbadge{display:inline-block;font-size:13px;font-weight:900;padding:5px 11px;border-radius:999px;background:var(--badge-bg,var(--p-soft));color:var(--badge-ink,var(--p-ink))}
+  .mcard-h{font-size:23px;font-weight:900;letter-spacing:-.02em;margin-top:10px}
+  .mcard-sub{font-size:14.5px;font-weight:650;color:var(--text2);margin-top:3px;line-height:1.4}
+  .mmetrics{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:14px}
+  .mmetric{padding:11px 6px;text-align:center;border-radius:calc(var(--r) - 2px);background:var(--metric-bg,rgba(0,0,0,.03));border:var(--metric-border,none)}
+  .mmetric span{display:block;font-size:12.5px;font-weight:800;color:var(--text2)}
+  .mmetric b{display:block;font-size:19px;font-weight:900;margin-top:2px}
+
+  .mfacs{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}
+  .mfac{display:flex;align-items:center;gap:9px;padding:11px 11px;font-size:14.5px;font-weight:800;border-radius:var(--r);background:var(--card);border:var(--cborder)}
+  .mfac i{width:25px;height:25px;border-radius:8px;display:grid;place-items:center;font-size:14px;font-weight:900;font-style:normal;flex:0 0 auto}
+  .mfac.ok i{background:var(--okbg);color:var(--ok)}
+  .mfac.warn i{background:var(--warnbg);color:var(--warn)}
+
+  .mreason{margin-top:12px;padding:13px 14px;border-radius:var(--r);background:var(--p-soft);color:var(--p-ink);font-size:14.5px;font-weight:680;line-height:1.5}
+  .mreason b{font-weight:900}
+  .mbtn{margin-top:13px;width:100%;min-height:56px;border:var(--btn-border,0);border-radius:var(--rbtn);font-family:inherit;font-size:19px;font-weight:900;color:var(--btn-ink,#fff);background:var(--btn-bg,var(--p-grad));box-shadow:var(--btn-shadow,none);cursor:default}
+
+  /* ================= A · 현행 보라·글래스 ================= */
+  .a{
+    --font:"Pretendard Variable",Pretendard,"Apple SD Gothic Neo",system-ui,sans-serif;
+    --bg:linear-gradient(165deg,#f6f2ff 0%,#eef7ff 46%,#f7fbff 100%);
+    --p:#6755F5;--p-ink:#5040D8;--p-soft:#EEEAFE;--p-grad:linear-gradient(145deg,#6755F5,#5069E8 55%,#3488F4);
+    --text:#15213B;--text2:#66718A;--line:rgba(100,116,139,.22);--danger:#C9363E;
+    --ok:#167A55;--okbg:#E9F8F1;--warn:#A95C00;--warnbg:#FFF4DA;
+    --r:16px;--rlg:22px;--rbtn:16px;
+    --card:rgba(255,255,255,.72);--cborder:1px solid rgba(255,255,255,.9);--cshadow:0 16px 38px -30px rgba(80,64,216,.55);
+    --top:linear-gradient(to bottom,rgba(246,249,255,.9),rgba(246,249,255,.5));--top-line:1px solid rgba(255,255,255,.6);
+    --tabbg:rgba(221,228,240,.55);--tabon:rgba(255,255,255,.95);--tabon-shadow:0 6px 14px -10px rgba(21,33,59,.5);
+    --metric-bg:rgba(245,248,255,.8);--mic-shadow:0 20px 38px -14px rgba(80,64,216,.6);
+    --btn-shadow:0 14px 26px -15px rgba(80,64,216,.7);--nav:rgba(255,255,255,.8);
+  }
+  .a .mplace,.a .mfac,.a .mcard{backdrop-filter:blur(14px)}
+
+  /* ================= B · 고대비 큰버튼 ================= */
+  .b{
+    --font:system-ui,"Malgun Gothic","Apple SD Gothic Neo",sans-serif;
+    --bg:#ffffff;
+    --p:#0E4FB3;--p-ink:#0E4FB3;--p-soft:#DBE8FB;--p-grad:#0E4FB3;
+    --text:#0A0F1A;--text2:#333B49;--line:#111827;--danger:#B3001B;
+    --ok:#0A6B2E;--okbg:#D7F0DF;--warn:#8A4200;--warnbg:#FBE3C7;
+    --r:10px;--rlg:12px;--rbtn:10px;
+    --card:#ffffff;--cborder:2.5px solid #111827;--cshadow:none;
+    --top:#fff;--top-line:2.5px solid #111827;
+    --tabbg:transparent;--tabon:#111827;--metric-bg:#fff;--metric-border:2px solid #111827;
+    --nav:#fff;--nav-line:2.5px solid #111827;--mic-r:14px;
+    --badge-bg:#111827;--badge-ink:#fff;--btn-bg:#0E4FB3;--btn-ink:#fff;
+  }
+  .b .mtab{border:2px solid #111827}
+  .b .mtab.on{color:#fff}
+  .b .mmic-btn{border-radius:16px}
+  .b .mnav-i.on{color:#0E4FB3}
+  .b .mreason{border:2px solid #111827;background:#EEF3FB;color:#0A0F1A}
+  .b .mbadge{border-radius:6px}
+
+  /* ================= C · 따뜻한 휴먼 (돌봄) ================= */
+  .c{
+    --font:"Apple SD Gothic Neo",system-ui,"Malgun Gothic",sans-serif;
+    --bg:linear-gradient(170deg,#fff6ef 0%,#fdf0f0 60%,#fff8f2 100%);
+    --p:#DC6A48;--p-ink:#BC5232;--p-soft:#FBE4DB;--p-grad:linear-gradient(145deg,#E88159,#D65E3D);
+    --text:#3B2F2A;--text2:#93786C;--line:#efe0d4;--danger:#C64A3C;
+    --ok:#4E8A5B;--okbg:#E7F2E7;--warn:#B26A17;--warnbg:#FBEBD3;
+    --r:22px;--rlg:28px;--rbtn:26px;
+    --card:#ffffff;--cborder:1px solid #f0e3d8;--cshadow:0 16px 34px -26px rgba(150,85,55,.5);
+    --top:transparent;--tabbg:rgba(240,222,210,.6);--tabon:#fff;--tabon-shadow:0 6px 14px -10px rgba(150,85,55,.4);
+    --metric-bg:#fbf4ee;--mic-shadow:0 20px 36px -14px rgba(200,90,60,.5);
+    --btn-shadow:0 14px 26px -15px rgba(200,90,60,.55);--nav:#fff;--mic-r:50%;
+  }
+
+  /* ================= D · 차분한 공공신뢰 (네이비·그린) ================= */
+  .d{
+    --font:system-ui,"Apple SD Gothic Neo","Malgun Gothic",sans-serif;
+    --bg:#f1f5f9;
+    --p:#1E3A5F;--p-ink:#1E3A5F;--p-soft:#E1E9F1;--p-grad:linear-gradient(145deg,#274A75,#1E3A5F);
+    --text:#16233B;--text2:#566072;--line:#dce3ec;--danger:#B3261E;
+    --ok:#1B7A4B;--okbg:#E2F1E8;--warn:#8A5300;--warnbg:#F6E9CF;
+    --r:12px;--rlg:14px;--rbtn:12px;
+    --card:#ffffff;--cborder:1px solid #dce3ec;--cshadow:0 12px 28px -24px rgba(30,58,95,.5);
+    --top:#fff;--top-line:1px solid #dce3ec;
+    --tabbg:#e5ebf1;--tabon:#fff;--tabon-shadow:0 6px 14px -11px rgba(30,58,95,.5);
+    --metric-bg:#f3f6fa;--nav:#fff;--mic-r:18px;
+    --badge-bg:#1B7A4B;--badge-ink:#fff;
+  }
+  .d .mcard{border-left:5px solid #1B7A4B}
+  .d .mkicker{color:#1B7A4B}
+
+  /* how-to */
+  .howto{margin-top:40px;padding:22px 24px;border-radius:20px;background:var(--page-panel);border:1px solid var(--page-line)}
+  .howto h3{font-size:18px;font-weight:900}
+  .howto ul{margin:12px 0 0;padding-left:20px;color:var(--page-text2);font-size:14.5px;font-weight:600;line-height:1.75}
+  .howto b{color:var(--page-text)}
+
+  .top-note{position:sticky;top:0;z-index:10;backdrop-filter:blur(14px);background:color-mix(in srgb,var(--page-panel) 74%,transparent);border-bottom:1px solid var(--page-line)}
+  .top-note .in{max-width:1180px;margin:0 auto;padding:11px 24px;display:flex;align-items:center;gap:12px}
+  .top-note .t{font-size:14px;font-weight:900}
+  .top-note .sp{flex:1}
+  .theme-btn{border:1px solid var(--page-line);background:var(--page-panel);color:var(--page-text2);font-family:inherit;font-size:13px;font-weight:800;border-radius:999px;padding:7px 13px;cursor:pointer}
+
+  @media (max-width:1000px){.dir-grid{grid-template-columns:1fr}.dir-info{position:static}}
+  @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+
+<div class="ds">
+  <div class="top-note"><div class="in"><span class="t">🎨 AI 길벗 · 디자인 방향 비교</span><span class="sp"></span><button class="theme-btn" id="themeBtn">🌙 다크</button></div></div>
+
+  <header class="head">
+    <span class="eyebrow">Design Directions · 4 candidates</span>
+    <h1>같은 앱, 네 가지 얼굴.</h1>
+    <p class="lead">홈(음성 입력)과 추천 경로 카드를 4개 방향으로 만들었습니다. <b>콘텐츠와 접근성 제약은 4개 모두 동일</b>하고, 바뀌는 건 색·형태·타이포의 성격뿐입니다. 하나를 고르면 전체 화면으로 확장합니다.</p>
+    <div class="constraints">
+      <span class="cst">공통 제약 →</span>
+      <span class="cst"><b>큰 글자</b> (어르신 기준)</span>
+      <span class="cst"><b>고대비</b></span>
+      <span class="cst"><b>큰 터치</b> ≥56px</span>
+      <span class="cst">상태 = 색 <b>+ 아이콘 + 글자</b></span>
+      <span class="cst"><b>“미확인” 정직 표기</b></span>
+    </div>
+  </header>
+
+  <main class="wrap">
+
+    <!-- A -->
+    <section class="dir">
+      <div class="dir-grid">
+        <div class="dir-info">
+          <span class="dir-tag">A</span>
+          <h2>현행 · 보라·글래스</h2>
+          <p class="persona">지금 와이어프레임. 보라 브랜드 + 글래스모피즘 + 소프트 그라데이션. 모던하고 세련된 느낌 — <b>기준선</b>.</p>
+          <div class="swrow"><span class="sw" style="background:#6755F5"></span><span class="sw" style="background:#3488F4"></span><span class="sw" style="background:#EEEAFE"></span><span class="sw" style="background:#167A55"></span><span class="sw" style="background:#A95C00"></span></div>
+          <div class="toks"><b>주색</b> #6755F5 · <b>폼</b> 글래스·둥근 22px<br><b>타이포</b> Pretendard</div>
+        </div>
+        <div class="dir-phones">
+          <div class="phone-wrap"><div class="phone-cap">홈 · 음성 입력</div>
+            <div class="pf a"><div class="scr">
+              <div class="mtop"><span class="mbrand"><span class="dot"></span>길벗</span><button class="msos">SOS</button></div>
+              <div class="mbody">
+                <p class="mkicker">안녕하세요</p><h3 class="mh">어디로 갈까요?</h3>
+                <div class="mmic"><div class="mmic-btn">🎤</div><p class="mmic-label">눌러서 말하세요</p><p class="mmic-help">예: “○○병원 가고 싶어요”</p></div>
+                <p class="msection">자주 가는 곳</p>
+                <div class="mplaces"><button class="mplace"><span class="mp-emoji">🏥</span>○○병원</button><button class="mplace"><span class="mp-emoji">🛒</span>전통시장</button><button class="mplace"><span class="mp-emoji">🏠</span>집</button><button class="mplace"><span class="mp-emoji">🚉</span>수원역</button></div>
+              </div>
+              <div class="mnav"><span class="mnav-i on"><span class="ic">🏠</span>홈</span><span class="mnav-i"><span class="ic">💬</span>상담</span><span class="mnav-i"><span class="ic">🗺️</span>경로</span><span class="mnav-i"><span class="ic">⚙️</span>설정</span></div>
+            </div></div>
+          </div>
+          <div class="phone-wrap"><div class="phone-cap">추천 경로 카드</div>
+            <div class="pf a"><div class="scr">
+              <div class="mtop"><span class="mback">‹</span><span class="mtitle">추천 경로</span><button class="msos">SOS</button></div>
+              <div class="mbody">
+                <h3 class="mh2">○○병원 가는 길</h3><p class="msub2">현재 위치 → ○○병원</p>
+                <div class="mtabs"><span class="mtab on">편한 길</span><span class="mtab">걷기 적은</span><span class="mtab">DRT</span></div>
+                <div class="mcard"><span class="mbadge">추천 1순위</span><h4 class="mcard-h">가장 편한 길</h4><p class="mcard-sub">계단 없는 구간으로 걷는 부담을 줄인 경로</p>
+                  <div class="mmetrics"><div class="mmetric"><span>예상</span><b>24분</b></div><div class="mmetric"><span>걷기</span><b>12분</b></div><div class="mmetric"><span>환승</span><b>1회</b></div></div></div>
+                <div class="mfacs"><div class="mfac ok"><i>✓</i>계단 없음</div><div class="mfac ok"><i>✓</i>횡단보도 2곳</div><div class="mfac warn"><i>!</i>엘리베이터 미확인</div><div class="mfac warn"><i>!</i>쉼터 미확인</div></div>
+                <div class="mreason"><b>추천 이유</b> 계단·육교·지하보도가 없는 길을 우선했어요.</div>
+                <button class="mbtn">이 길로 안내받기</button>
+              </div>
+            </div></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- B -->
+    <section class="dir">
+      <div class="dir-grid">
+        <div class="dir-info">
+          <span class="dir-tag">B</span>
+          <h2>고대비 · 큰버튼</h2>
+          <p class="persona">매우 높은 명도 대비, 굵고 큰 글자, 뚜렷한 검은 테두리, 장식 최소화. 관공서·복지앱 톤. <b>어르신 접근성 최우선</b>(WCAG AAA 지향).</p>
+          <div class="swrow"><span class="sw" style="background:#0E4FB3"></span><span class="sw" style="background:#111827"></span><span class="sw" style="background:#fff;border-color:#ccc"></span><span class="sw" style="background:#0A6B2E"></span><span class="sw" style="background:#8A4200"></span></div>
+          <div class="toks"><b>주색</b> #0E4FB3 · <b>폼</b> 2.5px 테두리·플랫<br><b>타이포</b> 시스템 굵게</div>
+        </div>
+        <div class="dir-phones">
+          <div class="phone-wrap"><div class="phone-cap">홈 · 음성 입력</div>
+            <div class="pf b"><div class="scr">
+              <div class="mtop"><span class="mbrand"><span class="dot"></span>길벗</span><button class="msos">SOS</button></div>
+              <div class="mbody">
+                <p class="mkicker">안녕하세요</p><h3 class="mh">어디로 갈까요?</h3>
+                <div class="mmic"><div class="mmic-btn">🎤</div><p class="mmic-label">눌러서 말하세요</p><p class="mmic-help">예: “○○병원 가고 싶어요”</p></div>
+                <p class="msection">자주 가는 곳</p>
+                <div class="mplaces"><button class="mplace"><span class="mp-emoji">🏥</span>○○병원</button><button class="mplace"><span class="mp-emoji">🛒</span>전통시장</button><button class="mplace"><span class="mp-emoji">🏠</span>집</button><button class="mplace"><span class="mp-emoji">🚉</span>수원역</button></div>
+              </div>
+              <div class="mnav"><span class="mnav-i on"><span class="ic">🏠</span>홈</span><span class="mnav-i"><span class="ic">💬</span>상담</span><span class="mnav-i"><span class="ic">🗺️</span>경로</span><span class="mnav-i"><span class="ic">⚙️</span>설정</span></div>
+            </div></div>
+          </div>
+          <div class="phone-wrap"><div class="phone-cap">추천 경로 카드</div>
+            <div class="pf b"><div class="scr">
+              <div class="mtop"><span class="mback">‹</span><span class="mtitle">추천 경로</span><button class="msos">SOS</button></div>
+              <div class="mbody">
+                <h3 class="mh2">○○병원 가는 길</h3><p class="msub2">현재 위치 → ○○병원</p>
+                <div class="mtabs"><span class="mtab on">편한 길</span><span class="mtab">걷기 적은</span><span class="mtab">DRT</span></div>
+                <div class="mcard"><span class="mbadge">추천 1순위</span><h4 class="mcard-h">가장 편한 길</h4><p class="mcard-sub">계단 없는 구간으로 걷는 부담을 줄인 경로</p>
+                  <div class="mmetrics"><div class="mmetric"><span>예상</span><b>24분</b></div><div class="mmetric"><span>걷기</span><b>12분</b></div><div class="mmetric"><span>환승</span><b>1회</b></div></div></div>
+                <div class="mfacs"><div class="mfac ok"><i>✓</i>계단 없음</div><div class="mfac ok"><i>✓</i>횡단보도 2곳</div><div class="mfac warn"><i>!</i>엘리베이터 미확인</div><div class="mfac warn"><i>!</i>쉼터 미확인</div></div>
+                <div class="mreason"><b>추천 이유</b> 계단·육교·지하보도가 없는 길을 우선했어요.</div>
+                <button class="mbtn">이 길로 안내받기</button>
+              </div>
+            </div></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- C -->
+    <section class="dir">
+      <div class="dir-grid">
+        <div class="dir-info">
+          <span class="dir-tag">C</span>
+          <h2>따뜻한 휴먼 · 돌봄</h2>
+          <p class="persona">따뜻한 코랄·크림 색, 크게 둥근 형태, 친근한 일러스트 톤. ‘돌봄·동반’ 서비스의 정서적 온기. 차갑지 않고 다가가기 쉬움.</p>
+          <div class="swrow"><span class="sw" style="background:#DC6A48"></span><span class="sw" style="background:#FBE4DB"></span><span class="sw" style="background:#FFF6EF;border-color:#eaddcf"></span><span class="sw" style="background:#4E8A5B"></span><span class="sw" style="background:#B26A17"></span></div>
+          <div class="toks"><b>주색</b> #DC6A48 · <b>폼</b> 매우 둥근 28px·따뜻한 그림자<br><b>타이포</b> 둥근 산세리프</div>
+        </div>
+        <div class="dir-phones">
+          <div class="phone-wrap"><div class="phone-cap">홈 · 음성 입력</div>
+            <div class="pf c"><div class="scr">
+              <div class="mtop"><span class="mbrand"><span class="dot"></span>길벗</span><button class="msos">SOS</button></div>
+              <div class="mbody">
+                <p class="mkicker">안녕하세요</p><h3 class="mh">어디로 갈까요?</h3>
+                <div class="mmic"><div class="mmic-btn">🎤</div><p class="mmic-label">눌러서 말하세요</p><p class="mmic-help">예: “○○병원 가고 싶어요”</p></div>
+                <p class="msection">자주 가는 곳</p>
+                <div class="mplaces"><button class="mplace"><span class="mp-emoji">🏥</span>○○병원</button><button class="mplace"><span class="mp-emoji">🛒</span>전통시장</button><button class="mplace"><span class="mp-emoji">🏠</span>집</button><button class="mplace"><span class="mp-emoji">🚉</span>수원역</button></div>
+              </div>
+              <div class="mnav"><span class="mnav-i on"><span class="ic">🏠</span>홈</span><span class="mnav-i"><span class="ic">💬</span>상담</span><span class="mnav-i"><span class="ic">🗺️</span>경로</span><span class="mnav-i"><span class="ic">⚙️</span>설정</span></div>
+            </div></div>
+          </div>
+          <div class="phone-wrap"><div class="phone-cap">추천 경로 카드</div>
+            <div class="pf c"><div class="scr">
+              <div class="mtop"><span class="mback">‹</span><span class="mtitle">추천 경로</span><button class="msos">SOS</button></div>
+              <div class="mbody">
+                <h3 class="mh2">○○병원 가는 길</h3><p class="msub2">현재 위치 → ○○병원</p>
+                <div class="mtabs"><span class="mtab on">편한 길</span><span class="mtab">걷기 적은</span><span class="mtab">DRT</span></div>
+                <div class="mcard"><span class="mbadge">추천 1순위</span><h4 class="mcard-h">가장 편한 길</h4><p class="mcard-sub">계단 없는 구간으로 걷는 부담을 줄인 경로</p>
+                  <div class="mmetrics"><div class="mmetric"><span>예상</span><b>24분</b></div><div class="mmetric"><span>걷기</span><b>12분</b></div><div class="mmetric"><span>환승</span><b>1회</b></div></div></div>
+                <div class="mfacs"><div class="mfac ok"><i>✓</i>계단 없음</div><div class="mfac ok"><i>✓</i>횡단보도 2곳</div><div class="mfac warn"><i>!</i>엘리베이터 미확인</div><div class="mfac warn"><i>!</i>쉼터 미확인</div></div>
+                <div class="mreason"><b>추천 이유</b> 계단·육교·지하보도가 없는 길을 우선했어요.</div>
+                <button class="mbtn">이 길로 안내받기</button>
+              </div>
+            </div></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- D -->
+    <section class="dir">
+      <div class="dir-grid">
+        <div class="dir-info">
+          <span class="dir-tag">D</span>
+          <h2>차분한 공공신뢰 · 네이비·그린</h2>
+          <p class="persona">네이비·그린 계열, 절제된 직선 레이아웃, 큰 타이포, 카드 좌측 강조선. 교통·공공기관 신뢰감. KT·교통안전공단 맥락과도 잘 맞음.</p>
+          <div class="swrow"><span class="sw" style="background:#1E3A5F"></span><span class="sw" style="background:#1B7A4B"></span><span class="sw" style="background:#E1E9F1"></span><span class="sw" style="background:#F1F5F9;border-color:#d5dee8"></span><span class="sw" style="background:#8A5300"></span></div>
+          <div class="toks"><b>주색</b> #1E3A5F · <b>강조</b> #1B7A4B · <b>폼</b> 직선·좌측 강조선<br><b>타이포</b> 시스템</div>
+        </div>
+        <div class="dir-phones">
+          <div class="phone-wrap"><div class="phone-cap">홈 · 음성 입력</div>
+            <div class="pf d"><div class="scr">
+              <div class="mtop"><span class="mbrand"><span class="dot"></span>길벗</span><button class="msos">SOS</button></div>
+              <div class="mbody">
+                <p class="mkicker">안녕하세요</p><h3 class="mh">어디로 갈까요?</h3>
+                <div class="mmic"><div class="mmic-btn">🎤</div><p class="mmic-label">눌러서 말하세요</p><p class="mmic-help">예: “○○병원 가고 싶어요”</p></div>
+                <p class="msection">자주 가는 곳</p>
+                <div class="mplaces"><button class="mplace"><span class="mp-emoji">🏥</span>○○병원</button><button class="mplace"><span class="mp-emoji">🛒</span>전통시장</button><button class="mplace"><span class="mp-emoji">🏠</span>집</button><button class="mplace"><span class="mp-emoji">🚉</span>수원역</button></div>
+              </div>
+              <div class="mnav"><span class="mnav-i on"><span class="ic">🏠</span>홈</span><span class="mnav-i"><span class="ic">💬</span>상담</span><span class="mnav-i"><span class="ic">🗺️</span>경로</span><span class="mnav-i"><span class="ic">⚙️</span>설정</span></div>
+            </div></div>
+          </div>
+          <div class="phone-wrap"><div class="phone-cap">추천 경로 카드</div>
+            <div class="pf d"><div class="scr">
+              <div class="mtop"><span class="mback">‹</span><span class="mtitle">추천 경로</span><button class="msos">SOS</button></div>
+              <div class="mbody">
+                <h3 class="mh2">○○병원 가는 길</h3><p class="msub2">현재 위치 → ○○병원</p>
+                <div class="mtabs"><span class="mtab on">편한 길</span><span class="mtab">걷기 적은</span><span class="mtab">DRT</span></div>
+                <div class="mcard"><span class="mbadge">추천 1순위</span><h4 class="mcard-h">가장 편한 길</h4><p class="mcard-sub">계단 없는 구간으로 걷는 부담을 줄인 경로</p>
+                  <div class="mmetrics"><div class="mmetric"><span>예상</span><b>24분</b></div><div class="mmetric"><span>걷기</span><b>12분</b></div><div class="mmetric"><span>환승</span><b>1회</b></div></div></div>
+                <div class="mfacs"><div class="mfac ok"><i>✓</i>계단 없음</div><div class="mfac ok"><i>✓</i>횡단보도 2곳</div><div class="mfac warn"><i>!</i>엘리베이터 미확인</div><div class="mfac warn"><i>!</i>쉼터 미확인</div></div>
+                <div class="mreason"><b>추천 이유</b> 계단·육교·지하보도가 없는 길을 우선했어요.</div>
+                <button class="mbtn">이 길로 안내받기</button>
+              </div>
+            </div></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <div class="howto">
+      <h3>어떻게 고를까</h3>
+      <ul>
+        <li><b>어르신 가독성·안전</b>이 최우선이면 → <b>B(고대비)</b>. 심사·평가에서 접근성 근거로 가장 강함.</li>
+        <li><b>정서적 친근함·돌봄 이미지</b>를 내세우면 → <b>C(따뜻한 휴먼)</b>.</li>
+        <li><b>공공·기관 신뢰감</b>과 발표 톤이면 → <b>D(네이비·그린)</b>.</li>
+        <li><b>지금 완성도·개발 연속성</b>을 살리면 → <b>A(현행)</b>.</li>
+        <li>혼합도 가능해요 — 예: <b>D의 색 + B의 대비·버튼 크기</b>처럼 장점만 뽑아 최종안을 만들 수 있습니다.</li>
+      </ul>
+    </div>
+  </main>
+</div>
+
+<script>
+  (function(){
+    var root=document.documentElement;
+    function sysDark(){return window.matchMedia&&window.matchMedia("(prefers-color-scheme:dark)").matches}
+    function cur(){var t=root.getAttribute("data-theme");return t?t==="dark":sysDark()}
+    function paint(){document.getElementById("themeBtn").textContent=cur()?"☀️ 라이트":"🌙 다크"}
+    document.getElementById("themeBtn").addEventListener("click",function(){root.setAttribute("data-theme",cur()?"light":"dark");paint()});
+    paint();
+  })();
+</script>

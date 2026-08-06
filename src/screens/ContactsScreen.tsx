@@ -3,9 +3,22 @@ import { addContact, deleteContact, listContacts } from '../api/safety'
 import type { EmergencyContactResponse } from '../types/dto'
 
 /**
- * 비상 연락처 — 6차 와이어프레임 #screen-contacts 이식 + 실제 CRUD.
+ * 비상 연락처 — 7차 와이어프레임 #screen-contacts 이식 + 실제 CRUD.
  * api/safety (BE /api/users/me/emergency-contacts) 연동. Mock 모드에서도 그대로 동작.
  */
+
+/**
+ * 전화번호를 하이픈 있는 형태로 되돌린다.
+ * ⚠️ 실서버는 `010-1234-5678` 로 보내도 하이픈을 지워 `01012345678` 로 저장·반환한다
+ *    (2026-08-04 로컬 실연결로 확인). 어르신 화면에 숫자 11자리가 붙어 나오면 읽기 어려우므로
+ *    표시할 때 다시 끊어준다. 형식을 못 알아보면 원본을 그대로 둔다.
+ */
+function formatPhone(raw: string): string {
+  const d = raw.replace(/\D/g, '')
+  if (/^02\d{7,8}$/.test(d)) return d.replace(/^(02)(\d{3,4})(\d{4})$/, '$1-$2-$3') // 서울 국번
+  if (/^\d{9,11}$/.test(d)) return d.replace(/^(\d{3})(\d{3,4})(\d{4})$/, '$1-$2-$3')
+  return raw
+}
 
 function BackIcon() {
   return (
@@ -102,7 +115,7 @@ export function ContactsScreen({
                   {c.relationship} · {c.priority}순위
                 </span>
                 <b>{c.name}</b>
-                <span>{c.phoneNumber}</span>
+                <span>{formatPhone(c.phoneNumber)}</span>
               </div>
               <div className="list-actions">
                 <button onClick={() => handleDelete(c.id)} aria-label={`${c.name} 삭제`}>

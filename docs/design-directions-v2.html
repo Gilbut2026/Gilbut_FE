@@ -1,0 +1,293 @@
+<style>
+  :root{
+    color-scheme: light dark;
+    --pg-bg:#eef1f5; --pg-panel:#ffffff; --pg-text:#101828; --pg-text2:#516079; --pg-line:rgba(70,90,120,.16); --pg-accent:#0369A1;
+    --sys:"Pretendard Variable",Pretendard,"Apple SD Gothic Neo","Malgun Gothic",system-ui,-apple-system,sans-serif;
+    --mono:ui-monospace,Menlo,Consolas,monospace;
+  }
+  @media (prefers-color-scheme:dark){:root{--pg-bg:#0c111b;--pg-panel:#151c28;--pg-text:#e7edf5;--pg-text2:#93a1b5;--pg-line:rgba(120,150,190,.16);--pg-accent:#38BDF8}}
+  :root[data-theme="light"]{--pg-bg:#eef1f5;--pg-panel:#fff;--pg-text:#101828;--pg-text2:#516079;--pg-line:rgba(70,90,120,.16);--pg-accent:#0369A1}
+  :root[data-theme="dark"]{--pg-bg:#0c111b;--pg-panel:#151c28;--pg-text:#e7edf5;--pg-text2:#93a1b5;--pg-line:rgba(120,150,190,.16);--pg-accent:#38BDF8}
+
+  *{box-sizing:border-box}
+  .ds{margin:0;font-family:var(--sys);color:var(--pg-text);background:var(--pg-bg);min-height:100vh;-webkit-font-smoothing:antialiased;padding-bottom:80px}
+  .ds :is(h1,h2,h3,h4,p){margin:0}
+  .wrap{max-width:1180px;margin:0 auto;padding:0 24px}
+
+  .top-note{position:sticky;top:0;z-index:10;backdrop-filter:blur(14px);background:color-mix(in srgb,var(--pg-panel) 78%,transparent);border-bottom:1px solid var(--pg-line)}
+  .top-note .in{max-width:1180px;margin:0 auto;padding:11px 24px;display:flex;align-items:center;gap:12px}
+  .top-note .t{font-size:14px;font-weight:900}
+  .theme-btn{margin-left:auto;border:1px solid var(--pg-line);background:var(--pg-panel);color:var(--pg-text2);font-family:inherit;font-size:13px;font-weight:800;border-radius:999px;padding:7px 13px;cursor:pointer}
+
+  .head{padding:50px 24px 20px;max-width:1180px;margin:0 auto}
+  .eyebrow{display:inline-flex;gap:8px;align-items:center;font-size:12.5px;font-weight:900;letter-spacing:.09em;text-transform:uppercase;color:var(--pg-accent)}
+  .eyebrow::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--pg-accent)}
+  .head h1{font-size:clamp(30px,4.5vw,46px);font-weight:900;letter-spacing:-.035em;line-height:1.1;margin:14px 0 0;text-wrap:balance}
+  .head .lead{font-size:17px;font-weight:600;color:var(--pg-text2);margin:14px 0 0;max-width:66ch;line-height:1.6}
+  .head .lead b{color:var(--pg-text)}
+  .why{display:flex;flex-wrap:wrap;gap:8px;margin-top:20px}
+  .chip{font-size:12.5px;font-weight:800;padding:7px 12px;border-radius:8px;border:1px solid var(--pg-line);background:var(--pg-panel);color:var(--pg-text2)}
+  .chip b{color:var(--pg-accent)}
+  .chip.warnc{border-color:#e5b567;color:#8a5a12;background:#fdf6e8}
+
+  .dir{padding:34px 0;border-top:1px solid var(--pg-line)}
+  .dir-grid{display:grid;grid-template-columns:250px 1fr;gap:28px;align-items:start}
+  .dir-info{position:sticky;top:64px}
+  .dir-tag{display:inline-block;font-family:var(--mono);font-size:13px;font-weight:700;color:#fff;background:var(--pg-accent);padding:3px 10px;border-radius:6px}
+  .dir-info h2{font-size:22px;font-weight:900;letter-spacing:-.02em;margin:12px 0 0;line-height:1.2}
+  .dir-info .persona{font-size:14px;font-weight:650;color:var(--pg-text2);line-height:1.55;margin-top:8px}
+  .dir-info .src{font-size:12px;font-weight:700;color:var(--pg-accent);margin-top:10px}
+  .swrow{display:flex;gap:6px;margin-top:12px}
+  .sw{width:30px;height:30px;border-radius:7px;border:1px solid rgba(0,0,0,.1)}
+  .toks{margin-top:12px;font-size:12px;font-weight:600;color:var(--pg-text2);line-height:1.7}
+  .toks b{color:var(--pg-text);font-weight:800}
+  .dir-phones{display:flex;gap:22px;flex-wrap:wrap}
+  .phone-wrap{display:flex;flex-direction:column;gap:8px}
+  .phone-cap{font-size:12.5px;font-weight:800;color:var(--pg-text2);text-align:center}
+
+  /* ===== phone frame ===== */
+  .pf{width:328px;border-radius:40px;padding:9px;background:linear-gradient(160deg,#252c38,#12161f);box-shadow:0 30px 66px -34px rgba(15,20,35,.6),inset 0 1px 1px rgba(255,255,255,.14)}
+  .scr{border-radius:32px;overflow:hidden;display:flex;flex-direction:column;min-height:648px;background:var(--bg);font-family:var(--font,var(--sys));color:var(--fg)}
+  .scr *{box-sizing:border-box}
+  .ic{width:24px;height:24px;flex:0 0 auto;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+
+  .mtop{display:flex;align-items:center;gap:10px;padding:14px 16px 13px;background:var(--top);border-bottom:1px solid var(--line)}
+  .mtop .mback{color:var(--fg);display:grid;place-items:center;width:30px;height:30px}
+  .mbrand{font-size:18px;font-weight:900;letter-spacing:-.01em;flex:1;display:flex;align-items:center;gap:8px}
+  .mbrand .logo{width:26px;height:26px;border-radius:7px;background:var(--p);color:var(--on-p);display:grid;place-items:center}
+  .mbrand .logo .ic{width:17px;height:17px;stroke-width:2.4}
+  .mtitle{font-size:18px;font-weight:900;flex:1}
+  .msos{border:0;font-family:inherit;background:var(--danger);color:#fff;font-size:15px;font-weight:900;padding:9px 15px;border-radius:var(--rbtn);cursor:default;letter-spacing:.02em}
+
+  .mbody{flex:1;padding:18px 16px 14px;display:flex;flex-direction:column}
+  .mkicker{font-size:15px;font-weight:800;color:var(--accent)}
+  .mh{font-size:29px;font-weight:900;letter-spacing:-.03em;margin-top:4px;line-height:1.18}
+  .mh2{font-size:25px;font-weight:900;letter-spacing:-.03em;line-height:1.2}
+  .msub2{font-size:15px;font-weight:650;color:var(--text2);margin-top:6px}
+
+  .mmic{display:flex;flex-direction:column;align-items:center;margin:22px 0 8px}
+  .mmic-btn{width:112px;height:112px;border-radius:var(--mic-r,50%);display:grid;place-items:center;color:var(--on-p);background:var(--p);box-shadow:var(--mic-shadow,none);border:var(--mic-border,0)}
+  .mmic-btn .ic{width:46px;height:46px;stroke-width:2}
+  .mmic-label{font-size:20px;font-weight:900;margin-top:16px}
+  .mmic-help{font-size:15px;font-weight:650;color:var(--text2);margin-top:5px;text-align:center;line-height:1.4}
+
+  .msection{font-size:16px;font-weight:850;margin:22px 2px 11px}
+  .mplaces{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .mplace{display:flex;align-items:center;gap:11px;min-height:62px;padding:12px 13px;font-family:inherit;font-size:17.5px;font-weight:800;text-align:left;color:var(--fg);background:var(--card);border:var(--cborder);border-radius:var(--r);box-shadow:var(--cshadow,none);cursor:default}
+  .mplace .pic{width:40px;height:40px;border-radius:11px;display:grid;place-items:center;background:var(--chip);color:var(--accent);flex:0 0 auto}
+  .mplace .pic .ic{width:23px;height:23px}
+
+  .mnav{display:flex;padding:10px 8px 13px;gap:4px;background:var(--nav);border-top:1px solid var(--line)}
+  .mnav-i{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;font-size:12px;font-weight:800;color:var(--text2)}
+  .mnav-i .ic{width:24px;height:24px}
+  .mnav-i.on{color:var(--accent)}
+
+  .mtabs{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin:16px 0 13px;padding:var(--tabpad,4px);background:var(--tabbg);border-radius:var(--r)}
+  .mtab{text-align:center;font-size:14px;font-weight:850;padding:11px 4px;border-radius:calc(var(--r) - 4px);color:var(--text2);background:transparent}
+  .mtab.on{color:var(--on-p);background:var(--p);box-shadow:var(--tabon-shadow,none)}
+
+  .mcard{position:relative;padding:17px;border-radius:var(--rlg);background:var(--card);border:var(--cborder);box-shadow:var(--cshadow,none)}
+  .mbadge{display:inline-flex;align-items:center;gap:6px;font-size:13.5px;font-weight:900;padding:6px 12px;border-radius:999px;background:var(--badge-bg);color:var(--badge-ink)}
+  .mbadge .ic{width:15px;height:15px;stroke-width:2.6}
+  .mcard-h{font-size:24px;font-weight:900;letter-spacing:-.02em;margin-top:11px}
+  .mcard-sub{font-size:15px;font-weight:650;color:var(--text2);margin-top:4px;line-height:1.4}
+  .mmetrics{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:15px}
+  .mmetric{padding:12px 6px;text-align:center;border-radius:calc(var(--r) - 2px);background:var(--metric-bg);border:var(--metric-border,0)}
+  .mmetric span{display:block;font-size:13px;font-weight:800;color:var(--text2)}
+  .mmetric b{display:block;font-size:20px;font-weight:900;margin-top:3px;font-variant-numeric:tabular-nums}
+
+  .mfacs{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:13px}
+  .mfac{display:flex;align-items:center;gap:9px;padding:12px 12px;font-size:15px;font-weight:800;border-radius:var(--r);background:var(--card);border:var(--cborder);color:var(--fg)}
+  .mfac .ic{width:22px;height:22px;padding:3px;border-radius:7px;stroke-width:2.4}
+  .mfac.ok .ic{background:var(--okbg);color:var(--ok)}
+  .mfac.warn .ic{background:var(--warnbg);color:var(--warn)}
+
+  .mreason{margin-top:13px;padding:14px 15px;border-radius:var(--r);background:var(--chip);color:var(--accent-ink);font-size:15px;font-weight:700;line-height:1.5;display:flex;gap:10px}
+  .mreason .ic{width:22px;height:22px;flex:0 0 auto;color:var(--accent)}
+  .mreason b{font-weight:900;color:var(--fg)}
+  .mbtn{margin-top:14px;width:100%;min-height:58px;border:var(--btn-border,0);border-radius:var(--rbtn);font-family:inherit;font-size:20px;font-weight:900;color:var(--on-accent);background:var(--accent);box-shadow:var(--btn-shadow,none);cursor:default;display:flex;align-items:center;justify-content:center;gap:9px}
+  .mbtn .ic{width:23px;height:23px;stroke-width:2.4}
+
+  /* ===== DIR 1 · 고대비 네이비 (Accessible & Ethical) ===== */
+  .navy{
+    --bg:#F8FAFC;--fg:#020617;--text2:#334155;
+    --p:#0F172A;--on-p:#fff;--accent:#0369A1;--on-accent:#fff;--accent-ink:#0C4A6E;
+    --card:#fff;--cborder:2px solid #0F172A;--cshadow:none;--chip:#E8ECF1;
+    --line:#0F172A;--top:#fff;--nav:#fff;
+    --r:11px;--rlg:12px;--rbtn:11px;--tabbg:#fff;--tabpad:4px;
+    --metric-bg:#fff;--metric-border:2px solid #0F172A;--mic-r:16px;
+    --ok:#15803D;--okbg:#DCFCE7;--warn:#B45309;--warnbg:#FEF3C7;--danger:#DC2626;
+    --badge-bg:#0F172A;--badge-ink:#fff;
+  }
+  .navy .mtab{border:2px solid #0F172A}
+  .navy .mnav{border-top:2px solid #0F172A}
+
+  /* ===== DIR 2 · 시니어 케어 (블루·그린) ===== */
+  .care{
+    --bg:#F0F9FF;--fg:#0C4A6E;--text2:#475569;
+    --p:#0369A1;--on-p:#fff;--accent:#16A34A;--on-accent:#fff;--accent-ink:#166534;
+    --card:#fff;--cborder:1px solid #D5E6F0;--cshadow:0 12px 28px -22px rgba(3,105,161,.5);--chip:#E2F1E8;
+    --line:#DCEAF3;--top:#fff;--nav:#fff;
+    --r:17px;--rlg:20px;--rbtn:16px;--tabbg:#E1EEF7;
+    --metric-bg:#F0F7FC;--mic-r:50%;--mic-shadow:0 18px 34px -14px rgba(3,105,161,.55);
+    --ok:#16A34A;--okbg:#DCFCE7;--warn:#B45309;--warnbg:#FEF3C7;--danger:#DC2626;
+    --badge-bg:#DCFCE7;--badge-ink:#166534;--btn-shadow:0 14px 26px -15px rgba(22,163,74,.5);
+    --tabon-shadow:0 6px 14px -9px rgba(3,105,161,.6);
+  }
+  .care .mtab.on{background:#0369A1}
+
+  /* ===== DIR 3 · 헬스케어 (시안·그린) ===== */
+  .health{
+    --bg:#ECFEFF;--fg:#164E63;--text2:#4B6472;
+    --p:#0891B2;--on-p:#fff;--accent:#059669;--on-accent:#fff;--accent-ink:#065F46;
+    --card:#fff;--cborder:1px solid #C2E9F0;--cshadow:0 12px 28px -22px rgba(8,145,178,.45);--chip:#D3F3F7;
+    --line:#CDECF1;--top:#fff;--nav:#fff;
+    --r:15px;--rlg:16px;--rbtn:14px;--tabbg:#D7F1F5;
+    --metric-bg:#EBFBFC;--mic-r:26px;--mic-shadow:0 18px 34px -14px rgba(8,145,178,.5);
+    --ok:#059669;--okbg:#D1FAE5;--warn:#B45309;--warnbg:#FEF3C7;--danger:#DC2626;
+    --badge-bg:#D1FAE5;--badge-ink:#065F46;--btn-shadow:0 14px 26px -15px rgba(5,150,105,.5);
+    --tabon-shadow:0 6px 14px -9px rgba(8,145,178,.55);
+  }
+  .health .mtab.on{background:#0891B2}
+
+  .howto{margin-top:38px;padding:22px 24px;border-radius:16px;background:var(--pg-panel);border:1px solid var(--pg-line)}
+  .howto h3{font-size:18px;font-weight:900}
+  .howto ul{margin:12px 0 0;padding-left:20px;color:var(--pg-text2);font-size:14.5px;font-weight:600;line-height:1.75}
+  .howto b{color:var(--pg-text)}
+
+  @media (max-width:1000px){.dir-grid{grid-template-columns:1fr}.dir-info{position:static}}
+  @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+  <symbol id="i-mic" viewBox="0 0 24 24"><rect x="9" y="2.5" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0"/><path d="M12 18v3"/><path d="M8.5 21h7"/></symbol>
+  <symbol id="i-cross" viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="3.5"/><path d="M12 9v6M9 12h6"/></symbol>
+  <symbol id="i-bag" viewBox="0 0 24 24"><path d="M6 8h12l-1 11.5H7L6 8Z"/><path d="M9 8V6.5a3 3 0 0 1 6 0V8"/></symbol>
+  <symbol id="i-home" viewBox="0 0 24 24"><path d="M4 11l8-7 8 7"/><path d="M6 10v10h12V10"/></symbol>
+  <symbol id="i-train" viewBox="0 0 24 24"><rect x="6" y="3.5" width="12" height="12" rx="2.5"/><path d="M6 11h12"/><path d="M8.5 20l1.6-3M15.5 20 14 17"/></symbol>
+  <symbol id="i-back" viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></symbol>
+  <symbol id="i-warn" viewBox="0 0 24 24"><path d="M12 4 3 20h18L12 4Z"/><path d="M12 10.5v4M12 17.6v.2"/></symbol>
+  <symbol id="i-chat" viewBox="0 0 24 24"><path d="M4 5h16v11H9l-4 3v-3H4V5Z"/><path d="M8 9h8M8 12h5"/></symbol>
+  <symbol id="i-route" viewBox="0 0 24 24"><path d="M9 4 3 6v14l6-2 6 2 6-2V4l-6 2-6-2Z"/><path d="M9 4v14M15 6v14"/></symbol>
+  <symbol id="i-gear" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5.2 5.2l2.1 2.1M16.7 16.7l2.1 2.1M18.8 5.2l-2.1 2.1M7.3 16.7l-2.1 2.1"/></symbol>
+  <symbol id="i-nav" viewBox="0 0 24 24"><path d="M12 21s7-6.5 7-12a7 7 0 1 0-14 0c0 5.5 7 12 7 12Z"/><circle cx="12" cy="9" r="2.4"/></symbol>
+</defs></svg>
+
+<div class="ds">
+  <div class="top-note"><div class="in"><span class="t">🧭 AI 길벗 · 디자인 v2 (스킬 기반)</span><button class="theme-btn" id="themeBtn">🌙 다크</button></div></div>
+
+  <header class="head">
+    <span class="eyebrow">Redesign · UI/UX Pro Max</span>
+    <h1>이번엔 근거를 갖고 다시.</h1>
+    <p class="lead"><b>UI/UX Pro Max 스킬</b>이 우리 제품(어르신·공공·이동)에 추천한 방향으로 다시 만들었습니다. 스킬이 짚은 정답 스타일은 <b>“Accessible &amp; Ethical”</b>(고대비·큰 글자·WCAG AAA), 팔레트는 <b>시니어 케어 블루·그린</b> 계열. 이전 버전의 문제도 스킬이 정확히 지적했습니다.</p>
+    <div class="why">
+      <span class="chip">스킬 지적 →</span>
+      <span class="chip warnc">✗ 이모지 아이콘 → <b style="color:#8a5a12">SVG로 교체</b></span>
+      <span class="chip warnc">✗ AI 보라 그라데이션 → <b style="color:#8a5a12">제거</b></span>
+      <span class="chip"><b>큰 글자</b> 17px+</span>
+      <span class="chip"><b>고대비</b> WCAG AAA</span>
+      <span class="chip"><b>포커스 링</b>·44px 터치</span>
+      <span class="chip">폰트 <b>Atkinson Hyperlegible</b> 계열</span>
+    </div>
+  </header>
+
+  <main class="wrap">
+
+    <!-- DIR 1 -->
+    <section class="dir">
+      <div class="dir-grid">
+        <div class="dir-info">
+          <span class="dir-tag">1</span>
+          <h2>고대비 네이비</h2>
+          <p class="persona">스킬의 <b>1순위 정답</b>. 네이비+블루 최고 대비, 굵은 테두리, 각진 형태, 큰 글자. 관공서·공단 신뢰감 + 접근성 최강.</p>
+          <div class="src">▲ 스킬 “Accessible &amp; Ethical” · WCAG AAA</div>
+          <div class="swrow"><span class="sw" style="background:#0F172A"></span><span class="sw" style="background:#0369A1"></span><span class="sw" style="background:#F8FAFC;border-color:#ccc"></span><span class="sw" style="background:#15803D"></span><span class="sw" style="background:#B45309"></span></div>
+          <div class="toks"><b>주색</b> #0F172A · <b>CTA</b> #0369A1<br><b>폼</b> 2px 테두리·각짐 11px</div>
+        </div>
+        <div class="dir-phones" data-t="navy"></div>
+      </div>
+    </section>
+
+    <!-- DIR 2 -->
+    <section class="dir">
+      <div class="dir-grid">
+        <div class="dir-info">
+          <span class="dir-tag">2</span>
+          <h2>시니어 케어 · 블루·그린</h2>
+          <p class="persona">스킬 <b>“Senior Care/Elderly” 팔레트</b> 그대로. 안심되는 블루 + 확인=그린, 둥근 카드, 큰 마이크. 따뜻하되 정직한 톤.</p>
+          <div class="src">▲ 스킬 color: “Senior Care/Elderly”</div>
+          <div class="swrow"><span class="sw" style="background:#0369A1"></span><span class="sw" style="background:#16A34A"></span><span class="sw" style="background:#F0F9FF;border-color:#cfe3f0"></span><span class="sw" style="background:#DCFCE7;border-color:#bbe8c9"></span><span class="sw" style="background:#B45309"></span></div>
+          <div class="toks"><b>주색</b> #0369A1 · <b>강조</b> #16A34A<br><b>폼</b> 둥근 20px·소프트 그림자</div>
+        </div>
+        <div class="dir-phones" data-t="care"></div>
+      </div>
+    </section>
+
+    <!-- DIR 3 -->
+    <section class="dir">
+      <div class="dir-grid">
+        <div class="dir-info">
+          <span class="dir-tag">3</span>
+          <h2>헬스케어 · 시안·그린</h2>
+          <p class="persona">스킬 <b>“Healthcare” 팔레트</b>. 밝은 시안 배경, 청량한 시안+그린. 병원 동행·건강 맥락에 맞는 깨끗하고 상쾌한 느낌.</p>
+          <div class="src">▲ 스킬 color: “Healthcare App”</div>
+          <div class="swrow"><span class="sw" style="background:#0891B2"></span><span class="sw" style="background:#059669"></span><span class="sw" style="background:#ECFEFF;border-color:#c2e9f0"></span><span class="sw" style="background:#D1FAE5;border-color:#b3ead0"></span><span class="sw" style="background:#B45309"></span></div>
+          <div class="toks"><b>주색</b> #0891B2 · <b>강조</b> #059669<br><b>폼</b> 중간 라운드 16px·에어리</div>
+        </div>
+        <div class="dir-phones" data-t="health"></div>
+      </div>
+    </section>
+
+    <div class="howto">
+      <h3>이전 버전 대비 뭐가 나아졌나</h3>
+      <ul>
+        <li><b>이모지 → SVG 아이콘</b> — 스킬이 “이모지를 구조 아이콘으로 쓰지 말 것”이라 명시. 병원·시장·집·역·마이크·내비 전부 일관된 라인 아이콘으로 교체.</li>
+        <li><b>보라 그라데이션 제거</b> — 스킬이 “AI 보라/핑크 그라데이션”을 안티패턴으로 지목. 신뢰감 있는 고대비 블루 계열로.</li>
+        <li><b>글자·대비 상향</b> — 본문 17px+, WCAG AAA 지향, 상태는 색+아이콘+글자 3중.</li>
+        <li><b>고를 때</b> — 심사·평가 근거 최강은 <b>1(고대비 네이비)</b>, 정서적 안심은 <b>2(시니어 케어)</b>, 병원 동행 맥락은 <b>3(헬스케어)</b>. 혼합도 가능(예: 2의 색 + 1의 대비·버튼).</li>
+      </ul>
+    </div>
+  </main>
+</div>
+
+<script>
+  // 세 방향에 동일한 두 화면(홈·경로카드)을 주입 — 콘텐츠·구조는 완전히 동일, 토큰만 다름
+  var HOME =
+    '<div class="phone-wrap"><div class="phone-cap">홈 · 음성 입력</div><div class="pf THEME"><div class="scr">'
+    +'<div class="mtop"><span class="mbrand"><span class="logo"><svg class="ic"><use href="#i-nav"/></svg></span>길벗</span><button class="msos">SOS</button></div>'
+    +'<div class="mbody"><p class="mkicker">안녕하세요</p><h3 class="mh">어디로 갈까요?</h3>'
+    +'<div class="mmic"><div class="mmic-btn"><svg class="ic"><use href="#i-mic"/></svg></div><p class="mmic-label">눌러서 말하세요</p><p class="mmic-help">예: “○○병원 가고 싶어요”</p></div>'
+    +'<p class="msection">자주 가는 곳</p><div class="mplaces">'
+    +'<button class="mplace"><span class="pic"><svg class="ic"><use href="#i-cross"/></svg></span>○○병원</button>'
+    +'<button class="mplace"><span class="pic"><svg class="ic"><use href="#i-bag"/></svg></span>전통시장</button>'
+    +'<button class="mplace"><span class="pic"><svg class="ic"><use href="#i-home"/></svg></span>집</button>'
+    +'<button class="mplace"><span class="pic"><svg class="ic"><use href="#i-train"/></svg></span>수원역</button>'
+    +'</div></div>'
+    +'<div class="mnav"><span class="mnav-i on"><svg class="ic"><use href="#i-home"/></svg>홈</span><span class="mnav-i"><svg class="ic"><use href="#i-chat"/></svg>상담</span><span class="mnav-i"><svg class="ic"><use href="#i-route"/></svg>경로</span><span class="mnav-i"><svg class="ic"><use href="#i-gear"/></svg>설정</span></div>'
+    +'</div></div></div>';
+  var ROUTE =
+    '<div class="phone-wrap"><div class="phone-cap">추천 경로 카드</div><div class="pf THEME"><div class="scr">'
+    +'<div class="mtop"><span class="mback"><svg class="ic"><use href="#i-back"/></svg></span><span class="mtitle">추천 경로</span><button class="msos">SOS</button></div>'
+    +'<div class="mbody"><h3 class="mh2">○○병원 가는 길</h3><p class="msub2">현재 위치 → ○○병원</p>'
+    +'<div class="mtabs"><span class="mtab on">편한 길</span><span class="mtab">걷기 적은</span><span class="mtab">DRT</span></div>'
+    +'<div class="mcard"><span class="mbadge"><svg class="ic"><use href="#i-check"/></svg>추천 1순위</span><h4 class="mcard-h">가장 편한 길</h4><p class="mcard-sub">계단 없는 구간으로 걷는 부담을 줄인 경로</p>'
+    +'<div class="mmetrics"><div class="mmetric"><span>예상</span><b>24분</b></div><div class="mmetric"><span>걷기</span><b>12분</b></div><div class="mmetric"><span>환승</span><b>1회</b></div></div></div>'
+    +'<div class="mfacs"><div class="mfac ok"><svg class="ic"><use href="#i-check"/></svg>계단 없음</div><div class="mfac ok"><svg class="ic"><use href="#i-check"/></svg>횡단보도 2곳</div><div class="mfac warn"><svg class="ic"><use href="#i-warn"/></svg>엘리베이터 미확인</div><div class="mfac warn"><svg class="ic"><use href="#i-warn"/></svg>쉼터 미확인</div></div>'
+    +'<div class="mreason"><svg class="ic"><use href="#i-check"/></svg><span><b>추천 이유</b> 계단·육교·지하보도가 없는 길을 우선했어요.</span></div>'
+    +'<button class="mbtn"><svg class="ic"><use href="#i-nav"/></svg>이 길로 안내받기</button>'
+    +'</div></div></div></div>';
+  document.querySelectorAll('.dir-phones').forEach(function(el){
+    var t=el.getAttribute('data-t');
+    el.innerHTML=(HOME+ROUTE).replace(/THEME/g,t);
+  });
+
+  (function(){
+    var root=document.documentElement;
+    function sysDark(){return window.matchMedia&&window.matchMedia("(prefers-color-scheme:dark)").matches}
+    function cur(){var t=root.getAttribute("data-theme");return t?t==="dark":sysDark()}
+    function paint(){document.getElementById("themeBtn").textContent=cur()?"☀️ 라이트":"🌙 다크"}
+    document.getElementById("themeBtn").addEventListener("click",function(){root.setAttribute("data-theme",cur()?"light":"dark");paint()});
+    paint();
+  })();
+</script>

@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { listHistory } from '../api/history'
 import type { RouteHistoryItem } from '../types/dto'
 
-/** 상담 기록 — 6차 와이어프레임 #screen-history 이식. 항목을 누르면 그 경로를 다시 본다. */
+/** 상담 기록 — 7차 와이어프레임 #screen-history 이식. 항목을 누르면 그 경로를 다시 본다. */
 
 function BackIcon() {
   return (

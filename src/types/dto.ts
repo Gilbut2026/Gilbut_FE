@@ -47,9 +47,10 @@ export type TransferLevel = 'AVAILABLE' | 'FEWER_PREFERRED' | 'AVOID_PREFERRED'
 
 /**
  * 이동 보조기구.
- * ⚠️ 6차 와이어프레임은 2옵션(사용안함/사용해요)로 단순화했으나,
- *    BE·AI(휠체어 시 경로 필터)는 종류 구분이 필요 → 회의 재조정 안건.
- *    OTHER 선택 시 mobilityAidDetail(≤100자) 필수.
+ * 7/31 회의에서 종류 구분이 되살아났다 — "휠체어 이용자에게는 똑버스 대신 장애인 콜택시를 안내한다"로
+ * 결정되면서 휠체어 식별이 필수가 됐다. AI Score function 도 DRT_taxi = (보조기구 == '휠체어') 로 분기한다.
+ * 프론트 온보딩은 NONE / CANE / WHEELCHAIR 3지선다를 쓴다(OTHER 는 화면에 노출하지 않음).
+ * OTHER 선택 시 mobilityAidDetail(≤100자) 필수.
  */
 export type MobilityAid = 'NONE' | 'CANE' | 'WHEELCHAIR' | 'OTHER'
 
@@ -244,8 +245,12 @@ export interface EmergencyContactResponse {
 
 export type InputType = 'TEXT' | 'VOICE'
 
-/** 경로 종류 — 가장 편한 길 / 걷기 적은 길 / 똑버스 */
-export type RouteKey = 'comfort' | 'short' | 'drt'
+/**
+ * 경로 종류 — 가장 편한 길 / 걷기 적은 길 / 똑버스 / 장애인 콜택시.
+ * `calltaxi` 는 7/31 회의 결정: 수원 똑버스는 휠체어를 탄 채로 탈 수 없어, 휠체어 이용자에게는
+ * 똑버스 자리에 장애인 콜택시 콜센터 안내를 대신 노출한다.
+ */
+export type RouteKey = 'comfort' | 'short' | 'drt' | 'calltaxi'
 
 /** 편의시설·이동조건 한 줄 (status = 확인/주의/정보) */
 export interface RouteFacility {
@@ -264,8 +269,40 @@ export interface RouteOption {
   transfer: string
   facilities: RouteFacility[]
   notice: string
-  guide: 'navigate' | 'drt' // '이 길로 안내받기' vs '똑버스 이용 방법 보기'
+  /** 주 버튼이 어디로 가는지 — 길 안내 / 똑버스 안내 / 콜택시 안내 */
+  guide: 'navigate' | 'drt' | 'calltaxi'
 }
+
+/**
+ * 계단 회피 경로 ↔ 계단 포함 경로 비교.
+ * 7/31 회의: 시스템이 한 경로를 일방적으로 고르지 않고, 두 경로의 보행 거리·시간 차이를 보여준 뒤
+ * 사용자가 직접 고르게 한다. (계단 '조금 어려움'일 때만 물어봄)
+ */
+export interface StairRouteOption {
+  /** 예상 소요 시간(분) */
+  minutes: number
+  /** 걷는 시간(분) */
+  walkMinutes: number
+  /** 걷는 거리(m) */
+  meters: number
+}
+
+export interface StairComparison {
+  withStairs: StairRouteOption & { stairFact: string }
+  noStairs: StairRouteOption
+}
+
+/**
+ * 경로를 못 불러왔을 때의 원인 — 원인마다 사용자에게 안내할 다음 행동이 다르다.
+ * `quota` 가 실제로 잦다: TMAP 대중교통 API 무료 플랜이 하루 10건이라
+ * 백엔드 PoC 에서 20건 중 12건이 429 QUOTA_EXCEEDED 로 실패했다.
+ */
+export type RouteErrorKind =
+  | 'quota' //   API 한도 초과 (429)
+  | 'none' //    조건에 맞는 경로 없음
+  | 'outside' // 서비스 지역(수원) 밖
+  | 'offline' // 네트워크 끊김
+  | 'server' //  그 밖의 서버 오류
 
 /** 경로 추천 결과 (여러 경로 비교 + 오늘 추천) */
 export interface RouteResult {
@@ -273,6 +310,8 @@ export interface RouteResult {
   origin: string
   options: RouteOption[]
   recommendedKey: RouteKey
+  /** 계단 선택을 물어야 하는 경우에만 채워진다 (아니면 null) */
+  stairComparison: StairComparison | null
 }
 
 /** 지난 길찾기 기록 한 건 (BE RouteSearchHistory 컨트롤러 미구현 → 현재 Mock) */

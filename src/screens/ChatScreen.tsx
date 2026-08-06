@@ -1,18 +1,22 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 
 /**
- * 대화로 길찾기 (chat) — 6차 와이어프레임 #screen-chat 이식.
+ * 대화로 길찾기 (chat) — 7차 와이어프레임 #screen-chat 이식.
  * 백엔드 AI 파트가 아직이라, 와이어프레임과 동일한 스크립트 대화로 동작한다.
- * 목적지 → 출발지 → 출발 시간 → 오늘 상태를 확인한 뒤 결과(가는 길)로 넘어간다.
+ * 목적지 → 출발지 → 출발 시간을 확인한 뒤 결과(가는 길)로 넘어간다.
+ *
+ * 7/31 회의: '오늘 평소보다 더 불편한 곳이 있나요?'(당일 상태) 질문을 개발 범위에서 제외.
+ * "오늘 상태를 세분화해 정량화하기 어렵다"는 기술적 제약으로 전원 합의(00:08:43~00:10:25).
+ * → 4단계 → 3단계로 되돌리고 todayCondition 상태값을 걷어냈다.
+ * ※ AI팀 Score function 문서에는 아직 A_today 계수가 남아 있어 다음 회의에서 정합 필요.
  */
 
-type Step = 'destination' | 'origin' | 'depart' | 'condition' | 'analysis'
+type Step = 'destination' | 'origin' | 'depart' | 'analysis'
 
 const STEP_META: Record<Step, [string, string, string]> = {
-  destination: ['목적지 확인 · 1/4', 'AI가 필요한 내용만 짧게 물어봐요', '25%'],
-  origin: ['출발지 확인 · 2/4', '어디서 출발할지 알려주세요', '50%'],
-  depart: ['출발 시간 확인 · 3/4', '출발 시각에 맞춰 날씨를 확인해요', '75%'],
-  condition: ['당일 상태 확인 · 4/4', '평소와 다른 점만 짧게 물어봐요', '100%'],
+  destination: ['목적지 확인 · 1/3', 'AI가 필요한 내용만 짧게 물어봐요', '33%'],
+  origin: ['출발지 확인 · 2/3', '어디서 출발할지 알려주세요', '66%'],
+  depart: ['출발 시간 확인 · 3/3', '출발 시각에 맞춰 날씨를 확인해요', '100%'],
   analysis: ['편한 길 찾는 중', '대화가 끝나면 편한 길을 보여드려요', '100%'],
 }
 
@@ -228,36 +232,11 @@ export function ChatScreen({
 
   function chooseTime(label: string) {
     userSay(label === '다른 날' ? '다른 날 갈 거예요' : `${label} 출발할게요`)
-    askCondition(label)
+    finishChat(label)
   }
 
-  function askCondition(label: string) {
+  function finishChat(label: string) {
     departRef.current = label
-    setStep('condition')
-    typing(() => {
-      botSay(
-        <>
-          마지막으로 오늘 상태만 확인할게요. <b>평소보다 더 불편한 곳이 있나요?</b>
-        </>,
-      )
-      actions(
-        <>
-          {['평소와 같아요', '다리가 더 아파요', '오늘은 휠체어를 써요'].map((c) => (
-            <button key={c} className="chat-reply" onClick={() => chooseCondition(c)}>
-              {c}
-            </button>
-          ))}
-        </>,
-      )
-    })
-  }
-
-  function chooseCondition(condition: string) {
-    userSay(condition)
-    finishChat()
-  }
-
-  function finishChat() {
     setStep('analysis')
     typing(() => {
       botSay(
@@ -268,7 +247,7 @@ export function ChatScreen({
       card(
         <>
           <h3>경로를 분석하고 있어요</h3>
-          <p>지도 후보와 날씨·교통, 저장해두신 이동 설정과 오늘 상태를 결합합니다.</p>
+          <p>지도 후보와 날씨·교통, 저장해두신 이동 설정을 결합합니다.</p>
         </>,
       )
       window.setTimeout(() => onDone(destRef.current), 1100)
@@ -312,7 +291,7 @@ export function ChatScreen({
       chooseOrigin(from)
     } else if (step === 'depart') {
       userSay(value)
-      askCondition(value)
+      finishChat(value)
     } else {
       userSay(value)
       typing(() => botSay('말씀하신 내용을 반영할게요. 지금 질문에 가까운 답변을 위 버튼에서 골라도 됩니다.'))
@@ -325,7 +304,6 @@ export function ChatScreen({
       if (step === 'destination') chooseDestination('○○병원')
       else if (step === 'origin') chooseOrigin('현재 위치')
       else if (step === 'depart') chooseTime('지금 바로')
-      else if (step === 'condition') chooseCondition('평소와 같아요')
     }, 600)
   }
 

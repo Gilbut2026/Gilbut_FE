@@ -12,11 +12,15 @@ import type {
 } from '../types/dto'
 
 /**
- * 나에게 맞는 길 설정 (온보딩) — 6차 와이어프레임 #screen-onboarding 이식.
- * 7문항을 순서대로 묻고, 완료 시 답변을 BE 계약으로 매핑해 저장한다.
+ * 나에게 맞는 길 설정 (온보딩) — 7차 와이어프레임 #screen-onboarding 이식.
+ * 6문항을 순서대로 묻고, 완료 시 답변을 BE 계약으로 매핑해 저장한다.
  *  · walk·stairs·rest·transfer·aid → MobilityProfileSaveRequest
  *  · voice → AccessibilitySetting(voiceGuidanceEnabled)
- *  · slope(오르막) → BE 필드 없음(⚠️ 보류) → 저장 안 함, UI 전용
+ *
+ * 7/31 회의 반영
+ *  · 오르막 질문 삭제 — 백엔드가 경사 데이터 확보 불가를 확인하고 삭제를 요청(00:20:18).
+ *    Score function 에도 미반영 항목이라, 답을 받아놓고 쓰지 않는 질문을 남기지 않는다.
+ *  · 보조기구 3지선다 복원 — 휠체어 이용자에게 장애인 콜택시를 안내하기로 정해져 휠체어 식별이 필요해졌다.
  */
 
 interface Question {
@@ -31,16 +35,14 @@ interface Question {
 const QUESTIONS: Question[] = [
   { id: 'voice', icon: '🔊', label: '음성 안내', title: '음성으로 안내를 받으시겠어요?', help: '켜두시면 이어지는 질문과 길 안내를 소리로 읽어드려요.', options: ['사용', '사용 안 함'] },
   { id: 'walk', icon: '🚶', label: '보행 시간', title: '한 번에 얼마나 걸을 수 있나요?', help: '평소 무리 없이 걸을 수 있는 시간을 골라주세요.', options: ['보행 불가', '10분 이내', '20분', '30분 이상'] },
-  { id: 'stairs', icon: '🪜', label: '계단', title: '계단을 이용할 수 있나요?', help: '계단이 적은 길을 먼저 찾아드려요.', options: ['이용 가능', '조금 어려움', '이용 어려움'] },
-  { id: 'slope', icon: '⛰️', label: '오르막', title: '오르막길 이동이 힘드신가요?', help: '경사가 큰 구간을 피하는 데 사용해요.', options: ['괜찮음', '조금 힘듦', '많이 힘듦'] },
-  { id: 'rest', icon: '🪑', label: '휴식', title: '이동 중 쉬어 갈 곳이 필요한가요?', help: '쉼터나 앉을 곳이 가까운 길을 우선해요.', options: ['필요', '상관없음'] },
+  { id: 'stairs', icon: '🪜', label: '계단', title: '계단을 이용할 수 있나요?', help: '계단이 있는 길과 없는 길을 함께 보여드려요.', options: ['이용 가능', '조금 어려움', '이용 어려움'] },
+  { id: 'rest', icon: '🪑', label: '휴식', title: '이동 중 쉬어 갈 곳이 필요한가요?', help: '가는 길 지도에 쉼터를 표시해 드려요.', options: ['필요', '상관없음'] },
   { id: 'transfer', icon: '🔁', label: '환승', title: '버스나 지하철 환승이 어려우신가요?', help: '환승 횟수가 적은 길에 더 높은 점수를 줘요.', options: ['괜찮음', '적게', '되도록 없음'] },
-  { id: 'aid', icon: '🦯', label: '보조기구', title: '이동할 때 보조기구를 사용하시나요?', help: '계단·오르막을 더 피하는 데 반영해요.', options: ['사용 안 함', '사용해요'] },
+  { id: 'aid', icon: '🦯', label: '보조기구', title: '이동할 때 무엇을 사용하시나요?', help: '휠체어를 쓰시면 탑승할 수 있는 차량으로 안내해 드려요.', options: ['사용 안 함', '지팡이·보행기', '휠체어'] },
 ]
 
 // ── 와이어프레임 선택지 → BE enum 매핑 ──────────────────────────
-// ⚠️ 회의 안건: '보행 불가'는 BE WalkingDuration 에 없어 10분이내로 수렴,
-//    보조기구 2옵션(사용해요)은 BE 4옵션 중 OTHER 로 임시 매핑 (종류 구분 필요).
+// ⚠️ 회의 안건 잔여: '보행 불가'는 BE WalkingDuration 에 없어 10분이내로 수렴 중 (BE enum 추가 필요).
 const WALK_MAP: Record<string, WalkingDuration> = {
   '보행 불가': 'WITHIN_10_MINUTES',
   '10분 이내': 'WITHIN_10_MINUTES',
@@ -63,7 +65,8 @@ const TRANSFER_MAP: Record<string, TransferLevel> = {
 }
 const AID_MAP: Record<string, MobilityAid> = {
   '사용 안 함': 'NONE',
-  사용해요: 'OTHER',
+  '지팡이·보행기': 'CANE',
+  휠체어: 'WHEELCHAIR',
 }
 
 function BackIcon() {

@@ -10,11 +10,14 @@ import { HistoryScreen } from './screens/HistoryScreen'
 import { HelpScreen } from './screens/HelpScreen'
 import { ChatScreen } from './screens/ChatScreen'
 import { DrtScreen } from './screens/DrtScreen'
+import { CallTaxiScreen } from './screens/CallTaxiScreen'
+import { StairChoiceScreen } from './screens/StairChoiceScreen'
 import { loadSettings, saveSettings, type Settings } from './state/settings'
-import { USE_MOCK } from './api/counseling'
+import { HAS_MOCK, mockBadgeLabel } from './api/mode'
 import { TAB_SCREENS, type Screen } from './types/nav'
+import type { StairComparison } from './types/dto'
 
-/** 하단 탭 정의 (6차 와이어프레임 bottom-nav). ⬜ 표시는 아직 이식 전 화면. */
+/** 하단 탭 정의 (7차 와이어프레임 bottom-nav). ⬜ 표시는 아직 이식 전 화면. */
 const NAV_ITEMS: { screen: Screen; label: string; icon: JSX.Element }[] = [
   {
     screen: 'home',
@@ -62,6 +65,9 @@ export default function App() {
   const [screen, setScreen] = useState<Screen>('signup')
   const [destination, setDestination] = useState<string | null>(null)
   const [chatPrefill, setChatPrefill] = useState<string | null>(null)
+  // 계단 있는 길 ↔ 없는 길 선택. 한 번 고르면 그 이동에서는 다시 묻지 않는다(7/31 회의)
+  const [stairChoice, setStairChoice] = useState<'with' | 'none' | null>(null)
+  const [stairComparison, setStairComparison] = useState<StairComparison | null>(null)
   const [settings, setSettings] = useState<Settings>(() => loadSettings())
   const [toastMsg, setToastMsg] = useState<string | null>(null)
   const toastTimer = useRef<number | null>(null)
@@ -78,11 +84,17 @@ export default function App() {
 
   const onSos = useCallback(() => toast('SOS 화면은 곧 준비할게요'), [toast])
 
+  const onNeedStairChoice = useCallback((comparison: StairComparison) => {
+    setStairComparison(comparison)
+    setScreen('stairs')
+  }, [])
+
   const showTabBar = TAB_SCREENS.includes(screen)
 
   return (
     <div id="app-shell" className={`font-${settings.fontSize}${settings.highContrast ? ' high-contrast' : ''}`}>
-      {USE_MOCK && <div className="mock-badge">MOCK 모드</div>}
+      {/* 통합 중에 어느 도메인이 실서버로 도는지 눈으로 보이게 한다 */}
+      {HAS_MOCK && <div className="mock-badge">{mockBadgeLabel()}</div>}
 
       {screen === 'signup' && <SignupScreen onSignedIn={() => setScreen('onboarding')} />}
 
@@ -119,6 +131,8 @@ export default function App() {
           onToast={toast}
           onDone={(dest) => {
             setDestination(dest)
+            // 새 이동이므로 지난번 계단 선택은 초기화한다 (갈 때와 올 때가 다를 수 있음)
+            setStairChoice(null)
             setScreen('results')
           }}
         />
@@ -127,16 +141,48 @@ export default function App() {
       {screen === 'results' && (
         <ResultsScreen
           destination={destination}
+          stairChoice={stairChoice}
+          onNeedStairChoice={onNeedStairChoice}
           onGoHome={() => setScreen('home')}
+          onRestartChat={() => {
+            setChatPrefill(null)
+            setScreen('chat')
+          }}
           onSos={onSos}
-          onGuide={(guide) =>
-            guide === 'drt' ? setScreen('drt') : toast('길 안내 화면은 곧 준비할게요')
-          }
+          onGuide={(guide) => {
+            if (guide === 'drt') setScreen('drt')
+            else if (guide === 'calltaxi') setScreen('calltaxi')
+            else toast('길 안내 화면은 곧 준비할게요')
+          }}
+        />
+      )}
+
+      {screen === 'stairs' && stairComparison && (
+        <StairChoiceScreen
+          comparison={stairComparison}
+          onPick={(pick) => {
+            setStairChoice(pick)
+            setScreen('results')
+            toast(pick === 'with' ? '계단이 있는 길로 안내할게요' : '계단 없는 길로 안내할게요')
+          }}
+          onBack={() => setScreen('chat')}
+          onSos={onSos}
+          onToast={toast}
         />
       )}
 
       {screen === 'drt' && (
         <DrtScreen destination={destination} onBack={() => setScreen('results')} onSos={onSos} onToast={toast} />
+      )}
+
+      {screen === 'calltaxi' && (
+        <CallTaxiScreen
+          destination={destination}
+          onBack={() => setScreen('results')}
+          onSos={onSos}
+          onToast={toast}
+          onOpenContacts={() => setScreen('contacts')}
+        />
       )}
 
       {screen === 'settings' && (
@@ -160,6 +206,7 @@ export default function App() {
           onSos={onSos}
           onPick={(dest) => {
             setDestination(dest)
+            setStairChoice(null)
             setScreen('results')
           }}
         />
@@ -178,6 +225,7 @@ export default function App() {
           onToast={toast}
           onPick={(dest) => {
             setDestination(dest)
+            setStairChoice(null)
             setScreen('results')
           }}
         />

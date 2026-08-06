@@ -1,0 +1,348 @@
+<style>
+  :root{
+    color-scheme: light dark;
+    --pg-bg:#eceff3; --pg-panel:#fff; --pg-text:#0f1826; --pg-text2:#51607a; --pg-line:rgba(70,90,120,.15); --pg-accent:#0369A1;
+    --sys:"Pretendard Variable",Pretendard,"Apple SD Gothic Neo","Malgun Gothic",system-ui,-apple-system,sans-serif;
+    --mono:ui-monospace,Menlo,Consolas,monospace;
+  }
+  @media (prefers-color-scheme:dark){:root{--pg-bg:#0b1018;--pg-panel:#141b26;--pg-text:#e7eef7;--pg-text2:#92a2b8;--pg-line:rgba(120,150,190,.16);--pg-accent:#38BDF8}}
+  :root[data-theme="light"]{--pg-bg:#eceff3;--pg-panel:#fff;--pg-text:#0f1826;--pg-text2:#51607a;--pg-line:rgba(70,90,120,.15);--pg-accent:#0369A1}
+  :root[data-theme="dark"]{--pg-bg:#0b1018;--pg-panel:#141b26;--pg-text:#e7eef7;--pg-text2:#92a2b8;--pg-line:rgba(120,150,190,.16);--pg-accent:#38BDF8}
+
+  *{box-sizing:border-box}
+  .ds{margin:0;font-family:var(--sys);color:var(--pg-text);background:var(--pg-bg);min-height:100vh;-webkit-font-smoothing:antialiased;padding-bottom:80px}
+  .ds :is(h1,h2,h3,h4,p){margin:0}
+  .wrap{max-width:1200px;margin:0 auto;padding:0 24px}
+
+  .top-note{position:sticky;top:0;z-index:10;backdrop-filter:blur(14px);background:color-mix(in srgb,var(--pg-panel) 78%,transparent);border-bottom:1px solid var(--pg-line)}
+  .top-note .in{max-width:1200px;margin:0 auto;padding:11px 24px;display:flex;align-items:center;gap:12px}
+  .top-note .t{font-size:14px;font-weight:900}
+  .theme-btn{margin-left:auto;border:1px solid var(--pg-line);background:var(--pg-panel);color:var(--pg-text2);font-family:inherit;font-size:13px;font-weight:800;border-radius:999px;padding:7px 13px;cursor:pointer}
+
+  .head{padding:52px 24px 18px;max-width:1200px;margin:0 auto}
+  .eyebrow{display:inline-flex;gap:8px;align-items:center;font-size:12.5px;font-weight:900;letter-spacing:.09em;text-transform:uppercase;color:var(--pg-accent)}
+  .eyebrow::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--pg-accent)}
+  .head h1{font-size:clamp(30px,4.6vw,48px);font-weight:900;letter-spacing:-.035em;line-height:1.08;margin:14px 0 0;text-wrap:balance}
+  .head .lead{font-size:17px;font-weight:600;color:var(--pg-text2);margin:14px 0 0;max-width:70ch;line-height:1.6}
+  .head .lead b{color:var(--pg-text)}
+
+  .dir{padding:36px 0;border-top:1px solid var(--pg-line)}
+  .dir-grid{display:grid;grid-template-columns:256px 1fr;gap:28px;align-items:start}
+  .dir-info{position:sticky;top:64px}
+  .dir-name{font-size:23px;font-weight:900;letter-spacing:-.02em;line-height:1.15}
+  .dir-idea{font-size:14px;font-weight:650;color:var(--pg-text2);line-height:1.55;margin-top:10px}
+  .dir-sig{margin-top:12px;font-size:13px;font-weight:800;color:var(--pg-accent);display:flex;gap:7px;line-height:1.4}
+  .dir-sig span{color:var(--pg-text2);font-weight:650}
+  .dir-src{margin-top:12px;font-size:11.5px;font-weight:700;color:var(--pg-text2);font-family:var(--mono);line-height:1.6}
+  .dir-phones{display:flex;gap:22px;flex-wrap:wrap}
+  .pw{display:flex;flex-direction:column;gap:8px}
+  .pw .cap{font-size:12.5px;font-weight:800;color:var(--pg-text2);text-align:center}
+
+  /* ===== shared phone shell ===== */
+  .pf{width:330px;border-radius:42px;padding:9px;background:linear-gradient(160deg,#252c38,#12161f);box-shadow:0 32px 70px -34px rgba(15,20,35,.62),inset 0 1px 1px rgba(255,255,255,.14)}
+  .scr{border-radius:33px;overflow:hidden;display:flex;flex-direction:column;min-height:660px;background:var(--bg);color:var(--fg);font-family:var(--sys)}
+  .scr *{box-sizing:border-box}
+  .ic{stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex:0 0 auto}
+  .bar{display:flex;align-items:center;gap:10px;padding:15px 17px 13px;border-bottom:1px solid var(--line);background:var(--card)}
+  .bar .brand{flex:1;display:flex;align-items:center;gap:9px;font-size:18px;font-weight:900}
+  .bar .brand .lg{width:27px;height:27px;border-radius:8px;background:var(--p);color:var(--on-p,#fff);display:grid;place-items:center}
+  .bar .brand .lg .ic{width:17px;height:17px;stroke-width:2.4}
+  .bar .back{width:30px;height:30px;display:grid;place-items:center;color:var(--fg)}
+  .bar .back .ic{width:24px;height:24px;stroke-width:2.3}
+  .bar .ttl{flex:1;font-size:18px;font-weight:900}
+  .sos{border:0;font-family:inherit;background:var(--danger);color:#fff;font-size:15px;font-weight:900;padding:9px 15px;border-radius:11px;letter-spacing:.02em}
+  .nav{margin-top:auto;display:flex;padding:10px 8px 13px;gap:4px;background:var(--card);border-top:1px solid var(--line)}
+  .nav a{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;font-size:12px;font-weight:800;color:var(--text2);text-decoration:none}
+  .nav a .ic{width:24px;height:24px}
+  .nav a.on{color:var(--accent)}
+  .body{flex:1;padding:18px 17px 8px;display:flex;flex-direction:column;min-height:0}
+
+  /* ===================================================================
+     D1 · 말하는 화면 (Exaggerated Minimalism · voice-first)
+     =================================================================== */
+  .d1{--bg:#F8FAFC;--fg:#0B1220;--text2:#475569;--p:#0F172A;--accent:#0369A1;--on-accent:#fff;--card:#fff;--line:#E4E9F0;
+      --ok:#15803D;--warn:#B45309;--danger:#DC2626}
+  .d1 .d1-kick{font-size:16px;font-weight:800;color:var(--accent);margin-top:6px}
+  .d1 .d1-h{font-size:52px;line-height:.98;font-weight:900;letter-spacing:-.055em;margin-top:6px}
+  .d1 .d1-mic{margin-top:22px;flex:1;min-height:250px;border-radius:26px;background:var(--p);color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;text-align:center}
+  .d1 .d1-mic .ring{width:118px;height:118px;border-radius:50%;display:grid;place-items:center;background:rgba(255,255,255,.12);border:2px solid rgba(255,255,255,.35)}
+  .d1 .d1-mic .ring .ic{width:52px;height:52px;stroke-width:1.9;color:#fff}
+  .d1 .d1-mic b{font-size:23px;font-weight:900}
+  .d1 .d1-mic span{font-size:15px;font-weight:600;color:rgba(255,255,255,.75)}
+  .d1 .d1-quick{display:flex;gap:8px;margin:14px 0 8px;overflow:hidden}
+  .d1 .d1-chip{flex:1;min-height:52px;border:2px solid var(--fg);border-radius:13px;display:flex;align-items:center;justify-content:center;gap:7px;font-size:15.5px;font-weight:850}
+  .d1 .d1-chip .ic{width:20px;height:20px}
+  /* route */
+  .d1 .d1-dest{font-size:22px;font-weight:900;letter-spacing:-.02em;margin-top:4px}
+  .d1 .d1-switch{display:flex;gap:6px;margin:14px 0 4px}
+  .d1 .d1-switch span{flex:1;text-align:center;font-size:13.5px;font-weight:850;padding:9px 4px;border-radius:10px;color:var(--text2);border:2px solid var(--line)}
+  .d1 .d1-switch span.on{color:#fff;background:var(--p);border-color:var(--p)}
+  .d1 .d1-hero{text-align:center;padding:18px 0 8px}
+  .d1 .d1-hero .num{font-size:84px;line-height:.9;font-weight:900;letter-spacing:-.06em}
+  .d1 .d1-hero .lab{font-size:17px;font-weight:800;color:var(--text2);margin-top:6px}
+  .d1 .d1-sub{text-align:center;font-size:16px;font-weight:750;color:var(--fg);margin-top:2px}
+  .d1 .d1-line{height:2px;background:var(--fg);margin:16px 0}
+  .d1 .d1-fac{display:flex;flex-wrap:wrap;gap:8px 14px;font-size:15px;font-weight:800}
+  .d1 .d1-fac div{display:flex;align-items:center;gap:7px}
+  .d1 .d1-fac .ic{width:20px;height:20px;stroke-width:2.4}
+  .d1 .d1-fac .ok{color:var(--ok)} .d1 .d1-fac .wa{color:var(--warn)}
+  .d1 .d1-cta{margin:16px 0 6px;min-height:60px;border:0;border-radius:14px;background:var(--accent);color:#fff;font-family:inherit;font-size:20px;font-weight:900;display:flex;align-items:center;justify-content:center;gap:9px}
+  .d1 .d1-cta .ic{width:23px;height:23px;stroke-width:2.4}
+
+  /* ===================================================================
+     D2 · 동행 카드 (conversational · warm · row-based)
+     =================================================================== */
+  .d2{--bg:#F0F9FF;--fg:#0C4A6E;--text2:#4C6076;--p:#0369A1;--accent:#16A34A;--on-accent:#fff;--card:#fff;--line:#DCEAF3;
+      --ok:#16A34A;--okbg:#DCFCE7;--warn:#B45309;--warnbg:#FEF3C7;--danger:#DC2626;--chip:#E7F0F7}
+  .d2 .d2-say{position:relative;background:var(--card);border:1px solid var(--line);border-radius:20px;border-top-left-radius:4px;padding:15px 16px;font-size:18px;font-weight:750;line-height:1.4;box-shadow:0 12px 28px -24px rgba(3,105,161,.5)}
+  .d2 .d2-say .who{font-size:13px;font-weight:900;color:var(--p);margin-bottom:5px;display:flex;align-items:center;gap:6px}
+  .d2 .d2-say .who .dot{width:20px;height:20px;border-radius:6px;background:var(--p);color:#fff;display:grid;place-items:center}
+  .d2 .d2-say .who .dot .ic{width:13px;height:13px;stroke-width:2.5}
+  .d2 .d2-mic{display:flex;flex-direction:column;align-items:center;margin:20px 0 6px}
+  .d2 .d2-mic .b{width:108px;height:108px;border-radius:50%;background:var(--p);color:#fff;display:grid;place-items:center;box-shadow:0 18px 34px -14px rgba(3,105,161,.6)}
+  .d2 .d2-mic .b .ic{width:46px;height:46px}
+  .d2 .d2-mic b{font-size:19px;font-weight:900;margin-top:13px}
+  .d2 .d2-sec{font-size:16px;font-weight:850;margin:20px 3px 11px}
+  .d2 .d2-row{display:flex;align-items:center;gap:13px;background:var(--card);border:1px solid var(--line);border-radius:16px;padding:13px 14px;margin-bottom:9px}
+  .d2 .d2-row .ic0{width:44px;height:44px;border-radius:13px;background:var(--chip);color:var(--p);display:grid;place-items:center;flex:0 0 auto}
+  .d2 .d2-row .ic0 .ic{width:25px;height:25px}
+  .d2 .d2-row .t{flex:1}
+  .d2 .d2-row .t b{display:block;font-size:18px;font-weight:850}
+  .d2 .d2-row .t span{display:block;font-size:13.5px;font-weight:650;color:var(--text2);margin-top:1px}
+  .d2 .d2-row .go{color:var(--text2)}
+  .d2 .d2-row .go .ic{width:22px;height:22px;stroke-width:2.4}
+  /* route */
+  .d2 .d2-lead{font-size:22px;font-weight:900;letter-spacing:-.02em}
+  .d2 .d2-pick{margin-top:13px;background:var(--card);border:1px solid var(--line);border-radius:18px;padding:15px 16px;box-shadow:0 14px 30px -24px rgba(3,105,161,.5)}
+  .d2 .d2-pick .badge{display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:900;color:#166534;background:var(--okbg);padding:5px 11px;border-radius:999px}
+  .d2 .d2-pick .badge .ic{width:14px;height:14px;stroke-width:2.6}
+  .d2 .d2-pick h4{font-size:22px;font-weight:900;margin-top:9px}
+  .d2 .d2-pick p{font-size:14.5px;font-weight:650;color:var(--text2);margin-top:3px}
+  .d2 .d2-stat{display:flex;align-items:center;gap:11px;padding:12px 2px;border-top:1px solid var(--line);font-size:16.5px;font-weight:800}
+  .d2 .d2-stat .ic{width:22px;height:22px;color:var(--p)}
+  .d2 .d2-stat b{margin-left:auto;font-size:19px;font-weight:900;font-variant-numeric:tabular-nums}
+  .d2 .d2-chk{display:flex;align-items:center;gap:9px;font-size:15px;font-weight:800;padding:6px 0}
+  .d2 .d2-chk .ic{width:22px;height:22px;padding:3px;border-radius:7px;stroke-width:2.5}
+  .d2 .d2-chk.ok .ic{background:var(--okbg);color:var(--ok)} .d2 .d2-chk.wa .ic{background:var(--warnbg);color:var(--warn)}
+  .d2 .d2-cta{margin:14px 0 6px;min-height:58px;border:0;border-radius:16px;background:var(--accent);color:#fff;font-family:inherit;font-size:20px;font-weight:900;display:flex;align-items:center;justify-content:center;gap:9px;box-shadow:0 14px 26px -15px rgba(22,163,74,.5)}
+  .d2 .d2-cta .ic{width:23px;height:23px;stroke-width:2.4}
+
+  /* ===================================================================
+     D3 · 한눈 요약 (structured public · summary-first · 확인/미확인 split)
+     =================================================================== */
+  .d3{--bg:#ECFEFF;--fg:#164E63;--text2:#4B6472;--p:#0891B2;--accent:#059669;--on-accent:#fff;--card:#fff;--line:#CDECF1;
+      --ok:#059669;--okbg:#D1FAE5;--warn:#B45309;--warnbg:#FEF3C7;--danger:#DC2626;--chip:#D3F3F7}
+  .d3 .d3-h{font-size:28px;font-weight:900;letter-spacing:-.03em;margin-top:4px}
+  .d3 .d3-primary{margin:16px 0 4px;min-height:64px;border:0;border-radius:15px;background:var(--p);color:#fff;font-family:inherit;font-size:20px;font-weight:900;display:flex;align-items:center;justify-content:center;gap:10px}
+  .d3 .d3-primary .ic{width:26px;height:26px;stroke-width:2.2}
+  .d3 .d3-label{font-size:13px;font-weight:900;letter-spacing:.04em;color:var(--text2);text-transform:none;margin:20px 2px 10px;display:flex;align-items:center;gap:8px}
+  .d3 .d3-label::after{content:"";flex:1;height:1px;background:var(--line)}
+  .d3 .d3-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+  .d3 .d3-tile{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px 13px;display:flex;align-items:center;gap:11px;font-size:17px;font-weight:850}
+  .d3 .d3-tile .ic0{width:38px;height:38px;border-radius:10px;background:var(--chip);color:var(--p);display:grid;place-items:center;flex:0 0 auto}
+  .d3 .d3-tile .ic0 .ic{width:22px;height:22px}
+  .d3 .d3-info{margin-top:14px;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:13px 15px;display:flex;align-items:center;gap:10px;font-size:15px;font-weight:750;color:var(--text2)}
+  .d3 .d3-info b{color:var(--fg);font-weight:900}
+  .d3 .d3-info .ic{width:22px;height:22px;color:var(--p)}
+  /* route */
+  .d3 .d3-dest{font-size:22px;font-weight:900;letter-spacing:-.02em}
+  .d3 .d3-dest span{font-size:14px;font-weight:750;color:var(--text2)}
+  .d3 .d3-summary{margin-top:13px;background:var(--p);color:#fff;border-radius:15px;padding:14px 8px;display:grid;grid-template-columns:repeat(3,1fr)}
+  .d3 .d3-summary div{text-align:center;position:relative}
+  .d3 .d3-summary div+div::before{content:"";position:absolute;left:0;top:4px;bottom:4px;width:1px;background:rgba(255,255,255,.28)}
+  .d3 .d3-summary span{display:block;font-size:12.5px;font-weight:800;color:rgba(255,255,255,.8)}
+  .d3 .d3-summary b{display:block;font-size:21px;font-weight:900;margin-top:2px;font-variant-numeric:tabular-nums}
+  .d3 .d3-tabs{display:flex;gap:6px;margin:13px 0}
+  .d3 .d3-tabs span{flex:1;text-align:center;font-size:13.5px;font-weight:850;padding:10px 4px;border-radius:11px;color:var(--text2);background:var(--chip)}
+  .d3 .d3-tabs span.on{color:#fff;background:var(--p)}
+  .d3 .d3-split{display:grid;grid-template-columns:1fr 1fr;gap:0;border:1px solid var(--line);border-radius:14px;overflow:hidden;background:var(--card)}
+  .d3 .d3-col{padding:13px 13px}
+  .d3 .d3-col+.d3-col{border-left:1px solid var(--line)}
+  .d3 .d3-col .hd{font-size:13px;font-weight:900;margin-bottom:10px;display:flex;align-items:center;gap:6px}
+  .d3 .d3-col.ok .hd{color:var(--ok)} .d3 .d3-col.wa .hd{color:var(--warn)}
+  .d3 .d3-col .hd .ic{width:16px;height:16px;stroke-width:2.6}
+  .d3 .d3-col .li{display:flex;align-items:center;gap:7px;font-size:14.5px;font-weight:800;padding:5px 0}
+  .d3 .d3-col .li .ic{width:17px;height:17px;stroke-width:2.5}
+  .d3 .d3-col.ok .li .ic{color:var(--ok)} .d3 .d3-col.wa .li .ic{color:var(--warn)}
+  .d3 .d3-cta{margin:14px 0 6px;min-height:58px;border:0;border-radius:14px;background:var(--accent);color:#fff;font-family:inherit;font-size:20px;font-weight:900;display:flex;align-items:center;justify-content:center;gap:9px}
+  .d3 .d3-cta .ic{width:23px;height:23px;stroke-width:2.4}
+
+  @media (max-width:1000px){.dir-grid{grid-template-columns:1fr}.dir-info{position:static}}
+  @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+  <symbol id="i-mic" viewBox="0 0 24 24"><rect x="9" y="2.5" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0"/><path d="M12 18v3"/><path d="M8.5 21h7"/></symbol>
+  <symbol id="i-cross" viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="3.5"/><path d="M12 9v6M9 12h6"/></symbol>
+  <symbol id="i-bag" viewBox="0 0 24 24"><path d="M6 8h12l-1 11.5H7L6 8Z"/><path d="M9 8V6.5a3 3 0 0 1 6 0V8"/></symbol>
+  <symbol id="i-home" viewBox="0 0 24 24"><path d="M4 11l8-7 8 7"/><path d="M6 10v10h12V10"/></symbol>
+  <symbol id="i-train" viewBox="0 0 24 24"><rect x="6" y="3.5" width="12" height="12" rx="2.5"/><path d="M6 11h12"/><path d="M8.5 20l1.6-3M15.5 20 14 17"/></symbol>
+  <symbol id="i-back" viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></symbol>
+  <symbol id="i-warn" viewBox="0 0 24 24"><path d="M12 4 3 20h18L12 4Z"/><path d="M12 10.5v4M12 17.6v.2"/></symbol>
+  <symbol id="i-chat" viewBox="0 0 24 24"><path d="M4 5h16v11H9l-4 3v-3H4V5Z"/><path d="M8 9h8M8 12h5"/></symbol>
+  <symbol id="i-route" viewBox="0 0 24 24"><path d="M9 4 3 6v14l6-2 6 2 6-2V4l-6 2-6-2Z"/><path d="M9 4v14M15 6v14"/></symbol>
+  <symbol id="i-gear" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5.2 5.2l2.1 2.1M16.7 16.7l2.1 2.1M18.8 5.2l-2.1 2.1M7.3 16.7l-2.1 2.1"/></symbol>
+  <symbol id="i-pin" viewBox="0 0 24 24"><path d="M12 21s7-6.5 7-12a7 7 0 1 0-14 0c0 5.5 7 12 7 12Z"/><circle cx="12" cy="9" r="2.4"/></symbol>
+  <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></symbol>
+  <symbol id="i-walk" viewBox="0 0 24 24"><circle cx="13" cy="4.5" r="1.8"/><path d="M13 8l-3 3 1 4-2 4M13 8l3 2 3 1M11 11l-2 5"/></symbol>
+  <symbol id="i-swap" viewBox="0 0 24 24"><path d="M7 8h11l-3-3M17 16H6l3 3"/></symbol>
+  <symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M5 5l1.5 1.5M17.5 17.5 19 19M19 5l-1.5 1.5M6.5 17.5 5 19"/></symbol>
+</defs></svg>
+
+<div class="ds">
+  <div class="top-note"><div class="in"><span class="t">🧭 AI 길벗 · 디자인 v3 (레이아웃 재생성)</span><button class="theme-btn" id="themeBtn">🌙 다크</button></div></div>
+
+  <header class="head">
+    <span class="eyebrow">Regenerated · frontend-design × UI/UX Pro Max</span>
+    <h1>색이 아니라 구조부터 다르게.</h1>
+    <p class="lead">이번엔 리컬러가 아니라 <b>레이아웃·히어로·시그니처가 각기 다른 3방향</b>입니다. 두 스킬을 함께 썼어요 — <b>frontend-design</b>의 “히어로는 논지다 · 시그니처 하나”와, <b>UI/UX Pro Max</b>의 스타일·구조·접근성 근거. 공통 제약(큰 글자·고대비·SVG 아이콘·“미확인” 정직)은 세 방향 모두 유지합니다.</p>
+  </header>
+
+  <main class="wrap">
+
+    <!-- ============ D1 ============ -->
+    <section class="dir">
+      <div class="dir-grid">
+        <div class="dir-info">
+          <div class="dir-name">1 · 말하는 화면</div>
+          <p class="dir-idea">이 앱의 본질은 “말하면 된다”. 그래서 <b>화면 자체가 마이크</b>가 되고, 글자는 초대형. 경로 카드는 잴 것 다 재지 않고 <b>핵심 숫자 하나만 거대하게</b>.</p>
+          <div class="dir-sig">◆ 시그니처<span>전면 음성 존 + 거대 숫자 히어로</span></div>
+          <div class="dir-src">style: Exaggerated Minimalism<br>palette: 고대비 네이비 #0F172A / #0369A1</div>
+        </div>
+        <div class="dir-phones">
+          <div class="pw"><div class="cap">홈</div>
+            <div class="pf d1"><div class="scr">
+              <div class="bar"><span class="brand"><span class="lg"><svg class="ic"><use href="#i-pin"/></svg></span>길벗</span><button class="sos">SOS</button></div>
+              <div class="body">
+                <p class="d1-kick">안녕하세요</p>
+                <h1 class="d1-h">어디로<br>갈까요?</h1>
+                <div class="d1-mic"><div class="ring"><svg class="ic"><use href="#i-mic"/></svg></div><b>눌러서 말하세요</b><span>예: “○○병원 가고 싶어요”</span></div>
+                <div class="d1-quick"><div class="d1-chip"><svg class="ic"><use href="#i-cross"/></svg>병원</div><div class="d1-chip"><svg class="ic"><use href="#i-home"/></svg>집</div><div class="d1-chip"><svg class="ic"><use href="#i-train"/></svg>수원역</div></div>
+              </div>
+              <div class="nav"><a class="on"><svg class="ic"><use href="#i-home"/></svg>홈</a><a><svg class="ic"><use href="#i-chat"/></svg>상담</a><a><svg class="ic"><use href="#i-route"/></svg>경로</a><a><svg class="ic"><use href="#i-gear"/></svg>설정</a></div>
+            </div></div>
+          </div>
+          <div class="pw"><div class="cap">추천 경로</div>
+            <div class="pf d1"><div class="scr">
+              <div class="bar"><span class="back"><svg class="ic"><use href="#i-back"/></svg></span><span class="ttl">추천 경로</span><button class="sos">SOS</button></div>
+              <div class="body">
+                <div class="d1-dest">○○병원 가는 길</div>
+                <div class="d1-switch"><span class="on">편한 길</span><span>걷기 적은</span><span>DRT</span></div>
+                <div class="d1-hero"><div class="num">24<span style="font-size:36px">분</span></div><div class="lab">예상 시간 · 가장 편한 길</div></div>
+                <div class="d1-sub">걷는 시간 12분 · 환승 1회</div>
+                <div class="d1-line"></div>
+                <div class="d1-fac"><div class="ok"><svg class="ic"><use href="#i-check"/></svg>계단 없음</div><div class="ok"><svg class="ic"><use href="#i-check"/></svg>횡단보도 2곳</div><div class="wa"><svg class="ic"><use href="#i-warn"/></svg>엘리베이터·쉼터 미확인</div></div>
+                <button class="d1-cta"><svg class="ic"><use href="#i-pin"/></svg>이 길로 안내받기</button>
+              </div>
+            </div></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ D2 ============ -->
+    <section class="dir">
+      <div class="dir-grid">
+        <div class="dir-info">
+          <div class="dir-name">2 · 동행 카드</div>
+          <p class="dir-idea">길벗이 곁에서 말 거는 느낌. 홈은 <b>말풍선으로 먼저 말을 걸고</b>, 자주 가는 곳은 큰 <b>가로 행(row)</b> 리스트. 경로는 카드가 아니라 <b>위→아래로 읽는 대화 요약</b>.</p>
+          <div class="dir-sig">◆ 시그니처<span>길벗 말풍선 + 행 기반 리스트</span></div>
+          <div class="dir-src">palette: Senior Care #0369A1 / #16A34A<br>green = 확인됨</div>
+        </div>
+        <div class="dir-phones">
+          <div class="pw"><div class="cap">홈</div>
+            <div class="pf d2"><div class="scr">
+              <div class="bar"><span class="brand"><span class="lg"><svg class="ic"><use href="#i-pin"/></svg></span>길벗</span><button class="sos">SOS</button></div>
+              <div class="body">
+                <div class="d2-say"><div class="who"><span class="dot"><svg class="ic"><use href="#i-chat"/></svg></span>길벗</div>천천히 말씀하세요.<br>오늘 어디로 모실까요?</div>
+                <div class="d2-mic"><div class="b"><svg class="ic"><use href="#i-mic"/></svg></div><b>눌러서 말하기</b></div>
+                <div class="d2-sec">자주 가는 곳</div>
+                <div class="d2-row"><span class="ic0"><svg class="ic"><use href="#i-cross"/></svg></span><span class="t"><b>○○병원</b><span>지난번 · 가장 편한 길</span></span><span class="go"><svg class="ic"><use href="#i-back" style="transform:scaleX(-1)"/></svg></span></div>
+                <div class="d2-row"><span class="ic0"><svg class="ic"><use href="#i-home"/></svg></span><span class="t"><b>집</b><span>행궁로 11</span></span><span class="go"><svg class="ic"><use href="#i-back" style="transform:scaleX(-1)"/></svg></span></div>
+                <div class="d2-row"><span class="ic0"><svg class="ic"><use href="#i-train"/></svg></span><span class="t"><b>수원역</b><span>버스·지하철</span></span><span class="go"><svg class="ic"><use href="#i-back" style="transform:scaleX(-1)"/></svg></span></div>
+              </div>
+              <div class="nav"><a class="on"><svg class="ic"><use href="#i-home"/></svg>홈</a><a><svg class="ic"><use href="#i-chat"/></svg>상담</a><a><svg class="ic"><use href="#i-route"/></svg>경로</a><a><svg class="ic"><use href="#i-gear"/></svg>설정</a></div>
+            </div></div>
+          </div>
+          <div class="pw"><div class="cap">추천 경로</div>
+            <div class="pf d2"><div class="scr">
+              <div class="bar"><span class="back"><svg class="ic"><use href="#i-back"/></svg></span><span class="ttl">추천 경로</span><button class="sos">SOS</button></div>
+              <div class="body">
+                <div class="d2-lead">○○병원까지, 이렇게 가요</div>
+                <div class="d2-pick"><span class="badge"><svg class="ic"><use href="#i-check"/></svg>추천 1순위</span><h4>가장 편한 길</h4><p>계단 없는 구간으로 걷는 부담을 줄였어요</p></div>
+                <div class="d2-stat"><svg class="ic"><use href="#i-clock"/></svg>예상 시간<b>24분</b></div>
+                <div class="d2-stat"><svg class="ic"><use href="#i-walk"/></svg>걷는 시간<b>12분</b></div>
+                <div class="d2-stat"><svg class="ic"><use href="#i-swap"/></svg>환승<b>1회</b></div>
+                <div style="height:6px"></div>
+                <div class="d2-chk ok"><svg class="ic"><use href="#i-check"/></svg>계단 없음 · 횡단보도 2곳 확인</div>
+                <div class="d2-chk wa"><svg class="ic"><use href="#i-warn"/></svg>엘리베이터 · 쉼터는 미확인이에요</div>
+                <button class="d2-cta"><svg class="ic"><use href="#i-pin"/></svg>이 길로 모실게요</button>
+              </div>
+            </div></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ D3 ============ -->
+    <section class="dir">
+      <div class="dir-grid">
+        <div class="dir-info">
+          <div class="dir-name">3 · 한눈 요약</div>
+          <p class="dir-idea">공공 안내판처럼 <b>정보를 구조로</b> 보여줌. 경로는 <b>요약 바</b>가 먼저 오고, 핵심은 <b>“확인됨 ┃ 미확인” 2열 분할</b> — 이 앱의 ‘정직’ 원칙을 장식이 아니라 <b>레이아웃 구조</b>로 만들었어요.</p>
+          <div class="dir-sig">◆ 시그니처<span>확인됨/미확인 2열 + 요약 바</span></div>
+          <div class="dir-src">palette: Healthcare #0891B2 / #059669<br>structure: summary-first</div>
+        </div>
+        <div class="dir-phones">
+          <div class="pw"><div class="cap">홈</div>
+            <div class="pf d3"><div class="scr">
+              <div class="bar"><span class="brand"><span class="lg"><svg class="ic"><use href="#i-pin"/></svg></span>길벗</span><button class="sos">SOS</button></div>
+              <div class="body">
+                <h1 class="d3-h">어디로 가세요?</h1>
+                <button class="d3-primary"><svg class="ic"><use href="#i-mic"/></svg>말로 목적지 찾기</button>
+                <div class="d3-label">자주 가는 곳</div>
+                <div class="d3-grid">
+                  <div class="d3-tile"><span class="ic0"><svg class="ic"><use href="#i-cross"/></svg></span>○○병원</div>
+                  <div class="d3-tile"><span class="ic0"><svg class="ic"><use href="#i-bag"/></svg></span>전통시장</div>
+                  <div class="d3-tile"><span class="ic0"><svg class="ic"><use href="#i-home"/></svg></span>집</div>
+                  <div class="d3-tile"><span class="ic0"><svg class="ic"><use href="#i-train"/></svg></span>수원역</div>
+                </div>
+                <div class="d3-label">오늘</div>
+                <div class="d3-info"><svg class="ic"><use href="#i-sun"/></svg><span><b>맑음 · 낮 최고 24°</b> · 걷기 좋은 날이에요</span></div>
+              </div>
+              <div class="nav"><a class="on"><svg class="ic"><use href="#i-home"/></svg>홈</a><a><svg class="ic"><use href="#i-chat"/></svg>상담</a><a><svg class="ic"><use href="#i-route"/></svg>경로</a><a><svg class="ic"><use href="#i-gear"/></svg>설정</a></div>
+            </div></div>
+          </div>
+          <div class="pw"><div class="cap">추천 경로</div>
+            <div class="pf d3"><div class="scr">
+              <div class="bar"><span class="back"><svg class="ic"><use href="#i-back"/></svg></span><span class="ttl">추천 경로</span><button class="sos">SOS</button></div>
+              <div class="body">
+                <div class="d3-dest">○○병원 가는 길 <span>· 3개 비교</span></div>
+                <div class="d3-summary"><div><span>예상</span><b>24분</b></div><div><span>걷기</span><b>12분</b></div><div><span>환승</span><b>1회</b></div></div>
+                <div class="d3-tabs"><span class="on">편한 길</span><span>걷기 적은</span><span>DRT</span></div>
+                <div class="d3-split">
+                  <div class="d3-col ok"><div class="hd"><svg class="ic"><use href="#i-check"/></svg>확인된 것</div><div class="li"><svg class="ic"><use href="#i-check"/></svg>계단 없음</div><div class="li"><svg class="ic"><use href="#i-check"/></svg>횡단보도 2곳</div><div class="li"><svg class="ic"><use href="#i-check"/></svg>환승 1회</div></div>
+                  <div class="d3-col wa"><div class="hd"><svg class="ic"><use href="#i-warn"/></svg>확인 못한 것</div><div class="li"><svg class="ic"><use href="#i-warn"/></svg>엘리베이터</div><div class="li"><svg class="ic"><use href="#i-warn"/></svg>경사</div><div class="li"><svg class="ic"><use href="#i-warn"/></svg>쉼터</div></div>
+                </div>
+                <button class="d3-cta"><svg class="ic"><use href="#i-pin"/></svg>이 길로 안내받기</button>
+              </div>
+            </div></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<script>
+  (function(){
+    var root=document.documentElement;
+    function sysDark(){return window.matchMedia&&window.matchMedia("(prefers-color-scheme:dark)").matches}
+    function cur(){var t=root.getAttribute("data-theme");return t?t==="dark":sysDark()}
+    function paint(){document.getElementById("themeBtn").textContent=cur()?"☀️ 라이트":"🌙 다크"}
+    document.getElementById("themeBtn").addEventListener("click",function(){root.setAttribute("data-theme",cur()?"light":"dark");paint()});
+    paint();
+  })();
+</script>

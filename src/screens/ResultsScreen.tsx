@@ -1,11 +1,17 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { getRoutes } from '../api/route'
-import { MINI_PATHS } from '../mock/route'
-import type { RouteKey, RouteOption, RouteResult } from '../types/dto'
+import { ApiError } from '../api/client'
+import { MINI_PATHS, MINI_RESTS, applyStairChoice } from '../mock/route'
+import type { RouteErrorKind, RouteKey, RouteOption, RouteResult } from '../types/dto'
 
 /**
- * 가는 길 (결과) — 6차 와이어프레임 #screen-results 이식.
- * 오늘의 추천 경로를 중심에 두고, '다른 길도 볼게요'로 편한 길·걷기 적은 길·똑버스를 번갈아 본다.
+ * 가는 길 (결과) — 7차 와이어프레임 #screen-results 이식.
+ * 오늘의 추천 경로를 중심에 두고, '다른 길도 볼게요'로 편한 길·걷기 적은 길·똑버스(또는 콜택시)를 번갈아 본다.
+ *
+ * 7/31 회의 반영
+ *  · 쉼터를 미니맵 위에 마커로 표시 — 점수에는 넣지 않고 "가는 길에 보이게"만 한다.
+ *  · 계단이 '조금 어려움'이면 결과를 바로 보여주지 않고 계단 선택 화면을 먼저 띄운다.
+ *  · 휠체어 이용자에게는 똑버스 대신 장애인 콜택시 안내가 후보로 들어온다.
  */
 
 function BackIcon() {
@@ -16,9 +22,72 @@ function BackIcon() {
   )
 }
 
+/**
+ * 경로 조회 실패 안내 문구.
+ * 설계 원칙: **막다른 길을 만들지 않는다** — 모든 원인에 다음 행동을 준다.
+ * 어르신 대상이라 최후 수단으로 「전화로 도움 받기」를 항상 남긴다.
+ */
+const ROUTE_ERRORS: Record<RouteErrorKind, { title: string; text: string; hint: string }> = {
+  quota: {
+    title: '지금은 길을 찾지 못했어요',
+    text: '교통정보를 불러오는 중 문제가 생겼어요. 잠시 뒤 다시 시도해 주세요.',
+    hint: '길 안내가 안 되더라도 전화로 도움을 받으실 수 있어요.',
+  },
+  none: {
+    title: '갈 수 있는 길을 찾지 못했어요',
+    text: '계단을 피하는 조건 때문일 수 있어요. 기본 설정을 조금 바꾸면 길이 나올 수 있어요.',
+    hint: '설정에서 계단·보행 시간을 바꾸고 다시 찾아보실 수 있어요.',
+  },
+  outside: {
+    title: '아직 안내할 수 없는 지역이에요',
+    text: '지금은 수원시 안에서만 길을 찾아드릴 수 있어요.',
+    hint: '수원시 안의 목적지로 다시 말씀해 주세요.',
+  },
+  offline: {
+    title: '인터넷 연결이 끊겼어요',
+    text: '연결을 확인하신 뒤 다시 시도해 주세요.',
+    hint: '연결이 안 되어도 전화로 도움을 받으실 수 있어요.',
+  },
+  server: {
+    title: '지금은 길을 찾지 못했어요',
+    text: '잠시 문제가 생겼어요. 조금 뒤 다시 시도해 주세요.',
+    hint: '길 안내가 안 되더라도 전화로 도움을 받으실 수 있어요.',
+  },
+}
+
+/**
+ * 실패 원인 판별.
+ * ⚠️ `outside`(수원 밖)는 BE 가 별도 코드/메시지를 내려줘야 구분할 수 있다 — 응답 규약 확인 필요.
+ */
+function toErrorKind(e: unknown): RouteErrorKind {
+  if (e instanceof ApiError) {
+    if (e.status === 0) return 'offline'
+    if (e.status === 429) return 'quota'
+    if (e.status === 404) return 'none'
+    return 'server'
+  }
+  return 'server'
+}
+
+/** 쉼터 마커 — 점수에 반영하지 않고 지도에 보여주기만 하는 참고 정보(7/31 회의) */
+function RestMark({ x, y }: { x: number; y: number }) {
+  return (
+    <g transform={`translate(${x},${y})`}>
+      <circle r="7.5" fill="#fff" stroke="#167A55" strokeWidth="2" />
+      <path
+        d="M-3.4 -1.4h6.8M-3.4 -1.4v2.8M3.4 -1.4v2.8M-2.2 1.6h4.4"
+        stroke="#167A55"
+        strokeWidth="1.6"
+        strokeLinecap="round"
+      />
+    </g>
+  )
+}
+
 function MiniMap({ routeKey }: { routeKey: RouteKey }) {
-  const accent = routeKey === 'drt' ? '#167A55' : '#6755F5'
+  const accent = routeKey === 'drt' || routeKey === 'calltaxi' ? '#167A55' : '#6755F5'
   const d = MINI_PATHS[routeKey]
+  const rests = MINI_RESTS[routeKey]
   return (
     <div className="mini-map">
       <svg viewBox="0 0 300 120" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
@@ -40,12 +109,15 @@ function MiniMap({ routeKey }: { routeKey: RouteKey }) {
         <path d={d} fill="none" stroke={accent} strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" />
         <path className="route-flow" d={d} fill="none" stroke="#fff" strokeWidth="1.6" strokeLinecap="round" />
         <circle cx="18" cy="94" r="6.5" fill="#3488F4" stroke="#fff" strokeWidth="2.5" />
+        {rests.map(([x, y]) => (
+          <RestMark key={`${x}-${y}`} x={x} y={y} />
+        ))}
         <g transform="translate(284,34)">
           <path d="M0 0 C-5 -8 -9 -12 -9 -17 A9 9 0 1 1 9 -17 C9 -12 5 -8 0 0 Z" fill={accent} stroke="#fff" strokeWidth="1.6" />
           <circle cx="0" cy="-17" r="4.6" fill="#fff" />
         </g>
       </svg>
-      <span className="mini-map-badge">🗺️ 경로 미리보기</span>
+      <span className="mini-map-badge">{rests.length > 0 ? '🗺️ 경로 · 쉼터 표시' : '🗺️ 경로 미리보기'}</span>
     </div>
   )
 }
@@ -132,7 +204,11 @@ function RouteView({
 
         <div className="result-actions">
           <button className="btn primary" onClick={() => onGuide(selected.guide)}>
-            {selected.guide === 'drt' ? '똑버스 이용 방법 보기' : '이 길로 안내받기'}
+            {selected.guide === 'drt'
+              ? '똑버스 이용 방법 보기'
+              : selected.guide === 'calltaxi'
+                ? '콜택시 부르는 방법 보기'
+                : '이 길로 안내받기'}
           </button>
           <button className="text-btn" onClick={onNext}>
             다른 길도 볼게요
@@ -145,41 +221,90 @@ function RouteView({
 
 export function ResultsScreen({
   destination,
+  stairChoice,
+  onNeedStairChoice,
   onGoHome,
+  onRestartChat,
   onSos,
   onGuide,
 }: {
   destination: string | null
+  /** 사용자가 이미 고른 계단 선택 (아직 안 골랐으면 null) */
+  stairChoice: 'with' | 'none' | null
+  /** 계단 선택을 물어야 할 때 — App 이 계단 선택 화면으로 넘긴다 */
+  onNeedStairChoice: (comparison: NonNullable<RouteResult['stairComparison']>) => void
   onGoHome: () => void
+  /** 목적지를 다시 말하러 대화 화면으로 */
+  onRestartChat: () => void
   onSos: () => void
   onGuide: (guide: RouteOption['guide']) => void
 }) {
   const [result, setResult] = useState<RouteResult | null>(null)
   const [selectedKey, setSelectedKey] = useState<RouteKey | null>(null)
+  const [error, setError] = useState<RouteErrorKind | null>(null)
+  const [attempt, setAttempt] = useState(0)
 
   useEffect(() => {
     if (!destination) {
       setResult(null)
       setSelectedKey(null)
+      setError(null)
       return
     }
     let alive = true
-    getRoutes(destination).then((r) => {
-      if (!alive) return
-      setResult(r)
-      setSelectedKey(r.recommendedKey)
-    })
+    setError(null)
+    setResult(null)
+    getRoutes(destination).then(
+      (r) => {
+        if (!alive) return
+        // 후보가 하나도 없으면 오류가 아니라 '갈 수 있는 길 없음'
+        if (r.options.length === 0) {
+          setError('none')
+          return
+        }
+        setResult(r)
+        setSelectedKey(r.recommendedKey)
+      },
+      (e: unknown) => {
+        if (!alive) return
+        setError(toErrorKind(e))
+      },
+    )
     return () => {
       alive = false
     }
-  }, [destination])
+  }, [destination, attempt])
 
-  const selected = result && selectedKey ? result.options.find((o) => o.key === selectedKey) ?? result.options[0] : null
+  const retry = useCallback(() => setAttempt((n) => n + 1), [])
+
+  // 글씨를 못 읽는 분도 상황을 알 수 있게 오류 제목은 음성으로도 안내한다
+  useEffect(() => {
+    if (!error || !('speechSynthesis' in window)) return
+    window.speechSynthesis.cancel()
+    const utter = new SpeechSynthesisUtterance(ROUTE_ERRORS[error].title)
+    utter.lang = 'ko-KR'
+    utter.rate = 0.9
+    window.speechSynthesis.speak(utter)
+  }, [error])
+
+  // 계단이 '조금 어려움'인데 아직 안 고르셨으면, 결과 대신 두 경로 비교를 먼저 보여드린다
+  useEffect(() => {
+    if (result?.stairComparison && stairChoice === null) {
+      onNeedStairChoice(result.stairComparison)
+    }
+  }, [result, stairChoice, onNeedStairChoice])
+
+  // 고른 결과를 '가장 편한 길' 카드에 실제로 반영한다
+  const options = result
+    ? result.options.map((o) => (o.key === 'comfort' && stairChoice ? applyStairChoice(o, stairChoice) : o))
+    : []
+
+  const selected = result && selectedKey ? options.find((o) => o.key === selectedKey) ?? options[0] : null
 
   function nextRoute() {
     if (!result || !selectedKey) return
-    const i = result.options.findIndex((o) => o.key === selectedKey)
-    setSelectedKey(result.options[(i + 1) % result.options.length].key)
+    const i = options.findIndex((o) => o.key === selectedKey)
+    setSelectedKey(options[(i + 1) % options.length].key)
   }
 
   return (
@@ -225,9 +350,34 @@ export function ResultsScreen({
           </div>
         )}
 
-        {destination && !selected && <p className="screen-lead">편한 길을 찾고 있어요…</p>}
+        {destination && error && (
+          <div className="route-empty glass">
+            <div className="route-empty-art error">
+              <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path d="M12 3 2.5 20h19L12 3Z" stroke="currentColor" strokeWidth="1.7" strokeLinejoin="round" />
+                <path d="M12 10v4m0 3h.01" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+              </svg>
+            </div>
+            <h2>{ROUTE_ERRORS[error].title}</h2>
+            <p>{ROUTE_ERRORS[error].text}</p>
+            <div className="route-empty-actions">
+              <button className="btn primary" onClick={retry}>
+                다시 시도하기
+              </button>
+              <button className="btn secondary" onClick={onRestartChat}>
+                목적지 다시 말하기
+              </button>
+              <a className="btn neutral" href="tel:031-228-2114">
+                전화로 도움 받기
+              </a>
+            </div>
+            <div className="route-empty-hint">{ROUTE_ERRORS[error].hint}</div>
+          </div>
+        )}
 
-        {destination && result && selected && (
+        {destination && !error && !selected && <p className="screen-lead">편한 길을 찾고 있어요…</p>}
+
+        {destination && !error && result && selected && (
           <RouteView result={result} selected={selected} onNext={nextRoute} onGuide={onGuide} />
         )}
       </div>

@@ -1,4 +1,16 @@
-/** 똑버스 이용 안내 (drt) — 7차 와이어프레임 #screen-drt 이식. */
+/**
+ * 장애인 콜택시 안내 (calltaxi) — 7차 와이어프레임 #screen-calltaxi 이식.
+ *
+ * 7/31 회의(00:14:22~00:18:59): 수원 똑버스는 휠체어를 탄 채로 탑승할 수 없는 것으로 조사됐고,
+ * 똑버스를 대체할 만한 공개 데이터셋도 찾지 못했다. 현시점에서 가장 현실적인 안으로
+ * "장애인 콜택시 콜센터 전화번호 안내"에 팀 전원이 합의했다. 앱은 예약 주체가 아니고 번호만 알려준다.
+ * (똑버스 미운행 지역도 같은 화면으로 통일)
+ *
+ * TODO(기획): 콜센터 정식 명칭·대표번호·이용 대상 기준은 기획팀 자료 수령 후 확정.
+ *             아래 번호(1666-0000)는 자리표시자이며 실제 번호가 아니다.
+ */
+
+const CALL_CENTER_TEL = '1666-0000'
 
 function BackIcon() {
   return (
@@ -8,16 +20,18 @@ function BackIcon() {
   )
 }
 
-export function DrtScreen({
+export function CallTaxiScreen({
   destination,
   onBack,
   onSos,
   onToast,
+  onOpenContacts,
 }: {
   destination: string | null
   onBack: () => void
   onSos: () => void
   onToast: (msg: string) => void
+  onOpenContacts: () => void
 }) {
   const dest = destination ?? '목적지'
 
@@ -33,14 +47,14 @@ export function DrtScreen({
     }
   }
 
-  function speakDrt() {
+  function speakCallTaxi() {
     if (!('speechSynthesis' in window)) {
       onToast('이 기기에서는 음성 안내를 쓸 수 없어요')
       return
     }
     window.speechSynthesis.cancel()
     const utter = new SpeechSynthesisUtterance(
-      '똑버스 예약 방법입니다. 전화 또는 공식 앱과 웹을 열고, 출발지와 목적지, 탑승 인원과 보조기구를 알려주세요. 배차 가능 여부와 대기시간은 운영기관에서 확인하세요.',
+      '장애인 콜택시 안내입니다. 콜센터로 전화를 걸어 휠체어를 이용한다고 먼저 말씀하시고, 출발지와 목적지, 타실 시간을 알려주세요. 예약은 콜센터에서 직접 하셔야 해요.',
     )
     utter.lang = 'ko-KR'
     utter.rate = 0.9
@@ -55,7 +69,7 @@ export function DrtScreen({
         </button>
         <div className="topbar-title">
           <span className="brand-dot" />
-          똑버스 이용 안내
+          콜택시 안내
         </div>
         <button className="sos-btn-top" onClick={onSos}>
           SOS
@@ -66,49 +80,48 @@ export function DrtScreen({
         <div className="drt-hero">
           <div className="drt-symbol">
             <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-              <path d="M4 16V8a2 2 0 0 1 2-2h9l4 4v6" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" />
-              <circle cx="8" cy="17" r="1.8" fill="currentColor" />
-              <circle cx="17" cy="17" r="1.8" fill="currentColor" />
-              <path d="M4 16h2m6 0h3M15 7v4h4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+              <circle cx="10" cy="4" r="1.9" fill="currentColor" />
+              <path d="M10 7v5h5l3 5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+              <path d="M14.5 13.2A5.5 5.5 0 1 1 7 8.6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
             </svg>
           </div>
           <h2>
-            똑버스 이용을 함께
+            휠체어로 탈 수 있는
             <br />
-            확인해 보세요
+            차량을 안내해 드려요
           </h2>
-          <p>현재 경로는 보행 부담이 커서 수요응답형 교통을 함께 안내합니다.</p>
+          <p>수원 똑버스는 휠체어를 탄 채로 탈 수 없어요. 대신 장애인 콜택시를 전화로 부르실 수 있어요.</p>
         </div>
 
-        <div className="section-label">추천한 이유</div>
+        <div className="section-label">이렇게 안내해요</div>
         <div className="criteria">
           <div className="criterion">
             <i>✓</i>
-            <span>현재 도보 구간이 설정한 최대 보행 범위를 넘어요.</span>
+            <span>기본 설정에서 휠체어를 쓰신다고 알려주셨어요.</span>
           </div>
           <div className="criterion">
             <i>✓</i>
-            <span>걸어가는 경로에 계단 2곳과 지하보도 1곳이 포함돼 있어요.</span>
+            <span>수원 똑버스는 휠체어 탑승이 어려운 것으로 확인됐어요.</span>
           </div>
         </div>
 
-        <div className="section-label">이용 가능한 서비스</div>
+        <div className="section-label">전화로 부르실 수 있어요</div>
         <div className="service-card glass">
           <div className="service-head">
-            <h3>수원 똑버스</h3>
+            <h3>장애인 콜택시 콜센터</h3>
             <span className="service-status">
               <i />
-              운행 지역 확인
+              전화 예약
             </span>
           </div>
           <div className="kv-list">
             <div className="kv">
-              <span>운행 구역</span>
-              <b>팔달구·권선구 일부</b>
+              <span>대표 번호</span>
+              <b>{CALL_CENTER_TEL}</b>
             </div>
             <div className="kv">
-              <span>예약 전화</span>
-              <b>1661-0000</b>
+              <span>이용 대상</span>
+              <b>콜센터 확인</b>
             </div>
             <div className="kv">
               <span>준비 정보</span>
@@ -116,34 +129,34 @@ export function DrtScreen({
             </div>
           </div>
           <div className="channel-grid">
-            <a className="channel" href="tel:16610000">
+            <a className="channel" href={`tel:${CALL_CENTER_TEL.replace(/-/g, '')}`}>
               <span className="channel-icon">☎️</span>
-              <strong>전화 예약</strong>
-              <span>운영기관에 바로 연결</span>
+              <strong>전화 걸기</strong>
+              <span>콜센터에 바로 연결</span>
             </a>
-            <button className="channel" onClick={() => onToast('예약 웹페이지 연결은 곧 준비할게요')}>
-              <span className="channel-icon">🌐</span>
-              <strong>앱·웹 열기</strong>
-              <span>공식 예약 채널 이동</span>
-            </button>
             <button className="channel" onClick={copyTrip}>
               <span className="channel-icon">📋</span>
               <strong>위치 복사</strong>
               <span>출발지와 목적지 복사</span>
             </button>
-            <button className="channel" onClick={speakDrt}>
+            <button className="channel" onClick={speakCallTaxi}>
               <span className="channel-icon">🔊</span>
               <strong>음성 안내</strong>
-              <span>예약 방법 다시 듣기</span>
+              <span>부르는 방법 다시 듣기</span>
+            </button>
+            <button className="channel" onClick={onOpenContacts}>
+              <span className="channel-icon">👤</span>
+              <strong>보호자에게</strong>
+              <span>비상 연락처 보기</span>
             </button>
           </div>
         </div>
 
-        <div className="section-label">예약은 이렇게 하세요</div>
+        <div className="section-label">부르실 때는 이렇게</div>
         <div className="steps">
-          <div className="step-card">전화 또는 공식 앱·웹을 열어주세요.</div>
-          <div className="step-card">출발지, 목적지, 탑승 인원과 보조기구를 알려주세요.</div>
-          <div className="step-card">배차 가능 여부와 대기시간을 운영기관에서 확인하세요.</div>
+          <div className="step-card">위 번호로 전화를 걸어주세요.</div>
+          <div className="step-card">휠체어를 이용한다고 먼저 말씀해 주세요.</div>
+          <div className="step-card">출발지와 목적지, 타실 시간을 알려주세요.</div>
         </div>
 
         <div className="notice-box">
@@ -151,7 +164,7 @@ export function DrtScreen({
             <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="1.8" />
             <path d="M12 8h.01M11 12h1v4h1" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
-          실제 배차와 대기시간은 운영기관에서 확인해 주세요.
+          예약은 콜센터에서 직접 하셔야 해요. 이 앱은 번호만 알려드려요.
         </div>
       </div>
     </section>

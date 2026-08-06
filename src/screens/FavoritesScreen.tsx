@@ -3,7 +3,7 @@ import { deleteFavorite, listFavorites } from '../api/place'
 import type { FavoritePlaceResponse } from '../types/dto'
 
 /**
- * 자주 가는 곳 — 6차 와이어프레임 #screen-favorites 이식.
+ * 자주 가는 곳 — 7차 와이어프레임 #screen-favorites 이식.
  * api/place (BE /api/users/me/favorites) 연동. 장소를 누르면 바로 길찾기(결과)로.
  */
 

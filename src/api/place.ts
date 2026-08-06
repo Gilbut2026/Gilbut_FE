@@ -23,14 +23,16 @@ import {
   mockUpdateFavorite,
 } from '../mock/place'
 
-const USE_MOCK: boolean = import.meta.env.VITE_USE_MOCK !== 'false'
+import { useMock } from './mode'
+
+const USE_MOCK = () => useMock('place')
 
 const FAVORITES = '/api/users/me/favorites'
 const HOME = '/api/users/me/home'
 
 /** 장소 검색 (키워드 + 선택적 현재위치/반경) */
 export function searchPlaces(req: PlaceSearchRequest): Promise<PlaceSearchResponse> {
-  if (USE_MOCK) return mockSearchPlaces(req.keyword)
+  if (USE_MOCK()) return mockSearchPlaces(req.keyword)
   const qs = toQuery({
     keyword: req.keyword,
     lat: req.lat,
@@ -44,14 +46,14 @@ export function searchPlaces(req: PlaceSearchRequest): Promise<PlaceSearchRespon
 
 /** 즐겨찾기 목록 */
 export function listFavorites(): Promise<FavoritePlaceResponse[]> {
-  return USE_MOCK ? mockListFavorites() : api.get<FavoritePlaceResponse[]>(FAVORITES)
+  return USE_MOCK() ? mockListFavorites() : api.get<FavoritePlaceResponse[]>(FAVORITES)
 }
 
 /** 즐겨찾기 등록 */
 export function addFavorite(
   req: FavoritePlaceSaveRequest,
 ): Promise<FavoritePlaceResponse> {
-  return USE_MOCK
+  return USE_MOCK()
     ? mockAddFavorite(req)
     : api.post<FavoritePlaceResponse>(FAVORITES, req)
 }
@@ -61,27 +63,32 @@ export function updateFavorite(
   id: number,
   req: FavoritePlaceUpdateRequest,
 ): Promise<FavoritePlaceResponse> {
-  return USE_MOCK
+  return USE_MOCK()
     ? mockUpdateFavorite(id, req)
     : api.patch<FavoritePlaceResponse>(`${FAVORITES}/${id}`, req)
 }
 
 /** 즐겨찾기 삭제 */
 export function deleteFavorite(id: number): Promise<void> {
-  return USE_MOCK ? mockDeleteFavorite(id) : api.del<void>(`${FAVORITES}/${id}`)
+  return USE_MOCK() ? mockDeleteFavorite(id) : api.del<void>(`${FAVORITES}/${id}`)
 }
 
-/** 집주소 조회 (없으면 null) */
-export function getHome(): Promise<HomePlaceResponse | null> {
-  return USE_MOCK ? mockGetHome() : api.get<HomePlaceResponse | null>(HOME)
+/**
+ * 집주소 조회 (없으면 null)
+ * ⚠️ 실서버는 미등록일 때 응답 봉투에서 `data` 를 아예 생략한다(= undefined).
+ *    선언한 타입과 맞추려고 여기서 null 로 정규화한다. (2026-08-04 로컬 실연결로 확인)
+ */
+export async function getHome(): Promise<HomePlaceResponse | null> {
+  if (USE_MOCK()) return mockGetHome()
+  return (await api.get<HomePlaceResponse | null>(HOME)) ?? null
 }
 
 /** 집주소 저장/수정 */
 export function saveHome(req: HomePlaceSaveRequest): Promise<HomePlaceResponse> {
-  return USE_MOCK ? mockSaveHome(req) : api.put<HomePlaceResponse>(HOME, req)
+  return USE_MOCK() ? mockSaveHome(req) : api.put<HomePlaceResponse>(HOME, req)
 }
 
 /** 집주소 삭제 */
 export function deleteHome(): Promise<void> {
-  return USE_MOCK ? mockDeleteHome() : api.del<void>(HOME)
+  return USE_MOCK() ? mockDeleteHome() : api.del<void>(HOME)
 }

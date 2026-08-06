@@ -9,11 +9,13 @@ import type { TokenResponse } from '../types/dto'
 import { saveTokens, clearTokens } from '../state/auth'
 import { mockKakaoLogin, mockRefresh, mockLogout } from '../mock/auth'
 
-const USE_MOCK: boolean = import.meta.env.VITE_USE_MOCK !== 'false'
+import { useMock } from './mode'
+
+const USE_MOCK = () => useMock('auth')
 
 /** 카카오 인가 코드로 로그인 → 토큰 저장 */
 export async function kakaoLogin(code: string): Promise<TokenResponse> {
-  const tokens = USE_MOCK
+  const tokens = USE_MOCK()
     ? await mockKakaoLogin()
     : await api.post<TokenResponse>('/api/auth/kakao-login', { code })
   saveTokens(tokens)
@@ -22,7 +24,7 @@ export async function kakaoLogin(code: string): Promise<TokenResponse> {
 
 /** 리프레시 토큰으로 재발급 → 토큰 갱신 저장 */
 export async function refresh(refreshToken: string): Promise<TokenResponse> {
-  const tokens = USE_MOCK
+  const tokens = USE_MOCK()
     ? await mockRefresh()
     : await api.post<TokenResponse>('/api/auth/refresh', { refreshToken })
   saveTokens(tokens)
@@ -31,7 +33,7 @@ export async function refresh(refreshToken: string): Promise<TokenResponse> {
 
 /** 로그아웃 → 로컬 토큰 삭제 */
 export async function logout(): Promise<void> {
-  if (!USE_MOCK) await api.post<void>('/api/auth/logout')
+  if (!USE_MOCK()) await api.post<void>('/api/auth/logout')
   else await mockLogout()
   clearTokens()
 }

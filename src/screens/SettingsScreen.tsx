@@ -9,7 +9,7 @@ import type {
 } from '../types/dto'
 
 /**
- * 내 이동 설정 (설정) — 6차 와이어프레임 #screen-settings 이식.
+ * 내 이동 설정 (설정) — 7차 와이어프레임 #screen-settings 이식.
  * 경로 추천 기준(BE getSettings) + 보기와 듣기(글자크기·고대비·음성, saveAccessibility) + 내 정보와 안전 링크.
  */
 
