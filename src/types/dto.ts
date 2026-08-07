@@ -30,8 +30,13 @@ export interface ApiResponse<T> {
  *     ⚠️ 값 문자열은 BE 자바 enum 과 반드시 동일해야 한다.
  * ============================================================ */
 
-/** 한 번에 걸을 수 있는 시간 (20~30 사이 구간 없음에 주의) */
+/**
+ * 한 번에 걸을 수 있는 시간 (20~30 사이 구간 없음에 주의).
+ * 2026-08-06 BE 중간 배포에서 `UNABLE_TO_WALK` 가 추가됐다 —
+ * "'보행 불가'가 BE enum 에 없어 10분이내로 수렴 중" 이던 회의 안건이 해소됐다.
+ */
 export type WalkingDuration =
+  | 'UNABLE_TO_WALK'
   | 'WITHIN_10_MINUTES'
   | 'WITHIN_20_MINUTES'
   | 'OVER_30_MINUTES'
@@ -51,6 +56,12 @@ export type TransferLevel = 'AVAILABLE' | 'FEWER_PREFERRED' | 'AVOID_PREFERRED'
  * 결정되면서 휠체어 식별이 필수가 됐다. AI Score function 도 DRT_taxi = (보조기구 == '휠체어') 로 분기한다.
  * 프론트 온보딩은 NONE / CANE / WHEELCHAIR 3지선다를 쓴다(OTHER 는 화면에 노출하지 않음).
  * OTHER 선택 시 mobilityAidDetail(≤100자) 필수.
+ *
+ * 🚨 2026-08-06 BE 중간 배포와 불일치 — 배포된 서버의 MobilityAid 는 아직 `NOT_USED | USED` 2값이고
+ *    mobilityAidDetail 필드도 없다. 이 상태로 user 도메인을 실서버로 켜면
+ *    PUT /api/users/me/mobility-profile 이 400 으로 떨어진다.
+ *    값을 USED 로 뭉개면 휠체어 식별이 사라져 7/31 결정(휠체어 → 콜택시)이 무너지므로,
+ *    BE 에 enum 확장을 요청하는 것이 맞다. 요청 전까지 user 도메인은 Mock 유지.
  */
 export type MobilityAid = 'NONE' | 'CANE' | 'WHEELCHAIR' | 'OTHER'
 
@@ -239,9 +250,108 @@ export interface EmergencyContactResponse {
 }
 
 /* ============================================================
- *  6. 🟡 상담(chat) — BE 컨트롤러 미구현, 노션 명세서 기준. Mock 전용.
- *     실제 붙일 때 이 섹션을 BE 최종 DTO 로 교체한다.
+ *  6. ✅ 상담(chat) — 2026-08-07 BE 배포 확정 계약 (chat-controller)
+ *     서버가 상태를 끌고 가는 방식: POST /api/chat 에 발화를 보내면
+ *     서버가 {현재 상태, 응답 타입, 메시지, 장소 후보} 를 돌려주고,
+ *     각 단계는 *-confirmation 엔드포인트로 확정한다.
  * ============================================================ */
+
+/** 상담 진행 상태 (서버 주도 상태머신) */
+export type ChatState =
+  | 'DESTINATION_WAITING'
+  | 'ORIGIN_CONFIRMATION'
+  | 'HOME_CONFIRMATION'
+  | 'DEPARTURE_TIME_CONFIRMATION'
+  | 'TODAY_CONDITION_CONFIRMATION'
+  | 'ROUTE_CALCULATING'
+  | 'STAIR_ROUTE_CONFIRMATION'
+  | 'RESULT_PRESENTATION'
+  | 'NAVIGATING'
+  | 'ARRIVED'
+
+/** 응답을 화면에 어떻게 그릴지 — 일반 텍스트 / 장소 후보 목록 / 선택 버튼 */
+export type ChatResponseType = 'TEXT' | 'PLACE_CANDIDATES' | 'CHOICE_OPTIONS'
+
+/** 출발지 종류 */
+export type OriginType = 'CURRENT_LOCATION' | 'HOME' | 'PLACE'
+
+/**
+ * 당일 상태. ⚠️ 7/31 회의에서 프론트는 '당일 상태' 질문을 뺐는데,
+ * BE 챗봇은 TODAY_CONDITION_CONFIRMATION 단계를 두고 이 값을 받는다 → 팀 정합 필요.
+ * WHEELCHAIR 가 여기 섞여 있어(온보딩 mobilityAid 와 별개) 확인이 더 필요하다.
+ */
+export type TodayCondition = 'NORMAL' | 'INCREASED_DISCOMFORT' | 'WHEELCHAIR'
+
+/** 상담 문맥 속 장소 (목적지·출발지) */
+export interface PlaceContext {
+  placeId: string
+  name: string
+  address: string
+  latitude: number
+  longitude: number
+}
+
+/** POST /api/chat — 사용자 발화 */
+export interface ChatMessageRequest {
+  message: string
+}
+
+/** POST /api/chat 응답 — 다음에 화면이 뭘 보여줄지 */
+export interface ChatMessageResponse {
+  sessionId: string
+  currentState: ChatState
+  responseType: ChatResponseType
+  message: string
+  /** responseType === 'PLACE_CANDIDATES' 일 때 채워짐 */
+  places: PlaceItemResponse[]
+}
+
+/** GET /api/chat/session — 현재 세션 스냅샷 */
+export interface ChatSessionResponse {
+  sessionId: string
+  currentState: ChatState
+  destination: PlaceContext | null
+  originType: OriginType | null
+  origin: PlaceContext | null
+  selectedRouteId: string | null
+  activeRequestId: string | null
+  departureDateTime: string | null
+  todayCondition: TodayCondition | null
+}
+
+/** POST /api/chat/place-confirmation — 목적지 후보 확정 */
+export interface PlaceConfirmationRequest {
+  placeId: string
+  name: string
+  address: string
+  latitude: number
+  longitude: number
+}
+
+/** POST /api/chat/origin-confirmation — 출발지 확정 */
+export interface OriginConfirmationRequest {
+  originType: OriginType
+  placeId?: string
+  name?: string
+  address?: string
+  latitude?: number
+  longitude?: number
+}
+
+/** POST /api/chat/departure-time-confirmation — 출발 시각 확정 (ISO 8601) */
+export interface DepartureTimeConfirmationRequest {
+  departureDateTime: string
+}
+
+/** POST /api/chat/today-condition-confirmation — 당일 상태 확정 */
+export interface TodayConditionConfirmationRequest {
+  todayCondition: TodayCondition
+}
+
+/* ------------------------------------------------------------
+ *  6-legacy. 🗑️ 피벗 이전(판단카드) 상담 모델 — mock/counseling.ts 전용.
+ *     실서버는 위 §6 계약을 쓴다. 화면 마이그레이션 후 제거 예정.
+ * ------------------------------------------------------------ */
 
 export type InputType = 'TEXT' | 'VOICE'
 

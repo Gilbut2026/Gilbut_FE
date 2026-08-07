@@ -37,14 +37,14 @@ const QUESTIONS: Question[] = [
   { id: 'walk', icon: '🚶', label: '보행 시간', title: '한 번에 얼마나 걸을 수 있나요?', help: '평소 무리 없이 걸을 수 있는 시간을 골라주세요.', options: ['보행 불가', '10분 이내', '20분', '30분 이상'] },
   { id: 'stairs', icon: '🪜', label: '계단', title: '계단을 이용할 수 있나요?', help: '계단이 있는 길과 없는 길을 함께 보여드려요.', options: ['이용 가능', '조금 어려움', '이용 어려움'] },
   { id: 'rest', icon: '🪑', label: '휴식', title: '이동 중 쉬어 갈 곳이 필요한가요?', help: '가는 길 지도에 쉼터를 표시해 드려요.', options: ['필요', '상관없음'] },
-  { id: 'transfer', icon: '🔁', label: '환승', title: '버스나 지하철 환승이 어려우신가요?', help: '환승 횟수가 적은 길에 더 높은 점수를 줘요.', options: ['괜찮음', '적게', '되도록 없음'] },
+  { id: 'transfer', icon: '🔁', label: '환승', title: '버스나 지하철 환승이 어려우신가요?', help: '환승 횟수가 적은 길을 우선해요.', options: ['괜찮음', '적게', '되도록 없음'] },
   { id: 'aid', icon: '🦯', label: '보조기구', title: '이동할 때 무엇을 사용하시나요?', help: '휠체어를 쓰시면 탑승할 수 있는 차량으로 안내해 드려요.', options: ['사용 안 함', '지팡이·보행기', '휠체어'] },
 ]
 
 // ── 와이어프레임 선택지 → BE enum 매핑 ──────────────────────────
-// ⚠️ 회의 안건 잔여: '보행 불가'는 BE WalkingDuration 에 없어 10분이내로 수렴 중 (BE enum 추가 필요).
+// 2026-08-06 BE 중간 배포에서 UNABLE_TO_WALK 가 추가돼, '보행 불가'를 뭉개지 않고 그대로 보낸다.
 const WALK_MAP: Record<string, WalkingDuration> = {
-  '보행 불가': 'WITHIN_10_MINUTES',
+  '보행 불가': 'UNABLE_TO_WALK',
   '10분 이내': 'WITHIN_10_MINUTES',
   '20분': 'WITHIN_20_MINUTES',
   '30분 이상': 'OVER_30_MINUTES',

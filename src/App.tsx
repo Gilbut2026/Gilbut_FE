@@ -14,8 +14,14 @@ import { CallTaxiScreen } from './screens/CallTaxiScreen'
 import { StairChoiceScreen } from './screens/StairChoiceScreen'
 import { loadSettings, saveSettings, type Settings } from './state/settings'
 import { HAS_MOCK, mockBadgeLabel } from './api/mode'
+import { kakaoLogin, KAKAO_CALLBACK_PATH } from './api/auth'
 import { TAB_SCREENS, type Screen } from './types/nav'
 import type { StairComparison } from './types/dto'
+
+/** 카카오 로그인 콜백(`/auth/kakao/callback?code=…`)으로 들어왔는지 최초 1회 판단 */
+function initialAuthPhase(): 'idle' | 'loading' {
+  return window.location.pathname.endsWith(KAKAO_CALLBACK_PATH) ? 'loading' : 'idle'
+}
 
 /** 하단 탭 정의 (7차 와이어프레임 bottom-nav). ⬜ 표시는 아직 이식 전 화면. */
 const NAV_ITEMS: { screen: Screen; label: string; icon: JSX.Element }[] = [
@@ -71,10 +77,34 @@ export default function App() {
   const [settings, setSettings] = useState<Settings>(() => loadSettings())
   const [toastMsg, setToastMsg] = useState<string | null>(null)
   const toastTimer = useRef<number | null>(null)
+  // 카카오 로그인 리다이렉트로 돌아왔을 때의 처리 단계
+  const [authPhase, setAuthPhase] = useState<'idle' | 'loading' | 'error'>(initialAuthPhase)
+  // 콜백 코드 교환은 딱 한 번만. StrictMode 가 dev 에서 effect 를 두 번 돌려도 두 번째는 건너뛴다
+  // (그러지 않으면 인가 코드가 두 번 소비되거나, 주소가 이미 비어 실패로 표시된다).
+  const authHandled = useRef(false)
 
   useEffect(() => {
     saveSettings(settings)
   }, [settings])
+
+  // 카카오 인가 코드(?code=…)를 받아 토큰으로 교환한다. 최초 1회만.
+  useEffect(() => {
+    if (authPhase !== 'loading' || authHandled.current) return
+    authHandled.current = true
+    const code = new URLSearchParams(window.location.search).get('code')
+    // 주소는 즉시 깔끔하게 되돌린다(뒤로가기/새로고침 때 코드 재사용 방지)
+    window.history.replaceState({}, '', import.meta.env.BASE_URL)
+    if (!code) {
+      setAuthPhase('error')
+      return
+    }
+    kakaoLogin(code)
+      .then(() => {
+        setAuthPhase('idle')
+        setScreen('onboarding')
+      })
+      .catch(() => setAuthPhase('error'))
+  }, [authPhase])
 
   const toast = useCallback((msg: string) => {
     setToastMsg(msg)
@@ -89,14 +119,38 @@ export default function App() {
     setScreen('stairs')
   }, [])
 
-  const showTabBar = TAB_SCREENS.includes(screen)
+  const showTabBar = TAB_SCREENS.includes(screen) && authPhase === 'idle'
 
   return (
     <div id="app-shell" className={`font-${settings.fontSize}${settings.highContrast ? ' high-contrast' : ''}`}>
       {/* 통합 중에 어느 도메인이 실서버로 도는지 눈으로 보이게 한다 */}
       {HAS_MOCK && <div className="mock-badge">{mockBadgeLabel()}</div>}
 
-      {screen === 'signup' && <SignupScreen onSignedIn={() => setScreen('onboarding')} />}
+      {/* 카카오 로그인 리다이렉트로 돌아온 동안 보여주는 화면 */}
+      {authPhase === 'loading' && (
+        <section className="screen">
+          <div className="screen-body signup-body">
+            <h1 className="signup-title">로그인 중이에요…</h1>
+            <p className="signup-lead">잠시만 기다려 주세요.</p>
+          </div>
+        </section>
+      )}
+
+      {authPhase === 'error' && (
+        <section className="screen">
+          <div className="screen-body signup-body">
+            <h1 className="signup-title">로그인에 실패했어요</h1>
+            <p className="signup-lead">다시 시도해 주세요.</p>
+            <button className="kakao-btn" onClick={() => setAuthPhase('idle')}>
+              처음으로
+            </button>
+          </div>
+        </section>
+      )}
+
+      {authPhase === 'idle' && screen === 'signup' && (
+        <SignupScreen onSignedIn={() => setScreen('onboarding')} />
+      )}
 
       {screen === 'onboarding' && (
         <OnboardingScreen

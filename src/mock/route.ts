@@ -165,7 +165,7 @@ export async function mockGetRoutes(destination: string): Promise<RouteResult> {
   // AI Score function 3단계와 같은 갈래. drt_recommended 가 내려오면 이 임시 트리거는 걷어낸다.
   const recommendedKey: RouteKey = isWheelchair
     ? 'calltaxi'
-    : profile.walkingDuration === 'WITHIN_10_MINUTES'
+    : profile.walkingDuration === 'UNABLE_TO_WALK' || profile.walkingDuration === 'WITHIN_10_MINUTES'
       ? 'drt'
       : 'comfort'
 

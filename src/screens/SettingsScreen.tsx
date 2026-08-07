@@ -14,7 +14,7 @@ import type {
  */
 
 // 이동특성 enum → 화면 태그 라벨
-const WALK_LABEL: Record<string, string> = { WITHIN_10_MINUTES: '10분 보행', WITHIN_20_MINUTES: '20분 보행', OVER_30_MINUTES: '30분+ 보행' }
+const WALK_LABEL: Record<string, string> = { UNABLE_TO_WALK: '보행 불가', WITHIN_10_MINUTES: '10분 보행', WITHIN_20_MINUTES: '20분 보행', OVER_30_MINUTES: '30분+ 보행' }
 const STAIR_LABEL: Record<string, string> = { AVAILABLE: '계단 가능', SLIGHTLY_DIFFICULT: '계단 조금 어려움', DIFFICULT: '계단 어려움' }
 const REST_LABEL: Record<string, string> = { REQUIRED: '휴식 필요', NO_PREFERENCE: '휴식 상관없음' }
 const TRANSFER_LABEL: Record<string, string> = { AVAILABLE: '환승 가능', FEWER_PREFERRED: '환승 적게', AVOID_PREFERRED: '환승 없이' }

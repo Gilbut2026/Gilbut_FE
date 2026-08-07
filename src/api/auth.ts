@@ -13,6 +13,26 @@ import { useMock } from './mode'
 
 const USE_MOCK = () => useMock('auth')
 
+/** 카카오 로그인 콜백 경로 — 인가 URL·App 콜백 감지·라우팅에서 공유한다. */
+export const KAKAO_CALLBACK_PATH = '/auth/kakao/callback'
+
+/**
+ * 브라우저를 보낼 카카오 인가 페이지 URL.
+ * redirect_uri 는 BE 의 KAKAO_REDIRECT_URI + 카카오 콘솔 등록값과 글자까지 같아야 한다
+ * (BE 가 토큰 교환 때 이 값을 그대로 다시 보내기 때문). 안 맞으면 카카오가 KOE006 으로 막는다.
+ */
+export function kakaoAuthorizeUrl(): string {
+  const clientId = import.meta.env.VITE_KAKAO_CLIENT_ID ?? ''
+  const redirectUri =
+    import.meta.env.VITE_KAKAO_REDIRECT_URI || `${window.location.origin}${KAKAO_CALLBACK_PATH}`
+  const params = new URLSearchParams({
+    response_type: 'code',
+    client_id: clientId,
+    redirect_uri: redirectUri,
+  })
+  return `https://kauth.kakao.com/oauth/authorize?${params.toString()}`
+}
+
 /** 카카오 인가 코드로 로그인 → 토큰 저장 */
 export async function kakaoLogin(code: string): Promise<TokenResponse> {
   const tokens = USE_MOCK()

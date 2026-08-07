@@ -1,10 +1,11 @@
 import { useState } from 'react'
-import { kakaoLogin } from '../api/auth'
+import { kakaoLogin, kakaoAuthorizeUrl } from '../api/auth'
+import { useMock } from '../api/mode'
 
 /**
  * 시작 · 카카오 회원가입 (첫 진입) — 7차 와이어프레임 #screen-signup 이식.
- * Mock 모드에선 카카오 버튼이 가짜 토큰을 발급하고 바로 온보딩으로 넘어간다.
- * 실서버 모드에선 실제 카카오 OAuth 리다이렉트로 대체될 자리.
+ * Mock 모드   : 가짜 토큰을 발급하고 바로 온보딩으로 넘어간다.
+ * 실서버 모드 : 카카오 인가 페이지로 리다이렉트 → 돌아오면 App 이 콜백을 받아 로그인 처리.
  */
 export function SignupScreen({ onSignedIn }: { onSignedIn: () => void }) {
   const [busy, setBusy] = useState(false)
@@ -12,12 +13,18 @@ export function SignupScreen({ onSignedIn }: { onSignedIn: () => void }) {
   async function handleKakao() {
     if (busy) return
     setBusy(true)
-    try {
-      await kakaoLogin('mock-code') // TODO: 실서버 — 카카오 인가 코드로 교체
-      onSignedIn()
-    } catch {
-      setBusy(false)
+    if (useMock('auth')) {
+      // Mock: 백엔드 없이 즉시 로그인된 상태로 온보딩 진입
+      try {
+        await kakaoLogin('mock-code')
+        onSignedIn()
+      } catch {
+        setBusy(false)
+      }
+      return
     }
+    // 실서버: 카카오 인가 페이지로 이동한다. 코드는 돌아온 뒤 App 의 콜백 처리에서 교환한다.
+    window.location.href = kakaoAuthorizeUrl()
   }
 
   return (
