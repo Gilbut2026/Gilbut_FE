@@ -13,7 +13,7 @@ export interface Settings {
 }
 
 export const DEFAULT_SETTINGS: Settings = {
-  fontSize: 'LARGE', // 어르신 타겟 — 기본을 '크게'로 시작
+  fontSize: 'NORMAL', // 기본 '보통' (설정에서 크게로 키울 수 있음)
   highContrast: false,
   voiceGuide: true,
   voiceSpeed: 1.0,

@@ -64,8 +64,8 @@ const TRANSFER_MAP: Record<string, TransferLevel> = {
   '되도록 없음': 'AVOID_PREFERRED',
 }
 const AID_MAP: Record<string, MobilityAid> = {
-  '사용 안 함': 'NONE',
-  '지팡이·보행기': 'CANE',
+  '사용 안 함': 'NOT_USED',
+  '지팡이·보행기': 'CANE_OR_WALKER',
   휠체어: 'WHEELCHAIR',
 }
 

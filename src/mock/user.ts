@@ -15,8 +15,7 @@ let mobilityProfile: MobilityProfileResponse = {
   stairLevel: 'SLIGHTLY_DIFFICULT',
   restStopPreference: 'NO_PREFERENCE',
   transferLevel: 'FEWER_PREFERRED',
-  mobilityAid: 'NONE',
-  mobilityAidDetail: null,
+  mobilityAid: 'NOT_USED',
 }
 
 let accessibility: AccessibilitySettingResponse = {

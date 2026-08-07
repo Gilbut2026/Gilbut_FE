@@ -52,18 +52,12 @@ export type TransferLevel = 'AVAILABLE' | 'FEWER_PREFERRED' | 'AVOID_PREFERRED'
 
 /**
  * 이동 보조기구.
- * 7/31 회의에서 종류 구분이 되살아났다 — "휠체어 이용자에게는 똑버스 대신 장애인 콜택시를 안내한다"로
- * 결정되면서 휠체어 식별이 필수가 됐다. AI Score function 도 DRT_taxi = (보조기구 == '휠체어') 로 분기한다.
- * 프론트 온보딩은 NONE / CANE / WHEELCHAIR 3지선다를 쓴다(OTHER 는 화면에 노출하지 않음).
- * OTHER 선택 시 mobilityAidDetail(≤100자) 필수.
- *
- * 🚨 2026-08-06 BE 중간 배포와 불일치 — 배포된 서버의 MobilityAid 는 아직 `NOT_USED | USED` 2값이고
- *    mobilityAidDetail 필드도 없다. 이 상태로 user 도메인을 실서버로 켜면
- *    PUT /api/users/me/mobility-profile 이 400 으로 떨어진다.
- *    값을 USED 로 뭉개면 휠체어 식별이 사라져 7/31 결정(휠체어 → 콜택시)이 무너지므로,
- *    BE 에 enum 확장을 요청하는 것이 맞다. 요청 전까지 user 도메인은 Mock 유지.
+ * 7/31 회의: "휠체어 이용자에게는 똑버스 대신 콜택시를 안내한다" → 휠체어 식별이 필수.
+ * 2026-08-07 BE 리팩토링으로 enum 이 3값으로 정리됐다 — 여기에 맞춘다.
+ *   NOT_USED(사용 안 함) · CANE_OR_WALKER(지팡이·보행기) · WHEELCHAIR(휠체어)
+ * (BE 초기 배포의 NOT_USED|USED 2값 불일치는 해소됨. OTHER·mobilityAidDetail 은 BE 에 없어 제거.)
  */
-export type MobilityAid = 'NONE' | 'CANE' | 'WHEELCHAIR' | 'OTHER'
+export type MobilityAid = 'NOT_USED' | 'CANE_OR_WALKER' | 'WHEELCHAIR'
 
 /** 글자 크기 5단계 (프론트 fontScale 0~100 과의 매핑은 settings 에서 처리) */
 export type FontSize =
@@ -110,8 +104,6 @@ export interface MobilityProfileSaveRequest {
   restStopPreference: RestStopPreference
   transferLevel: TransferLevel
   mobilityAid: MobilityAid
-  /** mobilityAid === 'OTHER' 일 때만 필요 (≤100자) */
-  mobilityAidDetail?: string | null
 }
 
 /** GET /api/users/me/mobility-profile */
@@ -122,7 +114,6 @@ export interface MobilityProfileResponse {
   restStopPreference: RestStopPreference
   transferLevel: TransferLevel
   mobilityAid: MobilityAid
-  mobilityAidDetail?: string | null
 }
 
 /** PUT /api/users/me/accessibility-settings */
