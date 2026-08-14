@@ -1,7 +1,9 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { saveMobilityProfile } from '../api/user'
 import { saveAccessibility } from '../api/user'
 import { getAccessibility } from '../api/user'
+import { speak } from '../state/tts'
+import { loadSettings } from '../state/settings'
 import type {
   MobilityAid,
   MobilityProfileSaveRequest,
@@ -99,6 +101,14 @@ export function OnboardingScreen({
   const [saving, setSaving] = useState(false)
 
   const q = QUESTIONS[index]
+
+  // 어르신 대상 — 음성 안내가 켜져 있으면 질문을 소리로 읽어준다.
+  // (음성 질문에 이미 답했으면 그 선택을, 아직이면 저장된 설정을 따른다.)
+  useEffect(() => {
+    const voiceOn = answers.voice ? answers.voice === '사용' : loadSettings().voiceGuide
+    if (voiceOn) speak(`${q.title} ${q.help}`)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [index])
   const answered = answers[q.id] != null
   const isLast = index === QUESTIONS.length - 1
 
