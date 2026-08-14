@@ -161,9 +161,12 @@ export default function App() {
             setScreen('home')
             toast('내게 맞는 이동 설정을 저장했어요')
             // 집 주소 미등록이면 홈 진입 후 등록을 권유한다 (7차 와이어프레임 #screen-home)
-            getHome().then((h) => {
-              if (!h) window.setTimeout(() => setHomePrompt(true), 900)
-            })
+            // 조회 실패 시에도 권유는 띄운다(사용자가 '나중에'로 닫을 수 있음).
+            getHome()
+              .then((h) => {
+                if (!h) window.setTimeout(() => setHomePrompt(true), 900)
+              })
+              .catch(() => window.setTimeout(() => setHomePrompt(true), 900))
           }}
         />
       )}

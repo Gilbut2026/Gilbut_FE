@@ -77,10 +77,13 @@ export function deleteFavorite(id: number): Promise<void> {
  * 집주소 조회 (없으면 null)
  * ⚠️ 실서버는 미등록일 때 응답 봉투에서 `data` 를 아예 생략한다(= undefined).
  *    선언한 타입과 맞추려고 여기서 null 로 정규화한다. (2026-08-04 로컬 실연결로 확인)
+ *    또한 `data` 가 빈 객체({address:null})로 오는 경우도 있어(설정은 미등록인데 프롬프트가
+ *    안 뜨던 원인) 주소가 실제로 있을 때만 집으로 취급한다. (2026-08-14)
  */
 export async function getHome(): Promise<HomePlaceResponse | null> {
   if (USE_MOCK()) return mockGetHome()
-  return (await api.get<HomePlaceResponse | null>(HOME)) ?? null
+  const res = (await api.get<HomePlaceResponse | null>(HOME)) ?? null
+  return res?.address ? res : null
 }
 
 /** 집주소 저장/수정 */
