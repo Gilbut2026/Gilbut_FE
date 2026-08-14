@@ -28,7 +28,8 @@ function formatWhen(iso: string): string {
 }
 
 /** 초 → "25분" (1시간 넘으면 "1시간 5분") */
-function formatDuration(totalSec: number): string {
+function formatDuration(totalSec: number | null): string {
+  if (totalSec == null) return '시간 미확인'
   const min = Math.max(1, Math.round(totalSec / 60))
   if (min < 60) return `${min}분`
   const h = Math.floor(min / 60)

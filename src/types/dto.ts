@@ -444,13 +444,13 @@ export interface RouteHistoryResponse {
   historyId: number
   originName: string
   destinationName: string
-  recommendedRouteId: string
-  recommendedRouteType: RouteType
+  recommendedRouteId: string | null
+  recommendedRouteType: RouteType | null
   recommendedRouteOption: WalkingRouteOption | null
-  totalTimeSec: number
-  totalWalkTimeSec: number
-  totalWalkDistanceM: number
-  transferCount: number
+  totalTimeSec: number | null
+  totalWalkTimeSec: number | null
+  totalWalkDistanceM: number | null
+  transferCount: number | null
   drtRecommended: boolean
   drtServiceArea: string | null
   createdAt: string
