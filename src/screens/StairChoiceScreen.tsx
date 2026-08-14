@@ -1,4 +1,5 @@
 import type { StairComparison } from '../types/dto'
+import { speak as playVoice } from '../state/tts'
 
 /**
  * 계단 있는 길 ↔ 계단 없는 길 선택 — 7차 와이어프레임 #screen-stairs 이식.
@@ -44,15 +45,7 @@ export function StairChoiceScreen({
     `계단을 피하면 ${gapMeters}미터, ${gapMinutes}분 더 걸어야 해요.`
 
   function speak() {
-    if (!('speechSynthesis' in window)) {
-      onToast('이 기기에서는 음성 안내를 쓸 수 없어요')
-      return
-    }
-    window.speechSynthesis.cancel()
-    const utter = new SpeechSynthesisUtterance(summary)
-    utter.lang = 'ko-KR'
-    utter.rate = 0.9
-    window.speechSynthesis.speak(utter)
+    if (!playVoice(summary)) onToast('이 기기에서는 음성 안내를 쓸 수 없어요')
   }
 
   return (

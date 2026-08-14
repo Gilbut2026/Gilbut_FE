@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { getRoutes } from '../api/route'
 import { ApiError } from '../api/client'
+import { speak } from '../state/tts'
 import { MINI_PATHS, MINI_RESTS, applyStairChoice } from '../mock/route'
 import type { RouteErrorKind, RouteKey, RouteOption, RouteResult } from '../types/dto'
 
@@ -279,12 +280,8 @@ export function ResultsScreen({
 
   // 글씨를 못 읽는 분도 상황을 알 수 있게 오류 제목은 음성으로도 안내한다
   useEffect(() => {
-    if (!error || !('speechSynthesis' in window)) return
-    window.speechSynthesis.cancel()
-    const utter = new SpeechSynthesisUtterance(ROUTE_ERRORS[error].title)
-    utter.lang = 'ko-KR'
-    utter.rate = 0.9
-    window.speechSynthesis.speak(utter)
+    if (!error) return
+    speak(ROUTE_ERRORS[error].title, { auto: true })
   }, [error])
 
   // 계단이 '조금 어려움'인데 아직 안 고르셨으면, 결과 대신 두 경로 비교를 먼저 보여드린다

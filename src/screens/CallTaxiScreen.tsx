@@ -12,6 +12,8 @@
 
 const CALL_CENTER_TEL = '1666-0000'
 
+import { speak as playVoice } from '../state/tts'
+
 function BackIcon() {
   return (
     <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
@@ -48,17 +50,10 @@ export function CallTaxiScreen({
   }
 
   function speakCallTaxi() {
-    if (!('speechSynthesis' in window)) {
-      onToast('이 기기에서는 음성 안내를 쓸 수 없어요')
-      return
-    }
-    window.speechSynthesis.cancel()
-    const utter = new SpeechSynthesisUtterance(
+    const ok = playVoice(
       '장애인 콜택시 안내입니다. 콜센터로 전화를 걸어 휠체어를 이용한다고 먼저 말씀하시고, 출발지와 목적지, 타실 시간을 알려주세요. 예약은 콜센터에서 직접 하셔야 해요.',
     )
-    utter.lang = 'ko-KR'
-    utter.rate = 0.9
-    window.speechSynthesis.speak(utter)
+    if (!ok) onToast('이 기기에서는 음성 안내를 쓸 수 없어요')
   }
 
   return (

@@ -1,4 +1,5 @@
 /** 도움말 — 7차 와이어프레임 #screen-help 이식. 사용법 4단계 + 음성으로 듣기. */
+import { speak as playVoice } from '../state/tts'
 
 function BackIcon() {
   return (
@@ -25,16 +26,8 @@ export function HelpScreen({
   onToast: (msg: string) => void
 }) {
   function speakHelp() {
-    if (!('speechSynthesis' in window)) {
-      onToast('이 기기에서는 음성 안내를 쓸 수 없어요')
-      return
-    }
-    window.speechSynthesis.cancel()
     const text = 'AI 길벗 사용 방법입니다. ' + STEPS.map((s) => `${s.n}. ${s.title}. ${s.desc}`).join(' ')
-    const utter = new SpeechSynthesisUtterance(text)
-    utter.lang = 'ko-KR'
-    utter.rate = 0.9
-    window.speechSynthesis.speak(utter)
+    if (!playVoice(text)) onToast('이 기기에서는 음성 안내를 쓸 수 없어요')
   }
 
   return (

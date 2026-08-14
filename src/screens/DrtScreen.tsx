@@ -1,4 +1,5 @@
 /** 똑버스 이용 안내 (drt) — 7차 와이어프레임 #screen-drt 이식. */
+import { speak as playVoice } from '../state/tts'
 
 function BackIcon() {
   return (
@@ -34,17 +35,10 @@ export function DrtScreen({
   }
 
   function speakDrt() {
-    if (!('speechSynthesis' in window)) {
-      onToast('이 기기에서는 음성 안내를 쓸 수 없어요')
-      return
-    }
-    window.speechSynthesis.cancel()
-    const utter = new SpeechSynthesisUtterance(
+    const ok = playVoice(
       '똑버스 예약 방법입니다. 전화 또는 공식 앱과 웹을 열고, 출발지와 목적지, 탑승 인원과 보조기구를 알려주세요. 배차 가능 여부와 대기시간은 운영기관에서 확인하세요.',
     )
-    utter.lang = 'ko-KR'
-    utter.rate = 0.9
-    window.speechSynthesis.speak(utter)
+    if (!ok) onToast('이 기기에서는 음성 안내를 쓸 수 없어요')
   }
 
   return (

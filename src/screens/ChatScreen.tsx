@@ -5,7 +5,8 @@ declare global {
   }
 }
 
-import { useEffect, useRef, useState, type ReactNode } from 'react'
+import { useEffect, useRef, useState, isValidElement, type ReactElement, type ReactNode } from 'react'
+import { speak } from '../state/tts'
 
 /**
  * 대화로 길찾기 (chat) — 7차 와이어프레임 #screen-chat 이식.
@@ -44,6 +45,19 @@ type MsgInput =
   | { type: 'typing' }
 type Msg = MsgInput & { id: number }
 
+/** ReactNode(JSX) 말풍선에서 읽어줄 순수 텍스트만 뽑는다. <br> 은 공백으로 처리. */
+function nodeToText(node: ReactNode): string {
+  if (node == null || typeof node === 'boolean') return ''
+  if (typeof node === 'string' || typeof node === 'number') return String(node)
+  if (Array.isArray(node)) return node.map(nodeToText).join('')
+  if (isValidElement(node)) {
+    const el = node as ReactElement<{ children?: ReactNode }>
+    if (el.type === 'br') return ' '
+    return nodeToText(el.props.children)
+  }
+  return ''
+}
+
 function ChatAvatar() {
   return (
     <div className="chat-avatar">
@@ -79,16 +93,12 @@ export function ChatScreen({
   const scrollRef = useRef<HTMLDivElement>(null)
 
   const nextId = () => idRef.current++
-  const speak = (text: string) => {
-  if (!window.speechSynthesis) return
-  window.speechSynthesis.cancel()
-  const utterance = new SpeechSynthesisUtterance(text)
-  utterance.lang = 'ko-KR'
-  utterance.rate = 0.9
-  window.speechSynthesis.speak(utterance)
-}
   const push = (msg: MsgInput) => setMessages((m) => [...m, { ...msg, id: nextId() } as Msg])
-  const botSay = (content: ReactNode) => push({ type: 'bot', content })
+  const botSay = (content: ReactNode) => {
+    push({ type: 'bot', content })
+    // 음성 안내가 켜져 있으면 말풍선을 소리로 읽어준다 (온보딩 약속: "이어지는 질문을 소리로 읽어드려요")
+    speak(nodeToText(content), { auto: true })
+  }
   const userSay = (text: string) => push({ type: 'user', text })
   const actions = (content: ReactNode) => push({ type: 'actions', content })
   const card = (content: ReactNode) => push({ type: 'card', content })
@@ -289,7 +299,6 @@ export function ChatScreen({
           안녕하세요. 기본 설정에서 저장한 이동 설정은 제가 기억하고 있어요. <b>오늘 어디로 가고 싶으세요?</b>
         </>,
       )
-      speak('안녕하세요. 오늘 어디로 가고 싶으세요?')
       actions(destinationReplies())
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -332,7 +341,6 @@ export function ChatScreen({
 
   recognition.onresult = (event: any) => {
     const text = event.results[0][0].transcript
-    console.log('STT 인식 결과:', text)
 
     if (step === 'destination') {
       const name = text
