@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { SignupScreen } from './screens/SignupScreen'
 import { OnboardingScreen } from './screens/OnboardingScreen'
 import { HomeAddressSheet } from './components/HomeAddressSheet'
+import { SosSheet } from './components/SosSheet'
 import { getHome } from './api/place'
 import { HomeScreen } from './screens/HomeScreen'
 import { SettingsScreen } from './screens/SettingsScreen'
@@ -80,6 +81,7 @@ export default function App() {
   const [toastMsg, setToastMsg] = useState<string | null>(null)
   // 온보딩 직후 집 주소가 없으면 등록을 권유하는 프롬프트 (7차 와이어프레임)
   const [homePrompt, setHomePrompt] = useState(false)
+  const [sosOpen, setSosOpen] = useState(false)
   const toastTimer = useRef<number | null>(null)
   // 카카오 로그인 리다이렉트로 돌아왔을 때의 처리 단계
   const [authPhase, setAuthPhase] = useState<'idle' | 'loading' | 'error'>(initialAuthPhase)
@@ -113,7 +115,7 @@ export default function App() {
     toastTimer.current = window.setTimeout(() => setToastMsg(null), 2200)
   }, [])
 
-  const onSos = useCallback(() => toast('SOS 화면은 곧 준비할게요'), [toast])
+  const onSos = useCallback(() => setSosOpen(true), [])
 
   const onNeedStairChoice = useCallback((comparison: StairComparison) => {
     setStairComparison(comparison)
@@ -317,6 +319,8 @@ export default function App() {
         onClose={() => setHomePrompt(false)}
         onToast={toast}
       />
+
+      <SosSheet open={sosOpen} onClose={() => setSosOpen(false)} onToast={toast} />
 
       <div className={`toast${toastMsg ? ' show' : ''}`}>{toastMsg}</div>
     </div>

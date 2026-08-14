@@ -325,6 +325,9 @@ export function ResultsScreen({
                 </svg>
                 목적지 말하기
               </button>
+              <button className="btn secondary" onClick={onRestartChat}>
+                대화로 길찾기
+              </button>
             </div>
             <div className="route-empty-hint">목적지만 정하면 편한 길을 바로 찾아드려요.</div>
           </div>

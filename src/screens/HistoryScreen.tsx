@@ -23,11 +23,11 @@ export function HistoryScreen({
 
   return (
     <section className="screen">
-      <TopBar title="상담 기록" onBack={onBack} backLabel="설정으로 돌아가기" onSos={onSos} />
+      <TopBar title="길찾기 기록" onBack={onBack} backLabel="설정으로 돌아가기" onSos={onSos} />
 
       <div className="screen-body">
         <h2 className="screen-title" style={{ fontSize: 27 }}>
-          지난 상담
+          지난 길찾기
         </h2>
         <p className="screen-lead">경로를 다시 보거나 보호자에게 공유할 수 있어요.</p>
 

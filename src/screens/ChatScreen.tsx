@@ -8,6 +8,8 @@ declare global {
 import { useEffect, useRef, useState, isValidElement, type ReactElement, type ReactNode } from 'react'
 import { speak } from '../state/tts'
 import { TopBar } from '../components/TopBar'
+import { LocationScreen } from './LocationScreen'
+import { getHome } from '../api/place'
 
 /**
  * 대화로 길찾기 (chat) — 7차 와이어프레임 #screen-chat 이식.
@@ -86,12 +88,14 @@ export function ChatScreen({
   const [messages, setMessages] = useState<Msg[]>([])
   const [step, setStep] = useState<Step>('destination')
   const [input, setInput] = useState('')
+  const [locationDenied, setLocationDenied] = useState(false) // 현재 위치 GPS 거부 시 위치 안내 화면 표시
 
   const idRef = useRef(1)
   const destRef = useRef('')
   const departRef = useRef('')
   const startedRef = useRef(false)
   const scrollRef = useRef<HTMLDivElement>(null)
+  const homeAddrRef = useRef<string | null>(null) // 저장된 집 주소(있으면 "🏠 집" 버튼 노출)
 
   const nextId = () => idRef.current++
   const push = (msg: MsgInput) => setMessages((m) => [...m, { ...msg, id: nextId() } as Msg])
@@ -114,6 +118,20 @@ export function ChatScreen({
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight })
   }, [messages])
+
+  // 저장된 집 주소를 미리 읽어둔다 — 있으면 출발지에 "🏠 집" 버튼을 띄우고,
+  // 없으면 현재 위치 출발 시 "여기가 집인가요?" 한 번만 물어본다.
+  useEffect(() => {
+    let alive = true
+    getHome()
+      .then((h) => {
+        if (alive) homeAddrRef.current = h?.address ?? null
+      })
+      .catch(() => {})
+    return () => {
+      alive = false
+    }
+  }, [])
 
   // ── 대화 스크립트 ──────────────────────────────
   const destinationReplies = () => (
@@ -178,6 +196,28 @@ export function ChatScreen({
     askOrigin()
   }
 
+  // 집 주소가 저장돼 있을 때만 "🏠 집" 버튼을 보여준다(없는 값을 고르게 하지 않음).
+  const originReplies = () => (
+    <>
+      <button className="chat-reply" onClick={pickCurrentLocation}>
+        📍 현재 위치
+      </button>
+      {homeAddrRef.current && (
+        <button className="chat-reply" onClick={() => chooseOrigin('집')}>
+          🏠 집
+        </button>
+      )}
+      <button
+        className="chat-reply"
+        onClick={() => {
+          botSay('출발지를 아래 입력창에 적어주세요. 예: 행복아파트 정문')
+        }}
+      >
+        ✏️ 직접 입력
+      </button>
+    </>
+  )
+
   function askOrigin() {
     setStep('origin')
     typing(() => {
@@ -186,27 +226,58 @@ export function ChatScreen({
           어디서 출발하세요? <b>현재 위치</b>에서 시작하면 가장 정확해요.
         </>,
       )
-      actions(
-        <>
-          <button className="chat-reply" onClick={() => chooseOrigin('현재 위치')}>
-            📍 현재 위치
-          </button>
-          <button
-            className="chat-reply"
-            onClick={() => {
-              botSay('출발지를 아래 입력창에 적어주세요. 예: 행복아파트 정문')
-            }}
-          >
-            ✏️ 직접 입력
-          </button>
-        </>,
-      )
+      actions(originReplies())
     })
   }
 
+  // BE 실제 흐름과 동일 — 출발지(현재 위치/집/장소)를 고르면 곧바로 출발 시간 확인으로 넘어간다.
+  // (BE 는 HOME_CONFIRMATION 상태를 예약만 해두고 "여기가 집인가요?" 단계는 아직 쓰지 않는다.)
   function chooseOrigin(value: string) {
     userSay(`${value}에서 출발할게요`)
     askDepartTime()
+  }
+
+  // "현재 위치" 출발은 실제 GPS 좌표가 필요하다(BE confirmCurrentLocation 이 좌표 필수).
+  // 위치를 얻으면 진행하고, 꺼져 있거나 거부되면 위치 안내 화면을 띄운다.
+  function pickCurrentLocation() {
+    if (!('geolocation' in navigator)) {
+      chooseOrigin('현재 위치')
+      return
+    }
+    onToast('현재 위치를 확인하고 있어요…')
+    navigator.geolocation.getCurrentPosition(
+      () => chooseOrigin('현재 위치'),
+      () => setLocationDenied(true),
+      { enableHighAccuracy: true, timeout: 8000 },
+    )
+  }
+
+  // 위치 안내 화면의 세 갈래
+  function locationAllow() {
+    if (!('geolocation' in navigator)) {
+      onToast('이 기기에서는 위치를 사용할 수 없어요')
+      return
+    }
+    onToast('현재 위치를 확인하고 있어요…')
+    navigator.geolocation.getCurrentPosition(
+      () => {
+        setLocationDenied(false)
+        chooseOrigin('현재 위치')
+      },
+      () => onToast('위치가 아직 꺼져 있어요. 휴대폰 설정에서 위치를 켠 뒤 다시 눌러주세요'),
+      { enableHighAccuracy: true, timeout: 8000 },
+    )
+  }
+
+  function locationUseHome() {
+    setLocationDenied(false)
+    chooseOrigin('집')
+  }
+
+  function locationTypeOrigin() {
+    setLocationDenied(false)
+    setStep('origin')
+    botSay('출발지를 아래 입력창에 적어주세요. 예: 행복아파트 정문')
   }
 
   function askDepartTime() {
@@ -376,6 +447,20 @@ export function ChatScreen({
 }
 
   const [title, desc, width] = STEP_META[step]
+
+  // 현재 위치를 못 얻었을 때는 대화 상태를 유지한 채 위치 안내 화면으로 바꿔 보여준다.
+  if (locationDenied) {
+    return (
+      <LocationScreen
+        hasHome={!!homeAddrRef.current}
+        onAllow={locationAllow}
+        onUseHome={locationUseHome}
+        onTypeOrigin={locationTypeOrigin}
+        onBack={() => setLocationDenied(false)}
+        onSos={onSos}
+      />
+    )
+  }
 
   return (
     <section className="screen">

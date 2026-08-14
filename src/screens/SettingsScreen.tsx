@@ -238,7 +238,7 @@ export function SettingsScreen({
         <button className="setting-link" onClick={onOpenHistory}>
           <span className="icon">🕘</span>
           <span className="copy">
-            <b>상담 기록</b>
+            <b>길찾기 기록</b>
             <span>지난 경로와 공유 내용을 다시 확인</span>
           </span>
           <span className="chev">›</span>
