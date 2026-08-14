@@ -1,5 +1,6 @@
 import type { StairComparison } from '../types/dto'
 import { speak as playVoice } from '../state/tts'
+import { TopBar } from '../components/TopBar'
 
 /**
  * 계단 있는 길 ↔ 계단 없는 길 선택 — 7차 와이어프레임 #screen-stairs 이식.
@@ -13,13 +14,6 @@ import { speak as playVoice } from '../state/tts'
  *  · 글씨를 못 읽는 분을 위해 비교 내용을 음성으로도 읽어준다.
  */
 
-function BackIcon() {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-      <path d="m15 5-7 7 7 7" stroke="currentColor" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  )
-}
 
 export function StairChoiceScreen({
   comparison,
@@ -50,18 +44,7 @@ export function StairChoiceScreen({
 
   return (
     <section className="screen">
-      <header className="topbar">
-        <button className="back-btn" onClick={onBack} aria-label="대화로 길찾기로 돌아가기">
-          <BackIcon />
-        </button>
-        <div className="topbar-title">
-          <span className="brand-dot" />
-          계단 선택
-        </div>
-        <button className="sos-btn-top" onClick={onSos}>
-          SOS
-        </button>
-      </header>
+      <TopBar title="계단 선택" onBack={onBack} backLabel="대화로 길찾기로 돌아가기" onSos={onSos} />
 
       <div className="screen-body">
         <p className="screen-kicker">두 가지 길이 있어요</p>

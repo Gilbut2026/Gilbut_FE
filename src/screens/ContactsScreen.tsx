@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { TopBar } from '../components/TopBar'
 import { addContact, deleteContact, listContacts } from '../api/safety'
 import type { EmergencyContactResponse } from '../types/dto'
 
@@ -20,13 +21,6 @@ function formatPhone(raw: string): string {
   return raw
 }
 
-function BackIcon() {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-      <path d="m15 5-7 7 7 7" stroke="currentColor" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  )
-}
 
 export function ContactsScreen({
   onBack,
@@ -87,18 +81,7 @@ export function ContactsScreen({
 
   return (
     <section className="screen">
-      <header className="topbar">
-        <button className="back-btn" onClick={onBack} aria-label="설정으로 돌아가기">
-          <BackIcon />
-        </button>
-        <div className="topbar-title">
-          <span className="brand-dot" />
-          비상 연락처
-        </div>
-        <button className="sos-btn-top" onClick={onSos}>
-          SOS
-        </button>
-      </header>
+      <TopBar title="비상 연락처" onBack={onBack} backLabel="설정으로 돌아가기" onSos={onSos} />
 
       <div className="screen-body">
         <h2 className="screen-title" style={{ fontSize: 27 }}>

@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { getRoutes } from '../api/route'
 import { ApiError } from '../api/client'
 import { speak } from '../state/tts'
+import { TopBar } from '../components/TopBar'
 import { MINI_PATHS, MINI_RESTS, applyStairChoice } from '../mock/route'
 import type { RouteErrorKind, RouteKey, RouteOption, RouteResult } from '../types/dto'
 
@@ -15,13 +16,6 @@ import type { RouteErrorKind, RouteKey, RouteOption, RouteResult } from '../type
  *  · 휠체어 이용자에게는 똑버스 대신 장애인 콜택시 안내가 후보로 들어온다.
  */
 
-function BackIcon() {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-      <path d="m15 5-7 7 7 7" stroke="currentColor" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  )
-}
 
 /**
  * 경로 조회 실패 안내 문구.
@@ -306,18 +300,7 @@ export function ResultsScreen({
 
   return (
     <section className="screen">
-      <header className="topbar">
-        <button className="back-btn" onClick={onGoHome} aria-label="홈으로 돌아가기">
-          <BackIcon />
-        </button>
-        <div className="topbar-title">
-          <span className="brand-dot" />
-          가는 길
-        </div>
-        <button className="sos-btn-top" onClick={onSos}>
-          SOS
-        </button>
-      </header>
+      <TopBar title="가는 길" onBack={onGoHome} backLabel="홈으로 돌아가기" onSos={onSos} />
 
       <div className="screen-body">
         {!destination && (

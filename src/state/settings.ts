@@ -46,3 +46,38 @@ export function saveSettings(s: Settings): void {
     /* 저장 실패는 무시 (시크릿 모드 등) */
   }
 }
+
+/* ------------------------------------------------------------
+ *  전역 설정 스토어 — 단일 소스.
+ *  topbar 음성 토글·설정 화면·앱 셸이 같은 값을 보게 한다. (localStorage 캐시와 항상 동기)
+ *  이 스토어가 없으면 topbar 토글이 localStorage 를 직접 바꿔도 App 의 별도 state 가
+ *  덮어써버려 어긋난다. useSyncExternalStore 로 한 곳에서 구독한다.
+ * ------------------------------------------------------------ */
+import { useSyncExternalStore } from 'react'
+
+let current: Settings = loadSettings()
+const listeners = new Set<() => void>()
+
+function subscribe(cb: () => void): () => void {
+  listeners.add(cb)
+  return () => {
+    listeners.delete(cb)
+  }
+}
+
+/** 현재 설정 스냅샷 (스토어 소스) */
+export function getSettingsSnapshot(): Settings {
+  return current
+}
+
+/** 설정 일부를 바꾸고 저장 + 구독자에게 알린다. */
+export function updateSettings(patch: Partial<Settings>): void {
+  current = { ...current, ...patch }
+  saveSettings(current)
+  listeners.forEach((l) => l())
+}
+
+/** 컴포넌트에서 설정을 반응형으로 읽는다. */
+export function useSettings(): Settings {
+  return useSyncExternalStore(subscribe, getSettingsSnapshot, getSettingsSnapshot)
+}

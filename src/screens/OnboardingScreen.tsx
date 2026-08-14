@@ -3,7 +3,8 @@ import { saveMobilityProfile } from '../api/user'
 import { saveAccessibility } from '../api/user'
 import { getAccessibility } from '../api/user'
 import { speak } from '../state/tts'
-import { loadSettings } from '../state/settings'
+import { loadSettings, updateSettings } from '../state/settings'
+import { TopBar } from '../components/TopBar'
 import type {
   MobilityAid,
   MobilityProfileSaveRequest,
@@ -81,13 +82,6 @@ const AID_MAP: Record<string, MobilityAid> = {
   휠체어: 'WHEELCHAIR',
 }
 
-function BackIcon() {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-      <path d="m15 5-7 7 7 7" stroke="currentColor" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  )
-}
 
 export function OnboardingScreen({
   onComplete,
@@ -103,10 +97,9 @@ export function OnboardingScreen({
   const q = QUESTIONS[index]
 
   // 어르신 대상 — 음성 안내가 켜져 있으면 질문을 소리로 읽어준다.
-  // (음성 질문에 이미 답했으면 그 선택을, 아직이면 저장된 설정을 따른다.)
+  // 설정값(topbar 토글이 바꾸는 값) 하나만 본다. 음성 질문 답은 choose 에서 즉시 설정에 반영한다.
   useEffect(() => {
-    const voiceOn = answers.voice ? answers.voice === '사용' : loadSettings().voiceGuide
-    if (voiceOn) speak(`${q.title} ${q.help}`)
+    if (loadSettings().voiceGuide) speak(`${q.title} ${q.help}`)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [index])
   const answered = answers[q.id] != null
@@ -114,6 +107,8 @@ export function OnboardingScreen({
 
   function choose(option: string) {
     setAnswers((a) => ({ ...a, [q.id]: option }))
+    // 음성 질문 답은 즉시 설정에 반영 → 이후 질문 읽기·topbar 토글이 같은 값을 본다.
+    if (q.id === 'voice') updateSettings({ voiceGuide: option === '사용' })
   }
 
   async function next() {
@@ -152,23 +147,13 @@ export function OnboardingScreen({
 
   return (
     <section className="screen">
-      <header className="topbar">
-        <button
-          className="back-btn"
-          onClick={() => setIndex((i) => Math.max(0, i - 1))}
-          aria-label="이전 질문"
-          style={{ visibility: index === 0 ? 'hidden' : 'visible' }}
-        >
-          <BackIcon />
-        </button>
-        <div className="topbar-title">
-          <span className="brand-dot" />
-          나에게 맞는 길 설정
-        </div>
-        <button className="sos-btn-top" onClick={onSos}>
-          SOS
-        </button>
-      </header>
+      <TopBar
+        title="나에게 맞는 길 설정"
+        onBack={() => setIndex((i) => Math.max(0, i - 1))}
+        backLabel="이전 질문"
+        backHidden={index === 0}
+        onSos={onSos}
+      />
 
       <div className="screen-body onboard-body">
         <div className="progress-meta">

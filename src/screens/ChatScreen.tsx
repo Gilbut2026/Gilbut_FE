@@ -7,6 +7,7 @@ declare global {
 
 import { useEffect, useRef, useState, isValidElement, type ReactElement, type ReactNode } from 'react'
 import { speak } from '../state/tts'
+import { TopBar } from '../components/TopBar'
 
 /**
  * 대화로 길찾기 (chat) — 7차 와이어프레임 #screen-chat 이식.
@@ -378,20 +379,7 @@ export function ChatScreen({
 
   return (
     <section className="screen">
-      <header className="topbar">
-        <button className="back-btn" onClick={onBack} aria-label="홈으로 돌아가기">
-          <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-            <path d="m15 5-7 7 7 7" stroke="currentColor" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
-        </button>
-        <div className="topbar-title">
-          <span className="brand-dot" />
-          대화로 길찾기
-        </div>
-        <button className="sos-btn-top" onClick={onSos}>
-          SOS
-        </button>
-      </header>
+      <TopBar title="대화로 길찾기" onBack={onBack} backLabel="홈으로 돌아가기" onSos={onSos} />
 
       <div className="chat-step">
         <div className="copy">

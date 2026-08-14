@@ -1,16 +1,10 @@
 import { useEffect, useState } from 'react'
+import { TopBar } from '../components/TopBar'
 import { listHistory } from '../api/history'
 import type { RouteHistoryItem } from '../types/dto'
 
 /** 상담 기록 — 7차 와이어프레임 #screen-history 이식. 항목을 누르면 그 경로를 다시 본다. */
 
-function BackIcon() {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-      <path d="m15 5-7 7 7 7" stroke="currentColor" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  )
-}
 
 export function HistoryScreen({
   onBack,
@@ -29,18 +23,7 @@ export function HistoryScreen({
 
   return (
     <section className="screen">
-      <header className="topbar">
-        <button className="back-btn" onClick={onBack} aria-label="설정으로 돌아가기">
-          <BackIcon />
-        </button>
-        <div className="topbar-title">
-          <span className="brand-dot" />
-          상담 기록
-        </div>
-        <button className="sos-btn-top" onClick={onSos}>
-          SOS
-        </button>
-      </header>
+      <TopBar title="상담 기록" onBack={onBack} backLabel="설정으로 돌아가기" onSos={onSos} />
 
       <div className="screen-body">
         <h2 className="screen-title" style={{ fontSize: 27 }}>

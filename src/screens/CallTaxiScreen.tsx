@@ -13,14 +13,8 @@
 const CALL_CENTER_TEL = '1666-0000'
 
 import { speak as playVoice } from '../state/tts'
+import { TopBar } from '../components/TopBar'
 
-function BackIcon() {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-      <path d="m15 5-7 7 7 7" stroke="currentColor" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  )
-}
 
 export function CallTaxiScreen({
   destination,
@@ -58,18 +52,7 @@ export function CallTaxiScreen({
 
   return (
     <section className="screen">
-      <header className="topbar">
-        <button className="back-btn" onClick={onBack} aria-label="가는 길로 돌아가기">
-          <BackIcon />
-        </button>
-        <div className="topbar-title">
-          <span className="brand-dot" />
-          콜택시 안내
-        </div>
-        <button className="sos-btn-top" onClick={onSos}>
-          SOS
-        </button>
-      </header>
+      <TopBar title="콜택시 안내" onBack={onBack} backLabel="가는 길로 돌아가기" onSos={onSos} />
 
       <div className="screen-body">
         <div className="drt-hero">

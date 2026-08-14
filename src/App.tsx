@@ -12,7 +12,7 @@ import { ChatScreen } from './screens/ChatScreen'
 import { DrtScreen } from './screens/DrtScreen'
 import { CallTaxiScreen } from './screens/CallTaxiScreen'
 import { StairChoiceScreen } from './screens/StairChoiceScreen'
-import { loadSettings, saveSettings, type Settings } from './state/settings'
+import { useSettings, updateSettings } from './state/settings'
 import { HAS_MOCK, mockBadgeLabel } from './api/mode'
 import { kakaoLogin, KAKAO_CALLBACK_PATH } from './api/auth'
 import { TAB_SCREENS, type Screen } from './types/nav'
@@ -74,7 +74,7 @@ export default function App() {
   // 계단 있는 길 ↔ 없는 길 선택. 한 번 고르면 그 이동에서는 다시 묻지 않는다(7/31 회의)
   const [stairChoice, setStairChoice] = useState<'with' | 'none' | null>(null)
   const [stairComparison, setStairComparison] = useState<StairComparison | null>(null)
-  const [settings, setSettings] = useState<Settings>(() => loadSettings())
+  const settings = useSettings()
   const [toastMsg, setToastMsg] = useState<string | null>(null)
   const toastTimer = useRef<number | null>(null)
   // 카카오 로그인 리다이렉트로 돌아왔을 때의 처리 단계
@@ -83,9 +83,6 @@ export default function App() {
   // (그러지 않으면 인가 코드가 두 번 소비되거나, 주소가 이미 비어 실패로 표시된다).
   const authHandled = useRef(false)
 
-  useEffect(() => {
-    saveSettings(settings)
-  }, [settings])
 
   // 카카오 인가 코드(?code=…)를 받아 토큰으로 교환한다. 최초 1회만.
   useEffect(() => {
@@ -156,7 +153,7 @@ export default function App() {
         <OnboardingScreen
           onSos={onSos}
           onComplete={(voiceEnabled) => {
-            setSettings((s) => ({ ...s, voiceGuide: voiceEnabled }))
+            updateSettings({ voiceGuide: voiceEnabled })
             setScreen('home')
             toast('내게 맞는 이동 설정을 저장했어요')
           }}
@@ -242,7 +239,7 @@ export default function App() {
       {screen === 'settings' && (
         <SettingsScreen
           settings={settings}
-          onChange={(patch) => setSettings((s) => ({ ...s, ...patch }))}
+          onChange={updateSettings}
           onBack={() => setScreen('home')}
           onSos={onSos}
           onToast={toast}

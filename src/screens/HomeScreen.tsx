@@ -3,6 +3,8 @@
  * 마이크(음성으로 목적지 말하기) + 자주 가는 곳. 하단 탭은 App 셸이 렌더한다.
  */
 
+import { TopBar } from '../components/TopBar'
+
 const PLACES = [
   { emoji: '🏥', name: '○○병원' },
   { emoji: '🛒', name: '전통시장' },
@@ -30,15 +32,7 @@ export function HomeScreen({
 }) {
   return (
     <section className="screen">
-      <header className="topbar">
-        <div className="topbar-title">
-          <span className="brand-dot" />
-          AI 길벗
-        </div>
-        <button className="sos-btn-top" onClick={onSos}>
-          SOS
-        </button>
-      </header>
+      <TopBar title="AI 길벗" onSos={onSos} />
 
       <div className="screen-body">
         <div className="home-hero glass">

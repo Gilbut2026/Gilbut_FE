@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { TopBar } from '../components/TopBar'
 import { deleteFavorite, listFavorites } from '../api/place'
 import type { FavoritePlaceResponse } from '../types/dto'
 
@@ -7,13 +8,6 @@ import type { FavoritePlaceResponse } from '../types/dto'
  * api/place (BE /api/users/me/favorites) 연동. 장소를 누르면 바로 길찾기(결과)로.
  */
 
-function BackIcon() {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-      <path d="m15 5-7 7 7 7" stroke="currentColor" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  )
-}
 
 export function FavoritesScreen({
   onBack,
@@ -41,18 +35,7 @@ export function FavoritesScreen({
 
   return (
     <section className="screen">
-      <header className="topbar">
-        <button className="back-btn" onClick={onBack} aria-label="설정으로 돌아가기">
-          <BackIcon />
-        </button>
-        <div className="topbar-title">
-          <span className="brand-dot" />
-          자주 가는 곳
-        </div>
-        <button className="sos-btn-top" onClick={onSos}>
-          SOS
-        </button>
-      </header>
+      <TopBar title="자주 가는 곳" onBack={onBack} backLabel="설정으로 돌아가기" onSos={onSos} />
 
       <div className="screen-body">
         <h2 className="screen-title" style={{ fontSize: 27 }}>
