@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { TopBar } from '../components/TopBar'
 import { getSettings, saveAccessibility } from '../api/user'
-import { getHome, saveHome } from '../api/place'
+import { getHome, saveHome, searchPlaces } from '../api/place'
 import { FONT_SIZES, type Settings } from '../state/settings'
 import type {
   FontSize,
@@ -78,8 +78,20 @@ export function SettingsScreen({
     }
     setSavingHome(true)
     try {
-      // 좌표는 실서버에선 주소 검색으로 채운다. Mock 은 수원 기준 좌표.
-      await saveHome({ address: homeInput.trim(), latitude: 37.2636, longitude: 127.0286 })
+      const address = homeInput.trim()
+      // 입력 주소를 place 검색으로 실좌표 변환(첫 결과). 못 찾으면 수원 기본 좌표로 폴백.
+      let latitude = 37.2636
+      let longitude = 127.0286
+      try {
+        const first = (await searchPlaces({ keyword: address })).places[0]
+        if (first) {
+          latitude = first.latitude
+          longitude = first.longitude
+        }
+      } catch {
+        /* 검색 실패 시 기본 좌표 유지 */
+      }
+      await saveHome({ address, latitude, longitude })
       setHomeSheet(false)
       reloadSettings()
       onToast('집 주소를 저장했어요')
