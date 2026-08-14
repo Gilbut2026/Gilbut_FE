@@ -1,31 +1,74 @@
 /**
- * 경로 API — 화면은 이 파일의 함수만 호출한다.
+ * 경로 API — 화면은 이 파일의 함수만 호출한다. (Mock ↔ 실서버 스위칭)
  *
- * ⚠️ BE 경로 컨트롤러는 **개발 전** (노션 「API 명세서」 2026-08-04) 이라 항상 Mock 이다.
- *    올라오면 api/mode.ts 의 FORCED_MOCK 에서 'route' 를 빼고 아래 주석의 경로를 붙인다.
+ * 2026-08-14 실연동 배선: BE 「맞춤 경로 추천」 배포 + AI 스코어링 서버(gilbut-ai.onrender.com) 배포로
+ *   실호출이 가능해졌다. mode.ts 의 FORCED_MOCK 에서 route 를 뺐고, 스위치는 useMock('route') 가 한다.
+ *   · 배포본: VITE_REAL_DOMAINS=auth,place,safety (route 없음) → 여전히 Mock (시연 안전).
+ *   · 실서버 테스트: VITE_REAL_DOMAINS 에 route 추가 + 로그인(JWT) 필요. place 도 실서버여야 좌표를 얻는다.
  *
- *      POST /api/routes/recommendations          맞춤 경로 추천   ← getRoutes 가 쓸 것
- *      POST /api/routes/transit                  대중교통 경로
- *      POST /api/routes/walking                  보행 경로
- *      POST /api/routes/walking/reroute          보행 경로 재탐색
- *      POST /api/routes/walking/rest-stop-reroute 쉼터 경유 재탐색
- *      POST /api/facilities/along-route          경로 주변 쉼터 (7/31 회의: 지도 표시용)
+ * 좌표 배선 — BE 는 목적지/출발지의 위경도를 요구하는데 화면 흐름은 "목적지 이름(문자열)"만 넘긴다.
+ *   그래서 getRoutesReal 안에서 좌표를 만든다:
+ *     · 목적지 이름 → searchPlaces(place 실서버) 첫 결과의 위경도
+ *     · 출발지 "현재 위치" → 브라우저 geolocation (거부/미지원 시 수원 기본 좌표로 폴백)
+ *   BE 응답(RouteRecommendationResult)은 mapRecommendation.ts 어댑터가 화면 RouteResult 로 번역한다.
  *
- * 🚨 BE 실응답은 dto.ts §6-BE 에 이식 완료(RouteRecommendationResult, 2026-08-14 실코드 기준).
- *    우리 RouteResult(편집형 4카드)와 모양이 달라, 번역 어댑터를 미리 만들어 뒀다:
- *      mapRecommendationToRouteResult(be, {destination, origin})  ← api/mapRecommendation.ts
- *
- *    스위치 뺄 때(연결) 이 함수 본문을 아래처럼 바꾼다 (좌표 배선이 선행돼야 함):
- *      const be = await apiPost<RouteRecommendationResult>('/api/routes/recommendations', {
- *        origin, destination, departureDateTime,           // ← 좌표(searchPlaces)·geolocation 로 채움
- *      })
- *      return mapRecommendationToRouteResult(be, { destination: destName, origin: originName })
- *    (지금은 좌표 흐름·경사 NOT_REQUESTED 이슈가 남아 mock 유지 — FORCED_MOCK 에 'route' 있음.)
+ * 🚨 남은 것: 대화에서 고른 출발 시각을 실제로 전달(지금은 '지금' 고정). BE 접근성 신호 노출 시 어댑터 보강.
  */
-import type { RouteResult } from '../types/dto'
+import type { LatLng, RouteRecommendationRequest, RouteRecommendationResult, RouteResult } from '../types/dto'
+import { api, ApiError } from './client'
+import { useMock } from './mode'
+import { searchPlaces } from './place'
 import { mockGetRoutes } from '../mock/route'
+import { mapRecommendationToRouteResult } from './mapRecommendation'
+
+// 서비스 지역이 수원 — geolocation 을 못 잡을 때의 안전 기본 출발지(수원시청 인근).
+const DEFAULT_ORIGIN: LatLng = { latitude: 37.2636, longitude: 127.0286 }
+
+/** 브라우저 현재 위치 (권한 거부·미지원·시간초과 시 null → 기본 좌표로 폴백) */
+function getCurrentPosition(): Promise<LatLng | null> {
+  if (typeof navigator === 'undefined' || !navigator.geolocation) return Promise.resolve(null)
+  return new Promise((resolve) => {
+    navigator.geolocation.getCurrentPosition(
+      (pos) => resolve({ latitude: pos.coords.latitude, longitude: pos.coords.longitude }),
+      () => resolve(null),
+      { enableHighAccuracy: false, timeout: 8000, maximumAge: 60_000 },
+    )
+  })
+}
+
+/** 목적지 이름 → 좌표 (place 검색 첫 결과). center 를 기준점으로 검색. 못 찾으면 null. */
+async function resolveDestination(
+  keyword: string,
+  center: LatLng,
+): Promise<{ coords: LatLng; name: string } | null> {
+  const res = await searchPlaces({
+    keyword,
+    lat: String(center.latitude),
+    lon: String(center.longitude),
+  })
+  const first = res.places[0]
+  if (!first) return null
+  return { coords: { latitude: first.latitude, longitude: first.longitude }, name: first.name }
+}
+
+/** BE 「맞춤 경로 추천」 실호출 → 어댑터로 화면 RouteResult 번역 */
+async function getRoutesReal(destination: string): Promise<RouteResult> {
+  const origin = (await getCurrentPosition()) ?? DEFAULT_ORIGIN
+  const dest = await resolveDestination(destination, origin)
+  // 목적지를 못 찾으면 갈 수 있는 길이 없는 것과 같게 처리 (ResultsScreen 이 404 → 'none' 안내)
+  if (!dest) throw new ApiError(404, '해당 목적지를 찾지 못했어요.')
+
+  const request: RouteRecommendationRequest = {
+    origin,
+    destination: dest.coords,
+    // BE LocalDateTime — 존/밀리초 없는 형식. TODO: 대화에서 고른 출발 시각을 실제로 전달.
+    departureDateTime: new Date().toISOString().slice(0, 19),
+  }
+  const be = await api.post<RouteRecommendationResult>('/api/routes/recommendations', request)
+  return mapRecommendationToRouteResult(be, { destination: dest.name, origin: '현재 위치' })
+}
 
 /** 목적지 기준 추천 경로(편한 길·걷기 적은 길·똑버스/콜택시) 조회 */
 export function getRoutes(destination: string): Promise<RouteResult> {
-  return mockGetRoutes(destination)
+  return useMock('route') ? mockGetRoutes(destination) : getRoutesReal(destination)
 }

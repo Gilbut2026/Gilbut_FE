@@ -34,8 +34,14 @@ export const DOMAIN_LABEL: Record<ApiDomain, string> = {
   history: '기록',
 }
 
-/** BE 컨트롤러 미구현 — 실서버로 켜도 Mock 유지 (올라오는 대로 여기서 뺀다) */
-const FORCED_MOCK: ReadonlySet<ApiDomain> = new Set<ApiDomain>(['route', 'chat', 'history'])
+/**
+ * BE 컨트롤러 미구현 — 실서버로 켜도 Mock 유지 (올라오는 대로 여기서 뺀다).
+ * 2026-08-14 route 제거: BE 「맞춤 경로 추천」(POST /api/routes/recommendations) 배포됨 + AI 스코어링 서버
+ *   배포(gilbut-ai.onrender.com)로 실호출 가능해졌다. 이제 route 는 일반 스위치로 처리 — 배포본은
+ *   VITE_REAL_DOMAINS 에 route 가 없어 여전히 Mock 이고, 켜려면 그 목록에 route 를 넣는다(로그인 JWT 필요).
+ * chat 은 AI 챗 NLU 엔드포인트 미존재, history 는 실이력이 전체 플로우 후에야 쌓여 아직 Mock 유지.
+ */
+const FORCED_MOCK: ReadonlySet<ApiDomain> = new Set<ApiDomain>(['chat', 'history'])
 
 const ALL_DOMAINS: ApiDomain[] = ['auth', 'user', 'place', 'safety', 'route', 'chat', 'history']
 
