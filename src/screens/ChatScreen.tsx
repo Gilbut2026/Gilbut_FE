@@ -1,3 +1,10 @@
+declare global {
+  interface Window {
+    SpeechRecognition: any
+    webkitSpeechRecognition: any
+  }
+}
+
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 
 /**
@@ -72,6 +79,14 @@ export function ChatScreen({
   const scrollRef = useRef<HTMLDivElement>(null)
 
   const nextId = () => idRef.current++
+  const speak = (text: string) => {
+  if (!window.speechSynthesis) return
+  window.speechSynthesis.cancel()
+  const utterance = new SpeechSynthesisUtterance(text)
+  utterance.lang = 'ko-KR'
+  utterance.rate = 0.9
+  window.speechSynthesis.speak(utterance)
+}
   const push = (msg: MsgInput) => setMessages((m) => [...m, { ...msg, id: nextId() } as Msg])
   const botSay = (content: ReactNode) => push({ type: 'bot', content })
   const userSay = (text: string) => push({ type: 'user', text })
@@ -274,6 +289,7 @@ export function ChatScreen({
           안녕하세요. 기본 설정에서 저장한 이동 설정은 제가 기억하고 있어요. <b>오늘 어디로 가고 싶으세요?</b>
         </>,
       )
+      speak('안녕하세요. 오늘 어디로 가고 싶으세요?')
       actions(destinationReplies())
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -299,13 +315,56 @@ export function ChatScreen({
   }
 
   function micTap() {
-    onToast('말씀을 듣고 있어요…')
-    window.setTimeout(() => {
-      if (step === 'destination') chooseDestination('○○병원')
-      else if (step === 'origin') chooseOrigin('현재 위치')
-      else if (step === 'depart') chooseTime('지금 바로')
-    }, 600)
+  const SpeechRecognition =
+    window.SpeechRecognition || window.webkitSpeechRecognition
+
+  if (!SpeechRecognition) {
+    onToast('이 브라우저는 음성 인식을 지원하지 않아요. Chrome을 사용해 주세요.')
+    return
   }
+
+  const recognition = new SpeechRecognition()
+  recognition.lang = 'ko-KR'
+  recognition.interimResults = false
+  recognition.maxAlternatives = 1
+
+  onToast('말씀을 듣고 있어요…')
+
+  recognition.onresult = (event: any) => {
+    const text = event.results[0][0].transcript
+    console.log('STT 인식 결과:', text)
+
+    if (step === 'destination') {
+      const name = text
+        .replace(/(에|으로)?\s*(가고 싶어요|가고 싶어|가는 길|어떻게 가).*$/, '')
+        .trim() || text
+      chooseDestination(name)
+    } else if (step === 'origin') {
+      const from = text
+        .replace(/(에서|에)?\s*(출발.*)$/, '')
+        .trim() || text
+      chooseOrigin(from)
+    } else if (step === 'depart') {
+      chooseTime(text)
+    }
+  }
+
+  recognition.onerror = (event: any) => {
+    if (event.error === 'not-allowed') {
+      onToast('마이크 권한을 허용해 주세요')
+    } else if (event.error === 'no-speech') {
+      onToast('음성이 감지되지 않았어요. 다시 눌러주세요')
+    } else {
+      onToast('음성 인식 오류가 발생했어요')
+    }
+  }
+
+  try {
+    recognition.start()
+  } catch (e) {
+    onToast('마이크를 시작할 수 없어요. 다시 눌러주세요')
+  }
+}
 
   const [title, desc, width] = STEP_META[step]
 
