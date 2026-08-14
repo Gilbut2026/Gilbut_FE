@@ -424,7 +424,7 @@ export interface RouteResult {
   stairComparison: StairComparison | null
 }
 
-/** 지난 길찾기 기록 한 건 (BE RouteSearchHistory 컨트롤러 미구현 → 현재 Mock) */
+/** 지난 길찾기 기록 한 건 — 화면용(프론트가 만든 형태). BE 응답은 아래 RouteHistoryResponse. */
 export interface RouteHistoryItem {
   id: number
   destination: string
@@ -432,6 +432,28 @@ export interface RouteHistoryItem {
   routeKey: RouteKey
   badgeLabel: string
   badgeTone: 'default' | 'drt' | 'warn'
+}
+
+/**
+ * ✅ BE 「상담 이력」 실계약 (GET /api/routes/history) — 목록 한 건.
+ *    2026-08-14 Gilbut_BE #32 RouteHistoryResponse 에서 옮김.
+ *    화면용 RouteHistoryItem 으로의 번역은 api/mapHistory.ts 어댑터가 담당한다.
+ *    (route 실호출이 있어야 BE에 기록이 쌓이므로, 스위치는 경사도/route 준비 후 켠다.)
+ */
+export interface RouteHistoryResponse {
+  historyId: number
+  originName: string
+  destinationName: string
+  recommendedRouteId: string
+  recommendedRouteType: RouteType
+  recommendedRouteOption: WalkingRouteOption | null
+  totalTimeSec: number
+  totalWalkTimeSec: number
+  totalWalkDistanceM: number
+  transferCount: number
+  drtRecommended: boolean
+  drtServiceArea: string | null
+  createdAt: string
 }
 
 /* ============================================================
