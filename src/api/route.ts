@@ -11,10 +11,16 @@
  *      POST /api/routes/walking/rest-stop-reroute 쉼터 경유 재탐색
  *      POST /api/facilities/along-route          경로 주변 쉼터 (7/31 회의: 지도 표시용)
  *
- * 🚨 응답 DTO 가 아직 확정되지 않았다. 우리 RouteResult 는 와이어프레임 기준으로 프론트가 만든 형태라,
- *    BE 응답이 나오면 types/dto.ts 의 RouteOption/RouteResult 를 그쪽에 맞춰야 한다.
- *    특히 7/31 회의 신규 항목 — 계단 회피/포함 두 후보(StairComparison), 콜택시 분기, 쉼터 좌표 — 가
- *    응답에 들어오는지 확인 필요.
+ * 🚨 BE 실응답은 dto.ts §6-BE 에 이식 완료(RouteRecommendationResult, 2026-08-14 실코드 기준).
+ *    우리 RouteResult(편집형 4카드)와 모양이 달라, 번역 어댑터를 미리 만들어 뒀다:
+ *      mapRecommendationToRouteResult(be, {destination, origin})  ← api/mapRecommendation.ts
+ *
+ *    스위치 뺄 때(연결) 이 함수 본문을 아래처럼 바꾼다 (좌표 배선이 선행돼야 함):
+ *      const be = await apiPost<RouteRecommendationResult>('/api/routes/recommendations', {
+ *        origin, destination, departureDateTime,           // ← 좌표(searchPlaces)·geolocation 로 채움
+ *      })
+ *      return mapRecommendationToRouteResult(be, { destination: destName, origin: originName })
+ *    (지금은 좌표 흐름·경사 NOT_REQUESTED 이슈가 남아 mock 유지 — FORCED_MOCK 에 'route' 있음.)
  */
 import type { RouteResult } from '../types/dto'
 import { mockGetRoutes } from '../mock/route'

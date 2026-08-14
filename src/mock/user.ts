@@ -13,6 +13,7 @@ let mobilityProfile: MobilityProfileResponse = {
   id: 1,
   walkingDuration: 'WITHIN_20_MINUTES',
   stairLevel: 'SLIGHTLY_DIFFICULT',
+  slopeLevel: 'SLIGHTLY_DIFFICULT',
   restStopPreference: 'NO_PREFERENCE',
   transferLevel: 'FEWER_PREFERRED',
   mobilityAid: 'NOT_USED',

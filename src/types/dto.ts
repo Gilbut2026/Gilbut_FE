@@ -44,6 +44,13 @@ export type WalkingDuration =
 /** 계단 이용 정도 */
 export type StairLevel = 'AVAILABLE' | 'SLIGHTLY_DIFFICULT' | 'DIFFICULT'
 
+/**
+ * 오르막(경사) 이동 정도. ✅ 2026-08-13 BE 확정 (Gilbut_BE SlopeLevel enum, 재형님).
+ * 계단(StairLevel)과 동일한 3값. AI 스코어링이 이 값으로 경사 민감도(LOW/MEDIUM/HIGH)를 정한다.
+ *   AVAILABLE(괜찮음)→LOW · SLIGHTLY_DIFFICULT(조금 힘듦)→MEDIUM · DIFFICULT(많이 힘듦)→HIGH
+ */
+export type SlopeLevel = 'AVAILABLE' | 'SLIGHTLY_DIFFICULT' | 'DIFFICULT'
+
 /** 쉬어 갈 곳 필요 여부 */
 export type RestStopPreference = 'REQUIRED' | 'NO_PREFERENCE'
 
@@ -101,6 +108,7 @@ export interface UserResponse {
 export interface MobilityProfileSaveRequest {
   walkingDuration: WalkingDuration
   stairLevel: StairLevel
+  slopeLevel: SlopeLevel // ✅ BE @NotNull 필수 — 온보딩에서 반드시 함께 보낸다
   restStopPreference: RestStopPreference
   transferLevel: TransferLevel
   mobilityAid: MobilityAid
@@ -111,6 +119,7 @@ export interface MobilityProfileResponse {
   id: number
   walkingDuration: WalkingDuration
   stairLevel: StairLevel
+  slopeLevel: SlopeLevel
   restStopPreference: RestStopPreference
   transferLevel: TransferLevel
   mobilityAid: MobilityAid
@@ -423,6 +432,117 @@ export interface RouteHistoryItem {
   routeKey: RouteKey
   badgeLabel: string
   badgeTone: 'default' | 'drt' | 'warn'
+}
+
+/* ============================================================
+ *  6-BE. ✅ BE 「맞춤 경로 추천」 실계약 (POST /api/routes/recommendations)
+ *     2026-08-14 Gilbut_BE 실코드에서 그대로 옮김 (RouteRecommendationResult 외).
+ *     위쪽 RouteResult 는 화면용(편집형 4카드), 이건 BE 가 실제로 주는 원본이다.
+ *     둘 사이 번역은 api/mapRecommendation.ts 의 어댑터가 담당한다.
+ *     ⚠️ 아직 FORCED_MOCK 에 'route' 가 있어 실호출은 안 한다 — 스위치 뺄 때 어댑터를 붙인다.
+ * ============================================================ */
+
+/** 좌표 (BE PlaceRequest) */
+export interface LatLng {
+  latitude: number
+  longitude: number
+}
+
+/** POST /api/routes/recommendations 요청 — 출발지·목적지 좌표 + 출발시각(ISO 8601) */
+export interface RouteRecommendationRequest {
+  origin: LatLng
+  destination: LatLng
+  departureDateTime: string
+}
+
+/** 경로 이동 유형 */
+export type RouteType = 'WALKING' | 'TRANSIT'
+
+/** 보행 경로 탐색 조건 (TRANSIT 후보에서는 null) */
+export type WalkingRouteOption = 'DEFAULT' | 'AVOID_STAIRS'
+
+/** 경로 후보 지표 (초·미터 단위 원본) */
+export interface RouteMetricsDto {
+  totalTimeSec: number
+  totalWalkTimeSec: number
+  totalWalkDistanceM: number
+  transferCount: number
+}
+
+/** 경로 후보 (BE RouteCandidate — walkSegments 는 @JsonIgnore 라 응답에 없음) */
+export interface RouteCandidateDto {
+  routeId: string
+  routeType: RouteType
+  routeOption: WalkingRouteOption | null
+  providerRank: number
+  metrics: RouteMetricsDto
+}
+
+/** 점수 세부 (AI ScoreBreakdown) — 항목별 감점 */
+export interface ScoreBreakdown {
+  walkTimePenalty: number
+  walkDistancePenalty: number
+  obstaclePenalty: number
+  transferPenalty: number
+  weatherPenalty: number
+  slopePenalty: number
+}
+
+/** 경사 분석 상태 (NOT_REQUESTED = 경사 계산 미실행) */
+export type SlopeAnalysisStatus = 'NOT_REQUESTED' | 'SUCCESS' | 'PARTIAL' | 'FAILED'
+
+/** 경사 요약 (AI SlopeSummary) */
+export interface SlopeSummary {
+  status: SlopeAnalysisStatus
+  sampleIntervalM: number | null
+  analyzedSegmentCount: number | null
+  totalEligibleSegmentCount: number | null
+  maxUphillGradePercent: number | null
+  maxDownhillGradePercent: number | null
+  totalAscentM: number | null
+  totalDescentM: number | null
+}
+
+/** 추천 경로 한 건 (rank 순) */
+export interface RouteRecommendationItemDto {
+  routeId: string
+  candidate: RouteCandidateDto
+  score: number
+  rank: number
+  scoreBreakdown: ScoreBreakdown | null
+  slopeSummary: SlopeSummary | null
+}
+
+/** DRT/콜택시 판단 근거 코드 */
+export type DrtReasonCode =
+  | 'ASSISTIVE_DEVICE'
+  | 'LONG_WALK_DISTANCE'
+  | 'MANY_TRANSFERS'
+  | 'SEVERE_WEATHER'
+  | 'NO_PASSABLE_ROUTE'
+
+/** DRT/콜택시 안내 판단 (show=노출 · priority=우선추천 · taxiGuide=콜택시로 안내) */
+export interface DrtDecision {
+  show: boolean
+  priority: boolean
+  taxiGuide: boolean
+  reasonCodes: DrtReasonCode[]
+  basedOnRouteId: string | null
+}
+
+/**
+ * POST /api/routes/recommendations 응답.
+ * walkingRoute/transitRoutes/filteredResults 는 지도·상세용 큰 구조라 지금 화면이 안 써서
+ * unknown 으로 둔다(붙일 때 walking/transit 응답 타입을 별도 이식). recommendations·drtDecision 만 어댑터가 쓴다.
+ */
+export interface RouteRecommendationResult {
+  requestId: string
+  scoringVersion: string
+  recommendations: RouteRecommendationItemDto[]
+  filteredResults: unknown[] | null
+  drtDecision: DrtDecision | null
+  walkingRoute: unknown | null
+  transitRoutes: unknown | null
 }
 
 /* ============================================================

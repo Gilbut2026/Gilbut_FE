@@ -6,6 +6,7 @@ import type {
   MobilityAid,
   MobilityProfileSaveRequest,
   RestStopPreference,
+  SlopeLevel,
   StairLevel,
   TransferLevel,
   WalkingDuration,
@@ -13,14 +14,17 @@ import type {
 
 /**
  * 나에게 맞는 길 설정 (온보딩) — 7차 와이어프레임 #screen-onboarding 이식.
- * 6문항을 순서대로 묻고, 완료 시 답변을 BE 계약으로 매핑해 저장한다.
+ * 7문항을 순서대로 묻고, 완료 시 답변을 BE 계약으로 매핑해 저장한다.
  *  · walk·stairs·rest·transfer·aid → MobilityProfileSaveRequest
  *  · voice → AccessibilitySetting(voiceGuidanceEnabled)
  *
  * 7/31 회의 반영
- *  · 오르막 질문 삭제 — 백엔드가 경사 데이터 확보 불가를 확인하고 삭제를 요청(00:20:18).
- *    Score function 에도 미반영 항목이라, 답을 받아놓고 쓰지 않는 질문을 남기지 않는다.
  *  · 보조기구 3지선다 복원 — 휠체어 이용자에게 장애인 콜택시를 안내하기로 정해져 휠체어 식별이 필요해졌다.
+ *
+ * 8/12 오르막 질문 복원 (6차 와이어프레임 정의 그대로) → 8/14 저장 배선 완료.
+ *  · AI팀 확답: Score function 이 경사를 3단계(괜찮음/조금 힘듦/많이 힘듦)로 구분해 가중치.
+ *  · 8/13 BE 재형님이 SlopeLevel enum(AVAILABLE/SLIGHTLY_DIFFICULT/DIFFICULT, @NotNull 필수) 확정.
+ *    → dto.ts SlopeLevel + SLOPE_MAP + payload slopeLevel 로 연결함. 필수 필드라 반드시 함께 저장한다.
  */
 
 interface Question {
@@ -36,6 +40,7 @@ const QUESTIONS: Question[] = [
   { id: 'voice', icon: '🔊', label: '음성 안내', title: '음성으로 안내를 받으시겠어요?', help: '켜두시면 이어지는 질문과 길 안내를 소리로 읽어드려요.', options: ['사용', '사용 안 함'] },
   { id: 'walk', icon: '🚶', label: '보행 시간', title: '한 번에 얼마나 걸을 수 있나요?', help: '평소 무리 없이 걸을 수 있는 시간을 골라주세요.', options: ['보행 불가', '10분 이내', '20분', '30분 이상'] },
   { id: 'stairs', icon: '🪜', label: '계단', title: '계단을 이용할 수 있나요?', help: '계단이 있는 길과 없는 길을 함께 보여드려요.', options: ['이용 가능', '조금 어려움', '이용 어려움'] },
+  { id: 'slope', icon: '⛰️', label: '오르막', title: '오르막길 이동이 힘드신가요?', help: '경사가 큰 구간을 피하는 데 사용해요.', options: ['괜찮음', '조금 힘듦', '많이 힘듦'] },
   { id: 'rest', icon: '🪑', label: '휴식', title: '이동 중 쉬어 갈 곳이 필요한가요?', help: '가는 길 지도에 쉼터를 표시해 드려요.', options: ['필요', '상관없음'] },
   { id: 'transfer', icon: '🔁', label: '환승', title: '버스나 지하철 환승이 어려우신가요?', help: '환승 횟수가 적은 길을 우선해요.', options: ['괜찮음', '적게', '되도록 없음'] },
   { id: 'aid', icon: '🦯', label: '보조기구', title: '이동할 때 무엇을 사용하시나요?', help: '휠체어를 쓰시면 탑승할 수 있는 차량으로 안내해 드려요.', options: ['사용 안 함', '지팡이·보행기', '휠체어'] },
@@ -53,6 +58,11 @@ const STAIR_MAP: Record<string, StairLevel> = {
   '이용 가능': 'AVAILABLE',
   '조금 어려움': 'SLIGHTLY_DIFFICULT',
   '이용 어려움': 'DIFFICULT',
+}
+const SLOPE_MAP: Record<string, SlopeLevel> = {
+  괜찮음: 'AVAILABLE',
+  '조금 힘듦': 'SLIGHTLY_DIFFICULT',
+  '많이 힘듦': 'DIFFICULT',
 }
 const REST_MAP: Record<string, RestStopPreference> = {
   필요: 'REQUIRED',
@@ -108,6 +118,7 @@ export function OnboardingScreen({
       const profile: MobilityProfileSaveRequest = {
         walkingDuration: WALK_MAP[answers.walk],
         stairLevel: STAIR_MAP[answers.stairs],
+        slopeLevel: SLOPE_MAP[answers.slope],
         restStopPreference: REST_MAP[answers.rest],
         transferLevel: TRANSFER_MAP[answers.transfer],
         mobilityAid: AID_MAP[answers.aid],
