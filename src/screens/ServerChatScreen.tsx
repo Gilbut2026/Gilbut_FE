@@ -88,24 +88,44 @@ export function ServerChatScreen({
   // 발화에 실어 보낼 현재 좌표 — "내 근처 병원" 같은 기준 위치 검색에 쓰인다(있으면 보내고 없으면 생략)
   const coordsRef = useRef<{ latitude: number; longitude: number } | null>(null)
 
-  /** 사람이 읽을 수 있는 에러 문구로 바꾼다. 서버 메시지가 있으면 그대로 쓴다. */
+  /**
+   * 사람이 읽을 수 있는 에러 문구로 바꾼다.
+   *
+   * AI 관련 실패를 한 문구로 뭉치면 안 된다 — 원인마다 사용자가 할 일이 다르다.
+   *   503 AI_SERVER_UNAVAILABLE  서버에 AI 주소가 설정돼 있지 않다 → 다시 눌러도 소용없다
+   *   502 AI_CHAT_FAILED         호출이 늦거나 끊겼다 → 다시 하면 대개 된다
+   * (AI 서버가 잠들어 있다 깨어날 때 첫 요청이 특히 오래 걸린다)
+   */
   const errorText = (e: unknown): string => {
-    if (e instanceof ApiError) {
-      if (e.status === 0) return '네트워크에 연결할 수 없어요. 잠시 뒤 다시 시도해 주세요.'
-      // AI 서버가 아직 안 붙었을 때 BE 가 주는 응답 — 원인을 감추지 않고 그대로 알린다
-      if (/AI/i.test(e.message)) {
-        return 'AI 상담 서버에 연결하지 못했어요. 잠시 뒤 다시 시도해 주세요.'
-      }
-      return e.message
+    if (!(e instanceof ApiError)) return '문제가 생겼어요. 다시 한 번 말씀해 주시겠어요?'
+    if (e.status === 0) return '인터넷 연결을 확인해 주세요.'
+    if (e.status === 503) {
+      return 'AI 상담 서버가 아직 연결되지 않았어요. 아래 버튼으로 목적지를 골라주세요.'
     }
-    return '문제가 생겼어요. 잠시 뒤 다시 시도해 주세요.'
+    if (e.status === 502) {
+      return '응답이 늦어지고 있어요. 한 번만 다시 말씀해 주시겠어요?'
+    }
+    if (e.status === 409) {
+      // 대화 상태가 어긋났다 — 다시 시작하면 풀린다
+      return '대화가 꼬였어요. 처음부터 다시 여쭤볼게요.'
+    }
+    return e.message
   }
 
-  const fail = useCallback((e: unknown) => {
-    hideTyping()
-    botSay(errorText(e))
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [botSay, hideTyping])
+  /**
+   * 실패했을 때 막다른 길을 만들지 않는다.
+   * 목적지를 묻는 중이었다면 고를 수 있는 버튼을 다시 내준다 — 어르신이
+   * "다시 말해보세요"만 보고 무엇을 해야 할지 몰라 멈추는 것을 막는다.
+   */
+  const fail = useCallback(
+    (e: unknown) => {
+      hideTyping()
+      botSay(errorText(e))
+      if (state === 'DESTINATION_WAITING') actions(destinationReplies())
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    },
+    [botSay, hideTyping, actions, state],
+  )
 
   // ── 위치·집 주소 준비 ────────────────────────────
   useEffect(() => {
