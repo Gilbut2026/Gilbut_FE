@@ -37,11 +37,15 @@ export const DOMAIN_LABEL: Record<ApiDomain, string> = {
 /**
  * BE 컨트롤러 미구현 — 실서버로 켜도 Mock 유지 (올라오는 대로 여기서 뺀다).
  * 2026-08-14 route 제거: BE 「맞춤 경로 추천」(POST /api/routes/recommendations) 배포됨 + AI 스코어링 서버
- *   배포(gilbut-ai.onrender.com)로 실호출 가능해졌다. 이제 route 는 일반 스위치로 처리 — 배포본은
- *   VITE_REAL_DOMAINS 에 route 가 없어 여전히 Mock 이고, 켜려면 그 목록에 route 를 넣는다(로그인 JWT 필요).
- * chat 은 AI 챗 NLU 엔드포인트 미존재, history 는 실이력이 전체 플로우 후에야 쌓여 아직 Mock 유지.
+ *   배포(gilbut-ai.onrender.com)로 실호출 가능해졌다.
+ * 2026-08-15 history 제거: 배포 BE 에 GET /api/routes/history · /{historyId} 가 확인됐고(/v3/api-docs)
+ *   mapHistory 어댑터도 준비돼 있다. route 실호출이 돌면 이력이 쌓인다.
+ *
+ * chat 만 남긴 이유는 BE 미배포가 아니다 — 배포 BE 에 chat 6개 엔드포인트가 다 있다.
+ * ChatScreen 이 아직 서버 주도 상태머신을 쓰지 않고 화면 안 스크립트 대화로 동작해서,
+ * 여기서 빼도 실연동이 되지 않고 배지만 거짓말을 하게 된다. 화면을 재작성하면서 함께 뺀다.
  */
-const FORCED_MOCK: ReadonlySet<ApiDomain> = new Set<ApiDomain>(['chat', 'history'])
+const FORCED_MOCK: ReadonlySet<ApiDomain> = new Set<ApiDomain>(['chat'])
 
 const ALL_DOMAINS: ApiDomain[] = ['auth', 'user', 'place', 'safety', 'route', 'chat', 'history']
 

@@ -250,37 +250,42 @@ export interface EmergencyContactResponse {
 }
 
 /* ============================================================
- *  6. ✅ 상담(chat) — 2026-08-07 BE 배포 확정 계약 (chat-controller)
+ *  6. ✅ 상담(chat) — 2026-08-15 배포 BE 실계약 (/v3/api-docs 대조)
  *     서버가 상태를 끌고 가는 방식: POST /api/chat 에 발화를 보내면
  *     서버가 {현재 상태, 응답 타입, 메시지, 장소 후보} 를 돌려주고,
  *     각 단계는 *-confirmation 엔드포인트로 확정한다.
+ *
+ *     2026-08-15 정합: 배포 스키마에 맞춰 당일상태(TodayCondition)·계단확정 단계를 제거하고,
+ *     LOCATION_REQUIRED 응답타입과 발화 좌표(주변 검색용)를 추가했다.
  * ============================================================ */
 
-/** 상담 진행 상태 (서버 주도 상태머신) */
+/** 상담 진행 상태 (서버 주도 상태머신) — 배포 BE ChatState 8값과 일치 */
 export type ChatState =
   | 'DESTINATION_WAITING'
   | 'ORIGIN_CONFIRMATION'
   | 'HOME_CONFIRMATION'
   | 'DEPARTURE_TIME_CONFIRMATION'
-  | 'TODAY_CONDITION_CONFIRMATION'
   | 'ROUTE_CALCULATING'
-  | 'STAIR_ROUTE_CONFIRMATION'
   | 'RESULT_PRESENTATION'
   | 'NAVIGATING'
   | 'ARRIVED'
 
-/** 응답을 화면에 어떻게 그릴지 — 일반 텍스트 / 장소 후보 목록 / 선택 버튼 */
-export type ChatResponseType = 'TEXT' | 'PLACE_CANDIDATES' | 'CHOICE_OPTIONS'
+/**
+ * 응답을 화면에 어떻게 그릴지 — 텍스트 / 장소 후보 / 선택 버튼 / 위치권한 요청.
+ * LOCATION_REQUIRED = 출발지에 현재 위치가 필요한데 좌표를 못 받은 상태 → LocationScreen 을 띄운다.
+ */
+export type ChatResponseType =
+  | 'TEXT'
+  | 'PLACE_CANDIDATES'
+  | 'CHOICE_OPTIONS'
+  | 'LOCATION_REQUIRED'
 
 /** 출발지 종류 */
 export type OriginType = 'CURRENT_LOCATION' | 'HOME' | 'PLACE'
 
-/**
- * 당일 상태. ⚠️ 7/31 회의에서 프론트는 '당일 상태' 질문을 뺐는데,
- * BE 챗봇은 TODAY_CONDITION_CONFIRMATION 단계를 두고 이 값을 받는다 → 팀 정합 필요.
- * WHEELCHAIR 가 여기 섞여 있어(온보딩 mobilityAid 와 별개) 확인이 더 필요하다.
- */
-export type TodayCondition = 'NORMAL' | 'INCREASED_DISCOMFORT' | 'WHEELCHAIR'
+/* 당일 상태(TodayCondition)는 2026-08-15 배포 BE 에서 삭제됐다.
+ * 7/31 회의의 '당일 상태 질문 제외' 결정을 BE 가 따라오면서 enum·단계·엔드포인트가 모두 사라졌고,
+ * 휠체어는 온보딩 mobilityAid(영구 프로필)에서만 받는 것으로 확정됐다. → 관련 타입 제거함. */
 
 /** 상담 문맥 속 장소 (목적지·출발지) */
 export interface PlaceContext {
@@ -291,9 +296,15 @@ export interface PlaceContext {
   longitude: number
 }
 
-/** POST /api/chat — 사용자 발화 */
+/**
+ * POST /api/chat — 사용자 발화.
+ * latitude·longitude 는 선택이지만, 넣어야 "내 근처 병원"·"수원역 근처 약국" 같은
+ * 기준 위치 검색이 동작한다 (2026-08-15 BE 채팅 주변검색 지원). 위치를 못 받으면 생략한다.
+ */
 export interface ChatMessageRequest {
   message: string
+  latitude?: number
+  longitude?: number
 }
 
 /** POST /api/chat 응답 — 다음에 화면이 뭘 보여줄지 */
@@ -316,7 +327,6 @@ export interface ChatSessionResponse {
   selectedRouteId: string | null
   activeRequestId: string | null
   departureDateTime: string | null
-  todayCondition: TodayCondition | null
 }
 
 /** POST /api/chat/place-confirmation — 목적지 후보 확정 */
@@ -343,10 +353,10 @@ export interface DepartureTimeConfirmationRequest {
   departureDateTime: string
 }
 
-/** POST /api/chat/today-condition-confirmation — 당일 상태 확정 */
-export interface TodayConditionConfirmationRequest {
-  todayCondition: TodayCondition
-}
+/* POST /api/chat/today-condition-confirmation 은 배포 BE 에 존재하지 않는다(위 주석 참조).
+ * 배포된 chat 엔드포인트는 6개 뿐이다:
+ *   POST /api/chat · /api/chat/place-confirmation · /api/chat/origin-confirmation
+ *   POST /api/chat/departure-time-confirmation · /api/chat/session/reset · GET /api/chat/session */
 
 /* ------------------------------------------------------------
  *  6-legacy. 🗑️ 피벗 이전(판단카드) 상담 모델 — mock/counseling.ts 전용.
@@ -525,12 +535,35 @@ export interface SlopeSummary {
   totalDescentM: number | null
 }
 
+/** 경로 접근성 신호 상태 — 있음 / 없음 / 확인 불가 */
+export type AccessibilitySignalState = 'PRESENT' | 'ABSENT' | 'UNKNOWN'
+
+/** 신호 한 건 (state=UNKNOWN 이면 count 는 null) */
+export interface AccessibilitySignal {
+  state: AccessibilitySignalState
+  count: number | null
+}
+
+/**
+ * 경로별 접근성 요약 — 2026-08-15 BE 「경로 접근성 요약 정보 추가」로 응답에 노출됐다.
+ * 이전에는 RouteCandidate.walkSegments 가 @JsonIgnore 라 계단·육교 정보를 알 수 없었다.
+ */
+export interface RouteAccessibilitySummary {
+  stair: AccessibilitySignal | null
+  overpass: AccessibilitySignal | null
+  underpass: AccessibilitySignal | null
+  crosswalk: AccessibilitySignal | null
+}
+
 /** 추천 경로 한 건 (rank 순) */
 export interface RouteRecommendationItemDto {
   routeId: string
   candidate: RouteCandidateDto
   score: number
   rank: number
+  /** BE 가 만든 사람이 읽는 추천 사유 — 카드 문구에 그대로 쓸 수 있다 */
+  recommendationReason: string | null
+  accessibilitySummary: RouteAccessibilitySummary | null
   scoreBreakdown: ScoreBreakdown | null
   slopeSummary: SlopeSummary | null
 }
@@ -552,10 +585,36 @@ export interface DrtDecision {
   basedOnRouteId: string | null
 }
 
+/** 똑버스 운행 권역 (수원) */
+export type DrtServiceArea =
+  | 'GOSAEK_OMOKCHEON_PYEONGRI'
+  | 'GWANGGYO'
+  | 'GWONSEON'
+  | 'DANGSU'
+
+/** 똑버스 이용 가능 여부 — 확인필요 / 권역밖 / 알수없음 */
+export type DrtAvailability = 'CHECK_REQUIRED' | 'OUT_OF_SERVICE_AREA' | 'UNKNOWN'
+
+/**
+ * 똑버스 안내 상세 — 2026-08-15 BE 「DRT 운행권역 대표번호 응답 추가」로 내려온다.
+ * 화면의 자리표시자 전화번호를 이 contactNumber 로 교체한다.
+ * ※ 콜택시 안내 대상(taxiGuide=true)이면 BE 가 권역을 조회하지 않아 이 값이 null 이다.
+ */
+export interface DrtGuideResponse {
+  show: boolean
+  serviceName: string | null
+  serviceArea: DrtServiceArea | null
+  serviceAreaName: string | null
+  contactNumber: string | null
+  availability: DrtAvailability | null
+  message: string | null
+}
+
 /**
  * POST /api/routes/recommendations 응답.
  * walkingRoute/transitRoutes/filteredResults 는 지도·상세용 큰 구조라 지금 화면이 안 써서
- * unknown 으로 둔다(붙일 때 walking/transit 응답 타입을 별도 이식). recommendations·drtDecision 만 어댑터가 쓴다.
+ * unknown 으로 둔다(붙일 때 walking/transit 응답 타입을 별도 이식).
+ * 어댑터가 쓰는 것은 recommendations · drtDecision · drtGuide 셋이다.
  */
 export interface RouteRecommendationResult {
   requestId: string
@@ -563,6 +622,7 @@ export interface RouteRecommendationResult {
   recommendations: RouteRecommendationItemDto[]
   filteredResults: unknown[] | null
   drtDecision: DrtDecision | null
+  drtGuide: DrtGuideResponse | null
   walkingRoute: unknown | null
   transitRoutes: unknown | null
 }

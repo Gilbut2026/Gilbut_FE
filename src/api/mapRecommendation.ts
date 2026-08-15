@@ -12,14 +12,17 @@
  *   1. 카드 배정: rank 1 → '가장 편한 길'(comfort). 나머지 중 걷는 시간이 가장 짧은 후보 → '걷기 적은 길'(short).
  *   2. DRT/콜택시: drtDecision.show=true 면 카드 추가. taxiGuide=true → 콜택시, 아니면 똑버스.
  *   3. 오늘 추천(recommendedKey): drtDecision.priority=true & DRT 노출 시 그쪽, 아니면 comfort.
- *   4. 편의시설(facilities): BE 추천 응답엔 경로별 접근성 신호(계단·육교·지하보도)가 노출되지 않는다
- *      (RouteCandidate.walkSegments 가 @JsonIgnore). 그래서 지금은 지표(보행거리·환승)만 정확히 채우고
- *      계단/육교 등 상세는 뺀다. BE 가 신호를 노출하면 여기서 채운다.
- *   5. 문구(title·sub·notice)·미니맵: BE 가 안 주는 편집 정보라 아래 CARD_TEXT 템플릿을 유지한다(mock 과 동일 voice).
- *   6. stairComparison: BE WALKING DEFAULT ↔ AVOID_STAIRS 두 후보가 이에 해당하지만, 계단 상세(stairFact)가
- *      응답에 없어 지금은 null. 접근성 신호가 노출되면 그때 두 후보로 구성한다.
+ *   4. 편의시설(facilities): 2026-08-15 BE 가 accessibilitySummary(계단·육교·지하보도·횡단보도)를
+ *      노출하기 시작해 실제 신호로 채운다. UNKNOWN 은 "확인 불가"로 표시하고 감추지 않는다 —
+ *      어르신 대상이라 "정보가 없다"는 사실 자체가 판단에 필요하다.
+ *   5. 문구(title·sub)·미니맵: BE 가 안 주는 편집 정보라 아래 CARD_TEXT 템플릿을 유지한다(mock 과 동일 voice).
+ *      단 notice 는 BE recommendationReason 이 있으면 그것을 우선한다(사람이 읽는 추천 사유).
+ *   6. stairComparison: BE WALKING DEFAULT ↔ AVOID_STAIRS 두 후보로 구성한다. 계단 신호가
+ *      노출되면서 "계단 몇 개" 를 실제로 채울 수 있게 됐다.
  */
 import type {
+  AccessibilitySignal,
+  DrtGuideResponse,
   RouteFacility,
   RouteKey,
   RouteOption,
@@ -64,7 +67,20 @@ const formatTime = (sec: number): string => `약 ${toMinutes(sec)}분`
 const formatWalk = (sec: number): string => `${toMinutes(sec)}분`
 const formatTransfer = (count: number): string => (count <= 0 ? '없음' : `${count}회`)
 
-/** BE 지표에서 안전하게 채울 수 있는 편의시설만 만든다 (접근성 상세는 BE 미노출 → 제외, 위 주석 4). */
+/**
+ * 접근성 신호 한 줄 → 화면 편의시설 한 줄.
+ * PRESENT 는 어르신에게 부담 요소라 'warn', ABSENT 는 'ok', UNKNOWN 은 'info'(확인 불가)로 둔다.
+ * 신호 자체가 없으면(null) 줄을 만들지 않는다.
+ */
+function facilityFromSignal(label: string, signal: AccessibilitySignal | null): RouteFacility | null {
+  if (!signal) return null
+  if (signal.state === 'UNKNOWN') return { status: 'info', label, value: '확인 불가' }
+  if (signal.state === 'ABSENT') return { status: 'ok', label, value: '없음' }
+  // PRESENT — count 가 오면 개수까지 보여준다(0 이어도 서버가 PRESENT 라 했으면 '있음'으로 남긴다)
+  return { status: 'warn', label, value: signal.count ? `${signal.count}곳` : '있음' }
+}
+
+/** BE 지표 + 접근성 신호로 편의시설 목록을 만든다 (위 주석 4). */
 function facilitiesFromMetrics(item: RouteRecommendationItemDto): RouteFacility[] {
   const m = item.candidate.metrics
   const rows: RouteFacility[] = [
@@ -75,6 +91,19 @@ function facilitiesFromMetrics(item: RouteRecommendationItemDto): RouteFacility[
       value: formatTransfer(m.transferCount),
     },
   ]
+
+  // 접근성 신호 — 계단·육교·지하보도·횡단보도 (2026-08-15 BE 노출)
+  const a = item.accessibilitySummary
+  if (a) {
+    for (const row of [
+      facilityFromSignal('계단', a.stair),
+      facilityFromSignal('육교', a.overpass),
+      facilityFromSignal('지하보도', a.underpass),
+      facilityFromSignal('횡단보도', a.crosswalk),
+    ]) {
+      if (row) rows.push(row)
+    }
+  }
   // 경사 계산이 실제로 돌았을 때만(NOT_REQUESTED 아니면) 최대 오르막 경사를 참고로 보여준다.
   const slope = item.slopeSummary
   if (slope && slope.status !== 'NOT_REQUESTED' && slope.maxUphillGradePercent != null) {
@@ -87,7 +116,7 @@ function facilitiesFromMetrics(item: RouteRecommendationItemDto): RouteFacility[
   return rows
 }
 
-/** 추천 후보 1건 → 카드 1장 (지표는 BE 값, 문구는 템플릿). */
+/** 추천 후보 1건 → 카드 1장 (지표·사유는 BE 값, 나머지 문구는 템플릿). */
 function itemToOption(item: RouteRecommendationItemDto, key: RouteKey): RouteOption {
   const m = item.candidate.metrics
   const text = CARD_TEXT[key]
@@ -99,34 +128,53 @@ function itemToOption(item: RouteRecommendationItemDto, key: RouteKey): RouteOpt
     walk: formatWalk(m.totalWalkTimeSec),
     transfer: formatTransfer(m.transferCount),
     facilities: facilitiesFromMetrics(item),
-    notice: text.notice,
+    // BE 가 추천 사유를 주면 그것이 템플릿 문구보다 정확하다(실제 경로를 보고 쓴 문장이므로)
+    notice: item.recommendationReason?.trim() || text.notice,
     guide: 'navigate',
   }
 }
 
-/** DRT/콜택시 카드 — BE 가 지표를 주지 않으므로 템플릿 값으로 구성. */
-function drtOption(key: 'drt' | 'calltaxi'): RouteOption {
+/**
+ * DRT/콜택시 카드 — 시간·환승 지표는 BE 가 주지 않으므로 템플릿 값이다.
+ * 단 똑버스는 2026-08-15 부터 drtGuide 로 권역명·대표번호·이용가능 여부가 내려오므로 실값을 쓴다.
+ * (콜택시 안내 대상이면 BE 가 권역을 조회하지 않아 guide 가 null 이다 → 템플릿 유지)
+ */
+function drtOption(key: 'drt' | 'calltaxi', guide: DrtGuideResponse | null): RouteOption {
   const text = CARD_TEXT[key]
   const isTaxi = key === 'calltaxi'
+
+  const facilities: RouteFacility[] = isTaxi
+    ? [
+        { status: 'ok', label: '휠체어 탑승', value: '가능' },
+        { status: 'info', label: '대기시간', value: '콜센터 확인' },
+        { status: 'warn', label: '예약', value: '전화로만 가능' },
+      ]
+    : [
+        {
+          // 권역 밖이면 똑버스를 못 타므로 경고로 올린다
+          status: guide?.availability === 'OUT_OF_SERVICE_AREA' ? 'warn' : 'ok',
+          label: '운행 구역',
+          value:
+            guide?.availability === 'OUT_OF_SERVICE_AREA'
+              ? '운행 구역 밖'
+              : guide?.serviceAreaName || '포함 확인',
+        },
+        // 대표번호가 오면 자리표시자 대신 실제 번호를 보여준다
+        guide?.contactNumber
+          ? { status: 'ok', label: '예약 전화', value: guide.contactNumber }
+          : { status: 'info', label: '대기시간', value: '기관 확인' },
+        { status: 'warn', label: '배차', value: '예약 후 확정' },
+      ]
+
   return {
     key,
-    title: text.title,
+    title: !isTaxi && guide?.serviceName ? `${guide.serviceName} 이용 추천` : text.title,
     sub: text.sub,
     time: '예약 후 확정',
     walk: isTaxi ? '0분' : '4분',
     transfer: '없음',
-    facilities: isTaxi
-      ? [
-          { status: 'ok', label: '휠체어 탑승', value: '가능' },
-          { status: 'info', label: '대기시간', value: '콜센터 확인' },
-          { status: 'warn', label: '예약', value: '전화로만 가능' },
-        ]
-      : [
-          { status: 'ok', label: '운행 구역', value: '포함 확인' },
-          { status: 'info', label: '대기시간', value: '기관 확인' },
-          { status: 'warn', label: '배차', value: '예약 후 확정' },
-        ],
-    notice: text.notice,
+    facilities,
+    notice: (!isTaxi && guide?.message?.trim()) || text.notice,
     guide: key,
   }
 }
@@ -159,7 +207,7 @@ export function mapRecommendationToRouteResult(
   // 3. DRT/콜택시 (drtDecision.show 일 때만)
   const drt = be.drtDecision
   const drtKey: 'drt' | 'calltaxi' | null = drt?.show ? (drt.taxiGuide ? 'calltaxi' : 'drt') : null
-  if (drtKey) options.push(drtOption(drtKey))
+  if (drtKey) options.push(drtOption(drtKey, be.drtGuide ?? null))
 
   // 4. 오늘 추천 — DRT 우선추천이면 그쪽, 아니면 가장 편한 길
   const recommendedKey: RouteKey =
