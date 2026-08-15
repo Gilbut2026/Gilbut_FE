@@ -4,7 +4,7 @@ import type { ChatOutcome } from '../types/nav'
 import { ApiError } from '../api/client'
 import { speak } from '../state/tts'
 import { TopBar } from '../components/TopBar'
-import { applyStairChoice } from '../mock/route'
+import { applyStairChoice } from '../api/stairChoice'
 import type { LatLng, RouteErrorKind, RouteKey, RouteOption, RouteResult } from '../types/dto'
 
 /**
@@ -290,6 +290,19 @@ export function ResultsScreen({
     speak(ROUTE_ERRORS[error].title, { auto: true })
   }, [error])
 
+  /*
+   * 계단을 고르셨으면 그 길을 펼쳐서 보여준다.
+   *
+   * 예전에는 고르고 나서도 추천 카드가 그대로 떠 있었다 — 폭염이거나 환승이 많으면
+   * 그게 똑버스다. 「계단 없는 길」을 고른 어르신에게 똑버스 카드를 보여주면
+   * 고른 것이 어디로 갔는지 알 수 없다. 물어봤으면 답을 반영해야 한다.
+   *
+   * 한 번만 맞춰준다. 그 뒤 「다른 길도 볼게요」로 옮기는 것은 그대로 둔다.
+   */
+  useEffect(() => {
+    if (stairChoice && result?.stairComparison) setSelectedKey('comfort')
+  }, [stairChoice, result])
+
   // 계단이 '조금 어려움'인데 아직 안 고르셨으면, 결과 대신 두 경로 비교를 먼저 보여드린다
   useEffect(() => {
     if (result?.stairComparison && stairChoice === null) {
@@ -297,9 +310,12 @@ export function ResultsScreen({
     }
   }, [result, stairChoice, onNeedStairChoice])
 
-  // 고른 결과를 '가장 편한 길' 카드에 실제로 반영한다
+  // 고른 결과를 '가장 편한 길' 카드에 실제로 반영한다 (BE 실측값으로)
+  const cmp = result?.stairComparison ?? null
   const options = result
-    ? result.options.map((o) => (o.key === 'comfort' && stairChoice ? applyStairChoice(o, stairChoice) : o))
+    ? result.options.map((o) =>
+        o.key === 'comfort' && stairChoice && cmp ? applyStairChoice(o, stairChoice, cmp) : o,
+      )
     : []
 
   const selected = result && selectedKey ? options.find((o) => o.key === selectedKey) ?? options[0] : null
