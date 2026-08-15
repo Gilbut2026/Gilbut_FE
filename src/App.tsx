@@ -19,6 +19,7 @@ import { useSettings, updateSettings } from './state/settings'
 import { HAS_MOCK, mockBadgeLabel, useMock } from './api/mode'
 import { kakaoLogin, KAKAO_CALLBACK_PATH } from './api/auth'
 import { getMobilityProfile } from './api/user'
+import { warmUpAi } from './api/warmup'
 import { ApiError } from './api/client'
 import { isLoggedIn, onSessionExpired } from './state/auth'
 import { TAB_SCREENS, type Screen } from './types/nav'
@@ -182,6 +183,17 @@ export default function App() {
       .catch(() => setAuthPhase('error'))
   }, [authPhase])
 
+  /*
+   * AI 서버를 미리 깨워둔다 — 화면을 여는 순간, 로그인보다도 먼저.
+   *
+   * 깨우는 데 40초가 걸리므로 최대한 일찍 시작할수록 좋다. 여기서 보내두면
+   * 로그인하고 온보딩 7문항을 하는 동안(1~2분) 다 깨어나서, 사용자가 실제로
+   * 말할 때는 기다림이 없다. 시연 시간이 짧을 때 40초는 치명적이다.
+   */
+  useEffect(() => {
+    if (!useMock('chat')) warmUpAi()
+  }, [])
+
   // 토큰이 만료되고 재발급도 실패하면 로그인 화면으로 되돌린다.
   // 화면마다 제각기 실패해서 사용자가 원인을 못 알아채는 것이 가장 나쁘다.
   useEffect(
@@ -257,6 +269,8 @@ export default function App() {
           onSos={onSos}
           onComplete={(voiceEnabled) => {
             updateSettings({ voiceGuide: voiceEnabled })
+            // 앱 열 때 못 보냈으면 여기서 한 번 더. 성공했으면 아무 일도 하지 않는다.
+            if (!useMock('chat')) warmUpAi()
             setScreen('home')
             toast('내게 맞는 이동 설정을 저장했어요')
             // 집 주소 미등록이면 홈 진입 후 등록을 권유한다 (7차 와이어프레임 #screen-home)
