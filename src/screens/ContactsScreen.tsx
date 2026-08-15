@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { TopBar } from '../components/TopBar'
 import { addContact, deleteContact, listContacts } from '../api/safety'
 import type { EmergencyContactResponse } from '../types/dto'
+import { useScrollMemory } from '../state/scrollMemory'
 
 /**
  * 비상 연락처 — 7차 와이어프레임 #screen-contacts 이식 + 실제 CRUD.
@@ -32,6 +33,7 @@ export function ContactsScreen({
   onToast: (msg: string) => void
 }) {
   const [contacts, setContacts] = useState<EmergencyContactResponse[]>([])
+  const scrollRef = useScrollMemory('contacts', contacts.length > 0)
   const [sheetOpen, setSheetOpen] = useState(false)
   const [name, setName] = useState('')
   const [relationship, setRelationship] = useState('')
@@ -83,7 +85,7 @@ export function ContactsScreen({
     <section className="screen">
       <TopBar title="비상 연락처" onBack={onBack} backLabel="설정으로 돌아가기" onSos={onSos} />
 
-      <div className="screen-body">
+      <div className="screen-body" ref={scrollRef}>
         <h2 className="screen-title" style={{ fontSize: 27 }}>
           비상 연락처
         </h2>

@@ -1,6 +1,7 @@
 /** 도움말 — 7차 와이어프레임 #screen-help 이식. 사용법 4단계 + 음성으로 듣기. */
 import { speak as playVoice } from '../state/tts'
 import { TopBar } from '../components/TopBar'
+import { useScrollMemory } from '../state/scrollMemory'
 
 
 const STEPS = [
@@ -19,6 +20,7 @@ export function HelpScreen({
   onSos: () => void
   onToast: (msg: string) => void
 }) {
+  const scrollRef = useScrollMemory('help')
   function speakHelp() {
     const text = 'AI 길벗 사용 방법입니다. ' + STEPS.map((s) => `${s.n}. ${s.title}. ${s.desc}`).join(' ')
     if (!playVoice(text)) onToast('이 기기에서는 음성 안내를 쓸 수 없어요')
@@ -28,7 +30,7 @@ export function HelpScreen({
     <section className="screen">
       <TopBar title="도움말" onBack={onBack} backLabel="설정으로 돌아가기" onSos={onSos} />
 
-      <div className="screen-body">
+      <div className="screen-body" ref={scrollRef}>
         <h2 className="screen-title" style={{ fontSize: 27 }}>
           AI 길벗 사용 방법
         </h2>

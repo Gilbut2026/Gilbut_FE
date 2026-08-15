@@ -16,14 +16,7 @@ import { useEffect, useState } from 'react'
 import { TopBar } from '../components/TopBar'
 import { listFavorites } from '../api/place'
 import type { FavoritePlaceResponse } from '../types/dto'
-
-/** 즐겨찾기가 없을 때 보여주는 카테고리 — 현재 위치 기준으로 검색된다 */
-const CATEGORIES = [
-  { emoji: '🏥', name: '병원' },
-  { emoji: '💊', name: '약국' },
-  { emoji: '🛒', name: '전통시장' },
-  { emoji: '🏛️', name: '주민센터' },
-]
+import { QUICK_DESTINATIONS } from './quickDestinations'
 
 /** 즐겨찾기 이름으로 어울리는 아이콘을 고른다 (서버는 아이콘을 주지 않는다) */
 function emojiFor(name: string): string {
@@ -79,7 +72,7 @@ export function HomeScreen({
   // 불러오는 중(null)에는 카테고리를 먼저 보여줘서 빈 화면을 만들지 않는다.
   const items = hasFavorites
     ? favorites.slice(0, 6).map((f) => ({ emoji: emojiFor(f.name), name: f.name }))
-    : CATEGORIES
+    : QUICK_DESTINATIONS
 
   return (
     <section className="screen">

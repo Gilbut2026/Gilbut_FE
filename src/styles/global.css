@@ -377,15 +377,22 @@ button { color: inherit; }
 .help-card p { margin: 3px 0 0; color: var(--ink-3); font-size: 18px; font-weight: 650; }
 
 /* 집 주소 입력 (시트) */
-.home-field { display: block; margin-top: 13px; }
+/* 아래 여백이 없으면 입력창과 '집 주소로 저장' 버튼이 붙어 보인다.
+   어르신 대상이라 누를 것과 적을 것 사이는 넉넉히 띄운다(오탭 방지). */
+.home-field { display: block; margin-top: 13px; margin-bottom: 18px; }
 .home-field .label { display: block; margin-bottom: 6px; font-size: 18px; font-weight: 850; }
 .home-field input { width: 100%; padding: 13px 14px; border-radius: 15px; border: 1.5px solid rgba(21, 33, 59, 0.14); background: rgba(255, 255, 255, 0.86); font-size: 17px; font-weight: 700; font-family: inherit; color: var(--ink); }
 .home-field input:focus { outline: none; border-color: var(--violet-deep); background: #fff; }
 .home-field input::placeholder { color: var(--ink-3); font-weight: 650; }
-.home-gps { margin-top: 7px; width: 100%; padding: 10px; border-radius: 13px; border: 1px dashed rgba(103, 85, 245, 0.4); background: rgba(103, 85, 245, 0.06); color: var(--violet-deep); font-size: 18px; font-weight: 800; font-family: inherit; cursor: pointer; }
+/* 같은 이름이 여러 곳일 때 고르는 목록 — 시트 안이라 높이를 제한하고 넘치면 스크롤한다 */
+.home-candidates { display: flex; flex-direction: column; gap: 8px; margin-bottom: 18px; max-height: 232px; overflow-y: auto; }
+.home-candidates .label { display: block; font-size: 17px; font-weight: 850; }
+.home-candidates .chat-place { margin-top: 0; }
+.home-gps { margin: 0 0 18px; width: 100%; min-height: 52px; padding: 12px; border-radius: 13px; border: 1px dashed rgba(103, 85, 245, 0.4); background: rgba(103, 85, 245, 0.06); color: var(--violet-deep); font-size: 18px; font-weight: 800; font-family: inherit; cursor: pointer; }
+.home-gps:disabled { opacity: 0.55; cursor: default; }
 
 /* 시트 폼 (연락처 추가 등) */
-.sheet-field { display: block; margin-top: 12px; }
+.sheet-field { display: block; margin-top: 12px; margin-bottom: 16px; }
 .sheet-field .label { display: block; margin-bottom: 6px; font-size: 16px; font-weight: 850; }
 .sheet-field input { width: 100%; padding: 13px 14px; border-radius: 15px; border: 1.5px solid rgba(21, 33, 59, 0.14); background: rgba(255, 255, 255, 0.9); font-size: 17px; font-weight: 700; font-family: inherit; color: var(--ink); }
 .sheet-field input:focus { outline: none; border-color: var(--violet-deep); background: #fff; }

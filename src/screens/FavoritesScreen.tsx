@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { TopBar } from '../components/TopBar'
 import { deleteFavorite, listFavorites } from '../api/place'
 import type { FavoritePlaceResponse } from '../types/dto'
+import { useScrollMemory } from '../state/scrollMemory'
 
 /**
  * 자주 가는 곳 — 7차 와이어프레임 #screen-favorites 이식.
@@ -21,6 +22,7 @@ export function FavoritesScreen({
   onPick: (destination: string) => void
 }) {
   const [places, setPlaces] = useState<FavoritePlaceResponse[]>([])
+  const scrollRef = useScrollMemory('favorites', places.length > 0)
 
   function reload() {
     listFavorites().then(setPlaces)
@@ -37,7 +39,7 @@ export function FavoritesScreen({
     <section className="screen">
       <TopBar title="자주 가는 곳" onBack={onBack} backLabel="설정으로 돌아가기" onSos={onSos} />
 
-      <div className="screen-body">
+      <div className="screen-body" ref={scrollRef}>
         <h2 className="screen-title" style={{ fontSize: 27 }}>
           자주 가는 곳
         </h2>

@@ -13,6 +13,7 @@ import { ApiError } from '../api/client'
 import { departureAfter, parseDepartureMinutes } from '../api/time'
 import { rankPlaceCandidates } from '../api/placeRank'
 import { SEARCH_RADIUS_KM } from '../api/geo'
+import { QUICK_DESTINATION_NAMES } from './quickDestinations'
 import { ChatView, useChatLog } from '../components/ChatView'
 import type {
   ChatMessageResponse,
@@ -137,6 +138,20 @@ export function ServerChatScreen({
   }, [])
 
   // ── 단계별 질문 ─────────────────────────────────
+  /**
+   * 목적지 빠른 답변. 어르신에게는 타이핑보다 누르는 쪽이 훨씬 쉬워서,
+   * 목적지를 물을 때마다 함께 보여준다. 누르면 그 낱말을 그대로 발화로 보낸다.
+   */
+  const destinationReplies = () => (
+    <>
+      {QUICK_DESTINATION_NAMES.map((n) => (
+        <button key={n} className="chat-reply" onClick={() => sendText(n)}>
+          {n}
+        </button>
+      ))}
+    </>
+  )
+
   const originReplies = () => (
     <>
       <button className="chat-reply" onClick={pickCurrentLocation}>
@@ -179,6 +194,11 @@ export function ServerChatScreen({
    */
   const askFor = useCallback(
     (next: ChatState) => {
+      if (next === 'DESTINATION_WAITING') {
+        // 목적지를 (다시) 물어야 하는 상태 — 고를 수 있는 선택지를 항상 함께 준다
+        actions(destinationReplies())
+        return
+      }
       if (next === 'ORIGIN_CONFIRMATION' || next === 'HOME_CONFIRMATION') {
         botSay(
           <>
@@ -258,8 +278,14 @@ export function ServerChatScreen({
               네, 맞아요
             </button>
           ))}
-          <button className="full" onClick={() => botSay('다시 말씀해 주세요. 어디로 가고 싶으세요?')}>
-            다시 말하기
+          <button
+            className="full"
+            onClick={() => {
+              botSay('다시 말씀해 주세요. 어디로 가고 싶으세요?')
+              actions(destinationReplies())
+            }}
+          >
+            찾는 곳이 없어요 · 다시 말하기
           </button>
         </div>
       </>
@@ -529,6 +555,7 @@ export function ServerChatScreen({
             안녕하세요. 기본 설정에서 저장한 이동 설정은 제가 기억하고 있어요. <b>오늘 어디로 가고 싶으세요?</b>
           </>,
         )
+        actions(destinationReplies())
       } catch (e) {
         if (alive) fail(e)
       } finally {

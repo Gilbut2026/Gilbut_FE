@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { TopBar } from '../components/TopBar'
 import { listHistory } from '../api/history'
 import type { RouteHistoryItem } from '../types/dto'
+import { useScrollMemory } from '../state/scrollMemory'
 
 /** 상담 기록 — 7차 와이어프레임 #screen-history 이식. 항목을 누르면 그 경로를 다시 본다. */
 
@@ -16,6 +17,7 @@ export function HistoryScreen({
   onPick: (destination: string) => void
 }) {
   const [items, setItems] = useState<RouteHistoryItem[]>([])
+  const scrollRef = useScrollMemory('history', items.length > 0)
 
   useEffect(() => {
     listHistory().then(setItems)
@@ -25,7 +27,7 @@ export function HistoryScreen({
     <section className="screen">
       <TopBar title="길찾기 기록" onBack={onBack} backLabel="설정으로 돌아가기" onSos={onSos} />
 
-      <div className="screen-body">
+      <div className="screen-body" ref={scrollRef}>
         <h2 className="screen-title" style={{ fontSize: 27 }}>
           지난 길찾기
         </h2>

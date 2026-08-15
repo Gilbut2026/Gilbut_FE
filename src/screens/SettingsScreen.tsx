@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react'
 import { TopBar } from '../components/TopBar'
+import { HomeAddressSheet } from '../components/HomeAddressSheet'
 import { getSettings, saveAccessibility } from '../api/user'
-import { getHome, saveHome, searchPlaces } from '../api/place'
-import { SUWON_CENTER } from '../api/geo'
 import { FONT_SIZES, type Settings } from '../state/settings'
+import { useScrollMemory } from '../state/scrollMemory'
 import type {
   FontSize,
   MobilityProfileResponse,
@@ -15,17 +15,29 @@ import type {
  * 경로 추천 기준(BE getSettings) + 보기와 듣기(글자크기·고대비·음성, saveAccessibility) + 내 정보와 안전 링크.
  */
 
-// 이동특성 enum → 화면 태그 라벨
+/**
+ * 이동특성 enum → 화면 태그 라벨.
+ *
+ * 온보딩 7문항 중 서버에 저장되는 6개를 모두 보여준다(나머지 하나인 '음성 안내'는
+ * 아래 '보기와 듣기'에 있다). 여기서 빠지면 사용자는 자기가 뭘 답했는지 확인할 길이 없다.
+ *
+ * ⚠️ 키는 BE enum 과 정확히 같아야 한다. 매칭에 실패하면 undefined 가 되고
+ *    filter(Boolean) 에 걸려 **태그가 조용히 사라진다** — 화면상으로는 답을 안 한 것처럼 보인다.
+ *    실제로 mobilityAid 가 옛 enum(NONE/CANE/OTHER)으로 남아 있어 '사용 안 함'과 '지팡이'가
+ *    표시되지 않았다(2026-08-15 수정).
+ */
 const WALK_LABEL: Record<string, string> = { UNABLE_TO_WALK: '보행 불가', WITHIN_10_MINUTES: '10분 보행', WITHIN_20_MINUTES: '20분 보행', OVER_30_MINUTES: '30분+ 보행' }
 const STAIR_LABEL: Record<string, string> = { AVAILABLE: '계단 가능', SLIGHTLY_DIFFICULT: '계단 조금 어려움', DIFFICULT: '계단 어려움' }
+const SLOPE_LABEL: Record<string, string> = { AVAILABLE: '오르막 괜찮음', SLIGHTLY_DIFFICULT: '오르막 조금 힘듦', DIFFICULT: '오르막 많이 힘듦' }
 const REST_LABEL: Record<string, string> = { REQUIRED: '휴식 필요', NO_PREFERENCE: '휴식 상관없음' }
 const TRANSFER_LABEL: Record<string, string> = { AVAILABLE: '환승 가능', FEWER_PREFERRED: '환승 적게', AVOID_PREFERRED: '환승 없이' }
-const AID_LABEL: Record<string, string> = { NONE: '보조기구 없음', CANE: '지팡이', WHEELCHAIR: '휠체어', OTHER: '보조기구 사용' }
+const AID_LABEL: Record<string, string> = { NOT_USED: '보조기구 없음', CANE_OR_WALKER: '지팡이·보행기', WHEELCHAIR: '휠체어' }
 
 function profileTags(p: MobilityProfileResponse): string[] {
   return [
     WALK_LABEL[p.walkingDuration],
     STAIR_LABEL[p.stairLevel],
+    SLOPE_LABEL[p.slopeLevel],
     REST_LABEL[p.restStopPreference],
     TRANSFER_LABEL[p.transferLevel],
     AID_LABEL[p.mobilityAid],
@@ -57,51 +69,14 @@ export function SettingsScreen({
   onOpenHelp: () => void
 }) {
   const [data, setData] = useState<UserSettingsResponse | null>(null)
+  // 비상 연락처·즐겨찾기 등에 다녀와도 보던 자리로 돌아오게 한다 (내용이 그려진 뒤 복원)
+  const scrollRef = useScrollMemory('settings', data !== null)
   const [homeSheet, setHomeSheet] = useState(false)
-  const [homeInput, setHomeInput] = useState('')
-  const [savingHome, setSavingHome] = useState(false)
 
   function reloadSettings() {
     getSettings().then(setData)
   }
   useEffect(reloadSettings, [])
-
-  async function openHomeSheet() {
-    const current = await getHome()
-    setHomeInput(current?.address ?? '')
-    setHomeSheet(true)
-  }
-
-  async function handleSaveHome() {
-    if (!homeInput.trim()) {
-      onToast('집 주소를 입력해 주세요')
-      return
-    }
-    setSavingHome(true)
-    try {
-      const address = homeInput.trim()
-      // 입력 주소를 place 검색으로 실좌표 변환(첫 결과). 못 찾으면 서비스 지역 기준점으로 폴백.
-      let latitude = SUWON_CENTER.latitude
-      let longitude = SUWON_CENTER.longitude
-      try {
-        const first = (await searchPlaces({ keyword: address })).places[0]
-        if (first) {
-          latitude = first.latitude
-          longitude = first.longitude
-        }
-      } catch {
-        /* 검색 실패 시 기본 좌표 유지 */
-      }
-      await saveHome({ address, latitude, longitude })
-      setHomeSheet(false)
-      reloadSettings()
-      onToast('집 주소를 저장했어요')
-    } catch {
-      onToast('저장에 실패했어요')
-    } finally {
-      setSavingHome(false)
-    }
-  }
 
   // 접근성 변경 → 로컬 반영 + BE 저장
   function apply(patch: Partial<Settings>) {
@@ -123,7 +98,7 @@ export function SettingsScreen({
     <section className="screen">
       <TopBar title="설정" onBack={onBack} backLabel="홈으로 돌아가기" onSos={onSos} />
 
-      <div className="screen-body">
+      <div className="screen-body" ref={scrollRef}>
         <h2 className="screen-title" style={{ fontSize: 27 }}>
           내 이동 설정
         </h2>
@@ -212,7 +187,7 @@ export function SettingsScreen({
         </div>
 
         <div className="section-label">내 정보와 안전</div>
-        <button className="setting-link" onClick={openHomeSheet}>
+        <button className="setting-link" onClick={() => setHomeSheet(true)}>
           <span className="icon">🏠</span>
           <span className="copy">
             <b>집 주소</b>
@@ -245,7 +220,7 @@ export function SettingsScreen({
           <span className="chev">›</span>
         </button>
         <button className="setting-link" onClick={onOpenHelp}>
-          <span className="icon">?</span>
+          <span className="icon">💬</span>
           <span className="copy">
             <b>도움말</b>
             <span>사용법을 글과 음성으로 안내</span>
@@ -263,27 +238,16 @@ export function SettingsScreen({
         </div>
       </div>
 
-      <div className={`scrim${homeSheet ? ' show' : ''}`} onClick={() => setHomeSheet(false)} />
-      <div className={`sheet${homeSheet ? ' show' : ''}`}>
-        <div className="sheet-grip" />
-        <h3>집 주소</h3>
-        <p>등록해 두면 ‘집’을 출발지·목적지로 바로 쓸 수 있어요.</p>
-        <label className="home-field">
-          <span className="label">주소</span>
-          <input value={homeInput} onChange={(e) => setHomeInput(e.target.value)} placeholder="예: 수원시 팔달구 ○○로 12" />
-        </label>
-        <button className="home-gps" onClick={() => setHomeInput('경기 수원시 팔달구 (현재 위치)')}>
-          📍 현재 위치로 등록하기
-        </button>
-        <div className="sheet-actions">
-          <button className="btn primary" onClick={handleSaveHome} disabled={savingHome}>
-            {savingHome ? '저장하는 중…' : '저장하기'}
-          </button>
-          <button className="btn neutral" onClick={() => setHomeSheet(false)}>
-            취소
-          </button>
-        </div>
-      </div>
+      {/* 집 주소 시트는 공용 컴포넌트를 쓴다.
+          예전에는 이 화면이 자체 시트를 따로 갖고 있어서, 한쪽을 고쳐도 다른 쪽이 그대로 남았다.
+          실제로 '현재 위치로 등록하기'가 GPS 를 쓰지 않고 문자열만 박아 넣는 상태로 남아 있었다. */}
+      <HomeAddressSheet
+        open={homeSheet}
+        onClose={() => setHomeSheet(false)}
+        onToast={onToast}
+        onSaved={reloadSettings}
+      />
+
     </section>
   )
 }

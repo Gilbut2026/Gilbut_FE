@@ -5,6 +5,7 @@ import { departureAfter, parseDepartureMinutes } from '../api/time'
 import { SEARCH_RADIUS_KM, SUWON_CENTER, isInServiceArea } from '../api/geo'
 import { rankPlaceCandidates } from '../api/placeRank'
 import { ChatView, useChatLog } from '../components/ChatView'
+import { QUICK_DESTINATION_NAMES } from './quickDestinations'
 import type { LatLng, PlaceItemResponse } from '../types/dto'
 
 /**
@@ -30,13 +31,6 @@ const STEP_META: Record<Step, [string, string, string]> = {
   depart: ['출발 시간 확인 · 3/3', '출발 시각에 맞춰 날씨를 확인해요', '100%'],
   analysis: ['편한 길 찾는 중', '대화가 끝나면 편한 길을 보여드려요', '100%'],
 }
-
-/**
- * 대화 시작 시 보여주는 빠른 답변.
- * 예전에는 `○○병원` 같은 와이어프레임 자리표시자였는데, 실제 장소 검색을 붙이면서
- * 검색이 되는 실제 낱말로 바꿨다(자리표시자는 검색 결과가 0건이라 그대로 막힌다).
- */
-const QUICK_DESTINATIONS = ['병원', '약국', '전통시장', '주민센터']
 
 export function ScriptedChatScreen({
   prefill,
@@ -102,7 +96,7 @@ export function ScriptedChatScreen({
   // ── 대화 스크립트 ──────────────────────────────
   const destinationReplies = () => (
     <>
-      {QUICK_DESTINATIONS.map((n) => (
+      {QUICK_DESTINATION_NAMES.map((n) => (
         <button key={n} className="chat-reply" onClick={() => chooseDestination(n)}>
           {n}
         </button>
