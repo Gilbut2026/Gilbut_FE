@@ -9,9 +9,58 @@
  *  · 수원 똑버스는 휠체어 탑승 불가 → 휠체어 이용자에게는 똑버스 대신 장애인 콜택시 안내를 노출한다.
  * 시설 데이터 기준: 계단·육교·지하보도·횡단보도 = TMAP 확인 가능, 엘리베이터·경사 = 제외.
  */
-import type { RouteKey, RouteOption, RouteResult, StairComparison } from '../types/dto'
+import type {
+  LatLng,
+  RouteDirections,
+  RouteKey,
+  RouteOption,
+  RouteResult,
+  StairComparison,
+} from '../types/dto'
 import { delay } from './_shared'
 import { mockGetMobilityProfile } from './user'
+
+/**
+ * Mock 길 안내 — 수원시청 → 아주대학교병원.
+ *
+ * 좌표는 두 지점을 잇는 대략의 선이다. **실제 TMAP 경로가 아니다.**
+ * 실서버에서는 BE 가 준 routePoints 를 그대로 쓴다(api/directions).
+ * 여기 있는 것은 Mock 에서도 안내 화면과 지도가 굴러가게 하려는 최소한의 자료다 —
+ * 화면 배치·글자 크기를 API 호출 없이 다듬으려면 이만큼은 있어야 한다.
+ *
+ * 시연 안전판(ScriptedChatScreen)으로 돌 때도 길 안내까지 보여줄 수 있게 된다.
+ */
+const MOCK_PATH: LatLng[] = [
+  { latitude: 37.2636, longitude: 127.0286 },
+  { latitude: 37.2661, longitude: 127.0312 },
+  { latitude: 37.2698, longitude: 127.0345 },
+  { latitude: 37.2724, longitude: 127.0371 },
+  { latitude: 37.2753, longitude: 127.0398 },
+  { latitude: 37.2776, longitude: 127.0421 },
+  { latitude: 37.2794, longitude: 127.0436 },
+]
+
+/** 대중교통 경로 안내 — 걷기 → 타기 → 내리기 → 걷기 */
+const MOCK_TRANSIT_DIRECTIONS: RouteDirections = {
+  path: MOCK_PATH,
+  steps: [
+    { kind: 'walk', title: '350m 걷기', detail: '수원시청 정류장까지' },
+    { kind: 'ride', title: '3-1번 버스', detail: '수원시청에서 타요 · 6정거장' },
+    { kind: 'getoff', title: '아주대학교병원에서 내려요' },
+    { kind: 'walk', title: '200m 걷기', detail: '아주대학교병원 정문까지' },
+  ],
+}
+
+/** 걷는 경로 안내 — TMAP 턴바이턴을 흉내 낸 형태 */
+const MOCK_WALK_DIRECTIONS: RouteDirections = {
+  path: MOCK_PATH,
+  steps: [
+    { kind: 'walk', title: '직진', detail: '120m' },
+    { kind: 'walk', title: '횡단보도 건너기', detail: '30m' },
+    { kind: 'walk', title: '왼쪽으로 돌아 직진', detail: '260m' },
+    { kind: 'walk', title: '아주대학교병원 정문 도착', detail: '80m' },
+  ],
+}
 
 const COMFORT: RouteOption = {
   key: 'comfort',
@@ -28,8 +77,9 @@ const COMFORT: RouteOption = {
     { status: 'ok', label: '환승', value: '1회' },
     { status: 'info', label: '쉼터', value: '지도에 표시' },
   ],
-  notice: '계단·육교·지하보도·횡단보도는 확인된 정보예요. 쉼터는 점수에 넣지 않고 지도에 표시만 해요.',
+  notice: '계단·육교·지하보도·횡단보도는 확인된 정보예요.',
   guide: 'navigate',
+  directions: MOCK_TRANSIT_DIRECTIONS,
 }
 
 const SHORT: RouteOption = {
@@ -48,6 +98,7 @@ const SHORT: RouteOption = {
   ],
   notice: '계단 2곳과 지하보도 1곳이 포함돼 있어요. 지하보도는 계단을 함께 이용해야 할 수 있어요.',
   guide: 'navigate',
+  directions: MOCK_WALK_DIRECTIONS,
 }
 
 const DRT: RouteOption = {

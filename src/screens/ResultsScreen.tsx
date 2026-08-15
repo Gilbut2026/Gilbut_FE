@@ -194,6 +194,16 @@ function RouteView({
           </span>
         </div>
 
+        {/*
+          똑버스·콜택시 안내만 남았다는 것은 걷거나 타고 갈 길을 하나도 찾지 못했다는 뜻이다.
+          그냥 카드 한 장만 보여주면 "왜 이것뿐이지" 하고 끝난다 — 이유를 적어준다.
+        */}
+        {result.options.length === 1 && selected.guide !== 'navigate' && (
+          <div className="result-note">
+            지금 조건으로는 <b>걸어가거나 타고 갈 길</b>을 찾지 못했어요. 대신 이 방법을 안내해 드려요.
+          </div>
+        )}
+
         <div className="result-actions">
           <button className="btn primary" onClick={() => onGuide(selected.guide, result, selected)}>
             {selected.guide === 'drt'
@@ -202,9 +212,16 @@ function RouteView({
                 ? '콜택시 부르는 방법 보기'
                 : '이 길로 안내받기'}
           </button>
-          <button className="text-btn" onClick={onNext}>
-            다른 길도 볼게요
-          </button>
+          {/*
+            길이 하나뿐이면 「다른 길도 볼게요」를 내지 않는다.
+            순환할 곳이 없어 눌러도 아무 일이 없는데, 그런 버튼은 어르신에게
+            "내가 잘못 눌렀나" 하는 불안을 준다(2026-08-16 확인).
+          */}
+          {result.options.length > 1 && (
+            <button className="text-btn" onClick={onNext}>
+              다른 길도 볼게요
+            </button>
+          )}
         </div>
       </div>
     </div>
