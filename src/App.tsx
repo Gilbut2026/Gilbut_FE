@@ -73,6 +73,9 @@ const NAV_ITEMS: { screen: Screen; label: string; icon: JSX.Element }[] = [
 export default function App() {
   const [screen, setScreen] = useState<Screen>('signup')
   const [destination, setDestination] = useState<string | null>(null)
+  // 대화에서 고른 출발 시각('YYYY-MM-DDTHH:mm:ss'). 결과 화면이 이 시각 기준으로 경로를 조회한다.
+  // 시간대에 따라 대중교통 후보가 달라지므로, 대화의 선택이 결과에 그대로 반영돼야 한다.
+  const [departure, setDeparture] = useState<string | null>(null)
   const [chatPrefill, setChatPrefill] = useState<string | null>(null)
   // 계단 있는 길 ↔ 없는 길 선택. 한 번 고르면 그 이동에서는 다시 묻지 않는다(7/31 회의)
   const [stairChoice, setStairChoice] = useState<'with' | 'none' | null>(null)
@@ -193,8 +196,9 @@ export default function App() {
           onBack={() => setScreen('home')}
           onSos={onSos}
           onToast={toast}
-          onDone={(dest) => {
+          onDone={(dest, departureDateTime) => {
             setDestination(dest)
+            setDeparture(departureDateTime)
             // 새 이동이므로 지난번 계단 선택은 초기화한다 (갈 때와 올 때가 다를 수 있음)
             setStairChoice(null)
             setScreen('results')
@@ -205,6 +209,7 @@ export default function App() {
       {screen === 'results' && (
         <ResultsScreen
           destination={destination}
+          departureDateTime={departure}
           stairChoice={stairChoice}
           onNeedStairChoice={onNeedStairChoice}
           onGoHome={() => setScreen('home')}
@@ -270,6 +275,8 @@ export default function App() {
           onSos={onSos}
           onPick={(dest) => {
             setDestination(dest)
+            // 대화를 거치지 않고 바로 보는 경로다 — 지난 대화의 출발 시각이 남으면 안 된다(지금 기준)
+            setDeparture(null)
             setStairChoice(null)
             setScreen('results')
           }}
@@ -289,6 +296,8 @@ export default function App() {
           onToast={toast}
           onPick={(dest) => {
             setDestination(dest)
+            // 위와 같은 이유 — 즐겨찾기에서 바로 오면 지금 기준으로 조회한다
+            setDeparture(null)
             setStairChoice(null)
             setScreen('results')
           }}

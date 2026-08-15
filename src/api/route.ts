@@ -18,6 +18,7 @@ import type { LatLng, RouteRecommendationRequest, RouteRecommendationResult, Rou
 import { api, ApiError } from './client'
 import { useMock } from './mode'
 import { searchPlaces } from './place'
+import { departureAfter } from './time'
 import { mockGetRoutes } from '../mock/route'
 import { mapRecommendationToRouteResult } from './mapRecommendation'
 
@@ -52,7 +53,7 @@ async function resolveDestination(
 }
 
 /** BE 「맞춤 경로 추천」 실호출 → 어댑터로 화면 RouteResult 번역 */
-async function getRoutesReal(destination: string): Promise<RouteResult> {
+async function getRoutesReal(destination: string, departureDateTime?: string): Promise<RouteResult> {
   const origin = (await getCurrentPosition()) ?? DEFAULT_ORIGIN
   const dest = await resolveDestination(destination, origin)
   // 목적지를 못 찾으면 갈 수 있는 길이 없는 것과 같게 처리 (ResultsScreen 이 404 → 'none' 안내)
@@ -61,14 +62,20 @@ async function getRoutesReal(destination: string): Promise<RouteResult> {
   const request: RouteRecommendationRequest = {
     origin,
     destination: dest.coords,
-    // BE LocalDateTime — 존/밀리초 없는 형식. TODO: 대화에서 고른 출발 시각을 실제로 전달.
-    departureDateTime: new Date().toISOString().slice(0, 19),
+    // 대화에서 고른 출발 시각. 없으면 '지금'.
+    // 로컬 시각으로 보낸다 — toISOString().slice(0,19) 은 UTC 라 한국에서 9시간 과거가 되고,
+    // 그 값이 그대로 TMAP 대중교통 조회로 들어가 엉뚱한 시간표의 경로가 나온다.
+    departureDateTime: departureDateTime ?? departureAfter(0),
   }
   const be = await api.post<RouteRecommendationResult>('/api/routes/recommendations', request)
   return mapRecommendationToRouteResult(be, { destination: dest.name, origin: '현재 위치' })
 }
 
-/** 목적지 기준 추천 경로(편한 길·걷기 적은 길·똑버스/콜택시) 조회 */
-export function getRoutes(destination: string): Promise<RouteResult> {
-  return useMock('route') ? mockGetRoutes(destination) : getRoutesReal(destination)
+/**
+ * 목적지 기준 추천 경로(편한 길·걷기 적은 길·똑버스/콜택시) 조회.
+ * @param departureDateTime 대화에서 고른 출발 시각('YYYY-MM-DDTHH:mm:ss'). 없으면 지금 기준.
+ *   Mock 은 시각을 쓰지 않는다(고정 데이터라 시각별 차이가 없다).
+ */
+export function getRoutes(destination: string, departureDateTime?: string): Promise<RouteResult> {
+  return useMock('route') ? mockGetRoutes(destination) : getRoutesReal(destination, departureDateTime)
 }
