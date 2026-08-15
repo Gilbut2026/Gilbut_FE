@@ -366,12 +366,33 @@ export function ServerChatScreen({
         hideTyping()
         handleMessage(res)
       } catch (e) {
-        fail(e)
+        /*
+         * AI 서버가 잠들어 있으면 깨어나는 데 40초쯤 걸린다(onrender 무료 플랜).
+         * 백엔드 타임아웃이 30초라 **첫 요청은 거의 반드시 실패**한다 — 그런데 그 실패한
+         * 요청이 서버를 깨워놓기 때문에, 곧바로 다시 보내면 6~12초에 답이 온다.
+         * 사용자에게 "다시 말해보세요"라고 시키지 말고 우리가 한 번 대신 눌러준다.
+         * (근본 해결은 발표 전 워밍업과 백엔드 타임아웃 상향이다. 이건 안전망이다)
+         */
+        const isTimeout = e instanceof ApiError && e.status === 502
+        if (!isTimeout) {
+          fail(e)
+          setBusy(false)
+          return
+        }
+        botSay('조금만 더 기다려 주세요…')
+        showTyping()
+        try {
+          const res = await sendChatMessage(value, coordsRef.current ?? undefined)
+          hideTyping()
+          handleMessage(res)
+        } catch (again) {
+          fail(again)
+        }
       } finally {
         setBusy(false)
       }
     },
-    [busy, userSay, showTyping, hideTyping, handleMessage, fail, onToast],
+    [busy, userSay, botSay, showTyping, hideTyping, handleMessage, fail, onToast],
   )
 
   // ── 각 단계 확정 ─────────────────────────────────
