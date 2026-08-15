@@ -10,7 +10,7 @@ import {
 } from '../api/chat'
 import { ApiError } from '../api/client'
 import { departureAfter, parseDepartureMinutes } from '../api/time'
-import { rankPlaceCandidates } from '../api/placeRank'
+import { areaOf, areasDiffer, rankPlaceCandidates } from '../api/placeRank'
 import { SEARCH_RADIUS_KM } from '../api/geo'
 import { QUICK_DESTINATION_NAMES } from './quickDestinations'
 import { ChatView, useChatLog } from '../components/ChatView'
@@ -276,27 +276,38 @@ export function ServerChatScreen({
   )
 
   // ── 장소 후보 카드 ───────────────────────────────
+  /**
+   * 장소 후보 — 각 줄이 곧 버튼인 카드 목록.
+   *
+   * 예전에는 후보가 여럿이면 알약 버튼(chat-reply)으로 냈는데, 그건 "지금 바로"처럼
+   * 짧은 답변용이라 긴 장소명이 들어가면 두 줄로 어색하게 깨졌다(2026-08-16 확인).
+   * 이름을 크게, 줄 전체를 터치 영역으로 두는 편이 어르신에게 훨씬 낫다.
+   * 스크립트 대화도 같은 모양을 쓴다 — 엔진이 바뀌어도 화면은 같아야 한다.
+   */
   function placeCandidates(places: PlaceItemResponse[], onPick: (p: PlaceItemResponse) => void) {
+    const shown = places.slice(0, 4)
+    // 후보가 다 같은 동네면 지역을 안 붙인다 — 같은 글자를 네 번 읽게 하지 않는다
+    const showArea = areasDiffer(shown)
     return (
       <>
-        <h3>이 장소가 맞나요?</h3>
-        <p>비슷한 이름이 있을 수 있어 주소까지 확인해 주세요.</p>
+        <h3>어디로 모실까요?</h3>
+        <p>가시려는 곳을 골라주세요.</p>
         {/* key 에 순번을 섞는다 — BE 응답의 placeId 가 중복으로 온다(본원·정문·후문이 같은 ID) */}
-        {places.map((p, i) => (
-          <div key={`${p.placeId}-${i}`} className="chat-place" style={{ marginTop: 10 }}>
+        {shown.map((p, i) => (
+          <button
+            key={`${p.placeId}-${i}`}
+            className="chat-place pick"
+            disabled={busy}
+            onClick={() => onPick(p)}
+          >
             <span className="pin">📍</span>
             <span>
               <b>{p.name}</b>
-              <span>{p.address}</span>
+              {showArea && <span>{areaOf(p.address)}</span>}
             </span>
-          </div>
+          </button>
         ))}
         <div className="chat-card-actions">
-          {places.slice(0, 1).map((p, i) => (
-            <button key={`${p.placeId}-${i}`} className="primary full" onClick={() => onPick(p)}>
-              네, 맞아요
-            </button>
-          ))}
           <button
             className="full"
             onClick={() => {
@@ -307,19 +318,6 @@ export function ServerChatScreen({
             찾는 곳이 없어요 · 다시 말하기
           </button>
         </div>
-      </>
-    )
-  }
-
-  /** 후보가 여럿이면 하나씩 고르게 한다(주소가 달라 사람이 봐야 구분된다) */
-  function placeChoiceList(places: PlaceItemResponse[], onPick: (p: PlaceItemResponse) => void) {
-    return (
-      <>
-        {places.map((p, i) => (
-          <button key={`${p.placeId}-${i}`} className="chat-reply" onClick={() => onPick(p)}>
-            {p.name} · {p.address}
-          </button>
-        ))}
       </>
     )
   }
@@ -339,8 +337,7 @@ export function ServerChatScreen({
         const pick = (p: PlaceItemResponse) => confirmDestination(p)
         // TMAP 순서는 대표 시설이 한참 아래에 오므로 다시 정렬한다 (api/placeRank 주석 참고)
         const ranked = rankPlaceCandidates(res.places, lastUtteranceRef.current)
-        if (ranked.length === 1) card(placeCandidates(ranked, pick))
-        else actions(placeChoiceList(ranked, pick))
+        card(placeCandidates(ranked, pick))
         return
       }
 
@@ -502,7 +499,7 @@ export function ServerChatScreen({
         return
       }
       botSay('찾은 장소예요. 출발지가 맞는 것을 골라주세요.')
-      actions(placeChoiceList(rankPlaceCandidates(res.places, keyword), pickPlaceOrigin))
+      card(placeCandidates(rankPlaceCandidates(res.places, keyword), pickPlaceOrigin))
     } catch (e) {
       fail(e)
     } finally {

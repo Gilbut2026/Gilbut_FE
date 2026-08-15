@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { getHome, saveHome, searchPlaces, searchPlacesNear } from '../api/place'
 import { SEARCH_RADIUS_KM } from '../api/geo'
-import { rankPlaceCandidates } from '../api/placeRank'
+import { areaOf, areasDiffer, rankPlaceCandidates } from '../api/placeRank'
 import type { LatLng, PlaceItemResponse } from '../types/dto'
 
 /**
@@ -201,7 +201,7 @@ export function HomeAddressSheet({
                 <span className="pin">📍</span>
                 <span>
                   <b>{p.name}</b>
-                  <span>{p.address}</span>
+                  {areasDiffer(candidates) && <span>{areaOf(p.address)}</span>}
                 </span>
               </button>
             ))}

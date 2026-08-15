@@ -32,6 +32,33 @@ const SUB_FACILITY = /(주차장|주차빌딩|주차타워|충전소|대피소|�
 const normalize = (s: string): string => s.replace(/\s+/g, '')
 
 /**
+ * 주소에서 행정구역만 짧게 뽑는다.
+ * "경기 수원시 영통구 월드컵로 164" → "수원시 영통구"
+ *
+ * 어르신에게 상세 주소는 읽을 것만 많고 판단에는 도움이 안 된다.
+ * 실제 응답을 보면 후보 넷이 전부 같은 도로명이라 주소로는 아무것도 구분되지 않았다.
+ */
+export function areaOf(address?: string | null): string {
+  if (!address) return ''
+  return address
+    .trim()
+    .split(/\s+/)
+    .filter((token) => /[시군구읍면동]$/.test(token))
+    .slice(-2)
+    .join(' ')
+}
+
+/**
+ * 후보들끼리 지역이 갈리는지.
+ * 다 같은 동네면 지역을 보여줄 이유가 없다 — 같은 글자를 네 번 읽게 하는 것은
+ * 도움이 아니라 방해다. 갈릴 때만 붙인다.
+ */
+export function areasDiffer(places: { address?: string | null }[]): boolean {
+  const set = new Set(places.map((p) => areaOf(p.address)).filter(Boolean))
+  return set.size > 1
+}
+
+/**
  * 검색어와의 일치 정도. 낮을수록 먼저.
  * 0 완전히 같음 · 1 검색어로 시작 · 2 검색어를 품음 · 3 그 밖
  */

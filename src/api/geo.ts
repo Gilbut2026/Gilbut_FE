@@ -56,3 +56,15 @@ export function isInServiceArea(coords: LatLng): boolean {
  * ※ 문자열인 이유 — 백엔드 PlaceSearchRequest 가 쿼리 파라미터를 문자열로 받는다.
  */
 export const SEARCH_RADIUS_KM = '20'
+
+/**
+ * 현재 위치 근처에서 못 찾았을 때, **수원 기준으로** 다시 찾을 반경(km).
+ *
+ * 수원 밖(예: 발표장)에서 앱을 열어도 "수원시청" 같은 수원 장소를 찾을 수 있어야 한다.
+ * 이때 좌표를 아예 빼고 전국에서 찾으면 TMAP 이 엉뚱한 것을 준다 —
+ * "수원시청"에 '밤밭청개구리공원'이 온 적이 있다(2026-08-16).
+ * 이 앱은 수원 서비스이므로 갈 곳은 "전국"이 아니라 "수원"이다.
+ *
+ * 백엔드 상한이 33km 라 그 안에서 넉넉하게 잡았다.
+ */
+export const SERVICE_SEARCH_RADIUS_KM = '30'
