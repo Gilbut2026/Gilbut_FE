@@ -4,7 +4,7 @@ import { ApiError } from '../api/client'
 import { speak } from '../state/tts'
 import { TopBar } from '../components/TopBar'
 import { MINI_PATHS, MINI_RESTS, applyStairChoice } from '../mock/route'
-import type { RouteErrorKind, RouteKey, RouteOption, RouteResult } from '../types/dto'
+import type { LatLng, RouteErrorKind, RouteKey, RouteOption, RouteResult } from '../types/dto'
 
 /**
  * 가는 길 (결과) — 7차 와이어프레임 #screen-results 이식.
@@ -217,6 +217,7 @@ function RouteView({
 export function ResultsScreen({
   destination,
   departureDateTime,
+  destinationCoords,
   stairChoice,
   onNeedStairChoice,
   onGoHome,
@@ -227,6 +228,8 @@ export function ResultsScreen({
   destination: string | null
   /** 대화에서 고른 출발 시각('YYYY-MM-DDTHH:mm:ss'). 없으면 지금 기준으로 조회한다. */
   departureDateTime: string | null
+  /** 대화에서 사용자가 확인한 목적지 좌표. 있으면 이름으로 다시 검색하지 않는다. */
+  destinationCoords: LatLng | null
   /** 사용자가 이미 고른 계단 선택 (아직 안 골랐으면 null) */
   stairChoice: 'with' | 'none' | null
   /** 계단 선택을 물어야 할 때 — App 이 계단 선택 화면으로 넘긴다 */
@@ -252,7 +255,7 @@ export function ResultsScreen({
     let alive = true
     setError(null)
     setResult(null)
-    getRoutes(destination, departureDateTime ?? undefined).then(
+    getRoutes(destination, departureDateTime ?? undefined, destinationCoords ?? undefined).then(
       (r) => {
         if (!alive) return
         // 후보가 하나도 없으면 오류가 아니라 '갈 수 있는 길 없음'
@@ -272,7 +275,7 @@ export function ResultsScreen({
       alive = false
     }
     // 출발 시각이 바뀌면 다시 조회한다 — 시간대에 따라 대중교통 후보가 달라진다
-  }, [destination, departureDateTime, attempt])
+  }, [destination, departureDateTime, destinationCoords, attempt])
 
   const retry = useCallback(() => setAttempt((n) => n + 1), [])
 

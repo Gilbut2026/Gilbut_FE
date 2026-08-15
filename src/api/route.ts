@@ -53,9 +53,20 @@ async function resolveDestination(
 }
 
 /** BE 「맞춤 경로 추천」 실호출 → 어댑터로 화면 RouteResult 번역 */
-async function getRoutesReal(destination: string, departureDateTime?: string): Promise<RouteResult> {
+async function getRoutesReal(
+  destination: string,
+  departureDateTime?: string,
+  destinationCoords?: LatLng,
+): Promise<RouteResult> {
   const origin = (await getCurrentPosition()) ?? DEFAULT_ORIGIN
-  const dest = await resolveDestination(destination, origin)
+
+  // 대화에서 사용자가 직접 고른 좌표가 있으면 다시 검색하지 않는다.
+  // 같은 이름이라도 검색 1순위가 달라져 확인한 곳과 다른 데로 안내될 수 있기 때문이다
+  // (예: "수원역" 검색 1순위가 '팀에이치짐 수원시청역점 주차장'으로 잡힌 사례).
+  const dest = destinationCoords
+    ? { coords: destinationCoords, name: destination }
+    : await resolveDestination(destination, origin)
+
   // 목적지를 못 찾으면 갈 수 있는 길이 없는 것과 같게 처리 (ResultsScreen 이 404 → 'none' 안내)
   if (!dest) throw new ApiError(404, '해당 목적지를 찾지 못했어요.')
 
@@ -76,6 +87,12 @@ async function getRoutesReal(destination: string, departureDateTime?: string): P
  * @param departureDateTime 대화에서 고른 출발 시각('YYYY-MM-DDTHH:mm:ss'). 없으면 지금 기준.
  *   Mock 은 시각을 쓰지 않는다(고정 데이터라 시각별 차이가 없다).
  */
-export function getRoutes(destination: string, departureDateTime?: string): Promise<RouteResult> {
-  return useMock('route') ? mockGetRoutes(destination) : getRoutesReal(destination, departureDateTime)
+export function getRoutes(
+  destination: string,
+  departureDateTime?: string,
+  destinationCoords?: LatLng,
+): Promise<RouteResult> {
+  return useMock('route')
+    ? mockGetRoutes(destination)
+    : getRoutesReal(destination, departureDateTime, destinationCoords)
 }

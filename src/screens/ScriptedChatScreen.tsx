@@ -1,8 +1,10 @@
 import { useEffect, useRef, useState } from 'react'
 import { LocationScreen } from './LocationScreen'
-import { getHome } from '../api/place'
+import { getHome, searchPlaces } from '../api/place'
 import { departureAfter, parseDepartureMinutes } from '../api/time'
+import { SUWON_CENTER, isInServiceArea } from '../api/geo'
 import { ChatView, useChatLog } from '../components/ChatView'
+import type { LatLng, PlaceItemResponse } from '../types/dto'
 
 /**
  * 대화로 길찾기 — 화면 안 스크립트 엔진 (Mock 전용).
@@ -28,13 +30,12 @@ const STEP_META: Record<Step, [string, string, string]> = {
   analysis: ['편한 길 찾는 중', '대화가 끝나면 편한 길을 보여드려요', '100%'],
 }
 
-const DEST_ADDR: Record<string, string> = {
-  '○○병원': '수원시 팔달구 ○○로 12',
-  전통시장: '수원시 팔달구 시장길 5',
-  주민센터: '수원시 권선구 행정로 9',
-  수원역: '경기 수원시 팔달구 덕영대로 924',
-}
-const addressOf = (name: string) => DEST_ADDR[name] ?? '수원시 인근'
+/**
+ * 대화 시작 시 보여주는 빠른 답변.
+ * 예전에는 `○○병원` 같은 와이어프레임 자리표시자였는데, 실제 장소 검색을 붙이면서
+ * 검색이 되는 실제 낱말로 바꿨다(자리표시자는 검색 결과가 0건이라 그대로 막힌다).
+ */
+const QUICK_DESTINATIONS = ['병원', '전통시장', '주민센터', '수원역']
 
 export function ScriptedChatScreen({
   prefill,
@@ -47,22 +48,34 @@ export function ScriptedChatScreen({
   onBack: () => void
   onSos: () => void
   onToast: (msg: string) => void
-  /** 대화 끝 — 목적지와 고른 출발 시각('YYYY-MM-DDTHH:mm:ss')을 결과 화면으로 넘긴다 */
-  onDone: (destination: string, departureDateTime: string) => void
+  /**
+   * 대화 끝 — 목적지 이름, 고른 출발 시각, 그리고 사용자가 확인한 목적지 좌표.
+   * 좌표를 함께 넘기는 이유: 결과 화면이 이름으로 다시 검색하면 같은 이름이라도
+   * 1순위가 달라져 사용자가 확인한 곳과 다른 데로 안내될 수 있다.
+   */
+  onDone: (destination: string, departureDateTime: string, coords?: LatLng) => void
 }) {
   const log = useChatLog()
   const { botSay, userSay, actions, card, typing, push } = log
 
   const [step, setStep] = useState<Step>('destination')
   const [input, setInput] = useState('')
+  const [busy, setBusy] = useState(false)
   const [locationDenied, setLocationDenied] = useState(false)
 
   const destRef = useRef('')
+  // 사용자가 확인한 목적지의 실제 좌표. 결과 화면이 이 좌표로 바로 조회한다
+  // (이름으로 다시 검색하면 같은 이름이라도 1순위가 달라질 수 있다).
+  const destCoordsRef = useRef<LatLng | null>(null)
   const departRef = useRef('')
   const startedRef = useRef(false)
   const homeAddrRef = useRef<string | null>(null)
+  const posRef = useRef<LatLng | null>(null)
 
-  // 저장된 집 주소를 미리 읽어둔다 — 있으면 출발지에 "🏠 집" 버튼을 띄운다.
+  const { showTyping, hideTyping } = log
+
+  // 저장된 집 주소와 현재 위치를 미리 읽어둔다.
+  // 위치는 장소 검색의 기준점이 된다 — 백엔드가 이 좌표 반경 5km 안에서만 찾는다.
   useEffect(() => {
     let alive = true
     getHome()
@@ -70,6 +83,16 @@ export function ScriptedChatScreen({
         if (alive) homeAddrRef.current = h?.address ?? null
       })
       .catch(() => {})
+
+    if ('geolocation' in navigator) {
+      navigator.geolocation.getCurrentPosition(
+        (p) => {
+          if (alive) posRef.current = { latitude: p.coords.latitude, longitude: p.coords.longitude }
+        },
+        () => {},
+        { enableHighAccuracy: false, timeout: 8000, maximumAge: 60_000 },
+      )
+    }
     return () => {
       alive = false
     }
@@ -78,7 +101,7 @@ export function ScriptedChatScreen({
   // ── 대화 스크립트 ──────────────────────────────
   const destinationReplies = () => (
     <>
-      {['○○병원', '전통시장', '주민센터', '수원역'].map((n) => (
+      {QUICK_DESTINATIONS.map((n) => (
         <button key={n} className="chat-reply" onClick={() => chooseDestination(n)}>
           {n}
         </button>
@@ -86,42 +109,85 @@ export function ScriptedChatScreen({
     </>
   )
 
-  function placeCard(name: string) {
+  /** 서비스 지역 밖일 때의 안내 — 서버 오류처럼 보이지 않게 원인과 다음 행동을 말해준다 */
+  function sayOutOfArea() {
+    botSay(
+      <>
+        <b>지금은 수원시 안에서만</b> 길을 찾아드릴 수 있어요.
+        <br />
+        수원에서 다시 열어주시거나, 수원 안의 장소를 말씀해 주세요.
+      </>,
+    )
+  }
+
+  /**
+   * 실제 검색 결과로 목적지를 확인받는다.
+   * 예전에는 검색 없이 하드코딩된 가짜 주소를 보여주고, 결과 화면이 이름으로 다시 검색해
+   * **1순위를 말없이 채택**했다. "수원역"을 찾았는데 '팀에이치짐 수원시청역점 주차장'이
+   * 1순위로 잡히는 사례가 확인돼(2026-08-15), 사용자가 직접 고르도록 바꿨다.
+   */
+  function placeCard(places: PlaceItemResponse[]) {
     return (
       <>
         <h3>이 장소가 맞나요?</h3>
-        <p>비슷한 이름이 있을 수 있어 주소까지 확인해 주세요.</p>
-        <div className="chat-place">
-          <span className="pin">📍</span>
-          <span>
-            <b>{name}</b>
-            <span>{addressOf(name)}</span>
-          </span>
-        </div>
-        <div className="chat-card-actions">
-          <button onClick={redoDestination}>다시 말하기</button>
-          <button className="primary" onClick={confirmPlace}>
-            네, 맞아요
+        <p>비슷한 이름이 있을 수 있어요. 가시려는 곳을 골라주세요.</p>
+        {places.slice(0, 4).map((p) => (
+          <button key={p.placeId} className="chat-place pick" onClick={() => confirmPlace(p)}>
+            <span className="pin">📍</span>
+            <span>
+              <b>{p.name}</b>
+              <span>{p.address}</span>
+            </span>
           </button>
-          <button className="full" onClick={() => onToast('지도에서 자세히 보기는 곧 준비할게요')}>
-            지도에서 자세히 확인
+        ))}
+        <div className="chat-card-actions">
+          <button className="full" onClick={redoDestination}>
+            찾는 곳이 없어요 · 다시 말하기
           </button>
         </div>
       </>
     )
   }
 
-  function chooseDestination(name: string) {
-    destRef.current = name
+  async function chooseDestination(name: string) {
+    if (busy) return
     userSay(`${name}에 가고 싶어요`)
-    typing(() => {
+    setBusy(true)
+    showTyping()
+
+    const center = posRef.current ?? SUWON_CENTER
+    const outside = !isInServiceArea(center)
+
+    try {
+      const res = await searchPlaces({
+        keyword: name,
+        lat: String(center.latitude),
+        lon: String(center.longitude),
+      })
+      hideTyping()
+
+      if (!res.places.length) {
+        if (outside) sayOutOfArea()
+        else botSay(`"${name}" 근처에서 장소를 찾지 못했어요. 조금 더 자세히 말씀해 주시겠어요?`)
+        actions(destinationReplies())
+        return
+      }
+
       botSay(
         <>
-          <b>{name}</b>으로 들었어요. 장소와 주소를 한 번만 확인할게요.
+          <b>{name}</b>으로 들었어요. 어디를 말씀하신 건지 한 번만 확인할게요.
         </>,
       )
-      card(placeCard(name))
-    })
+      card(placeCard(res.places))
+    } catch {
+      hideTyping()
+      // 백엔드가 결과 0건도 502 로 내려주기 때문에, 지역 밖이면 그쪽 안내를 먼저 한다
+      if (outside) sayOutOfArea()
+      else botSay('장소를 찾는 중에 문제가 생겼어요. 잠시 뒤 다시 말씀해 주시겠어요?')
+      actions(destinationReplies())
+    } finally {
+      setBusy(false)
+    }
   }
 
   function redoDestination() {
@@ -133,8 +199,10 @@ export function ScriptedChatScreen({
     })
   }
 
-  function confirmPlace() {
-    userSay('네, 맞아요')
+  function confirmPlace(place: PlaceItemResponse) {
+    destRef.current = place.name
+    destCoordsRef.current = { latitude: place.latitude, longitude: place.longitude }
+    userSay(`${place.name}, 맞아요`)
     askOrigin()
   }
 
@@ -284,7 +352,10 @@ export function ScriptedChatScreen({
           <p>지도 후보와 날씨·교통, 저장해두신 이동 설정을 결합합니다.</p>
         </>,
       )
-      window.setTimeout(() => onDone(destRef.current, departureDateTime), 1100)
+      window.setTimeout(
+        () => onDone(destRef.current, departureDateTime, destCoordsRef.current ?? undefined),
+        1100,
+      )
     })
   }
 
@@ -294,14 +365,8 @@ export function ScriptedChatScreen({
     startedRef.current = true
     push({ type: 'day', text: '오늘' })
     if (prefill) {
-      destRef.current = prefill
-      userSay(`${prefill}에 가고 싶어요`)
-      botSay(
-        <>
-          <b>{prefill}</b>에 가시는군요. 제가 찾은 장소가 맞는지 확인해 주세요.
-        </>,
-      )
-      card(placeCard(prefill))
+      // 자주 가는 곳에서 들어온 경우 — 이름만 아는 상태라 똑같이 검색해서 확인받는다
+      chooseDestination(prefill)
     } else {
       botSay(
         <>
@@ -376,6 +441,7 @@ export function ScriptedChatScreen({
       onBack={onBack}
       onSos={onSos}
       onToast={onToast}
+      busy={busy}
     />
   )
 }

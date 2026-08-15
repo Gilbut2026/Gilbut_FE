@@ -16,6 +16,7 @@ import type {
   ChatMessageResponse,
   ChatSessionResponse,
   ChatState,
+  LatLng,
   PlaceItemResponse,
 } from '../types/dto'
 
@@ -62,8 +63,8 @@ export function ServerChatScreen({
   onBack: () => void
   onSos: () => void
   onToast: (msg: string) => void
-  /** 대화 끝 — 목적지와 확정한 출발 시각('YYYY-MM-DDTHH:mm:ss')을 결과 화면으로 넘긴다 */
-  onDone: (destination: string, departureDateTime: string) => void
+  /** 대화 끝 — 목적지 이름·확정한 출발 시각·확인한 목적지 좌표 */
+  onDone: (destination: string, departureDateTime: string, coords?: LatLng) => void
 }) {
   const log = useChatLog()
   const { botSay, userSay, actions, card, push, showTyping, hideTyping } = log
@@ -75,6 +76,8 @@ export function ServerChatScreen({
 
   const startedRef = useRef(false)
   const destNameRef = useRef('')
+  // 확인한 목적지 좌표 — 결과 화면이 이름으로 다시 검색하지 않도록 함께 넘긴다
+  const destCoordsRef = useRef<LatLng | null>(null)
   const homeAddrRef = useRef<string | null>(null)
   // 서버에 확정한 출발 시각 — 결과 화면이 같은 값으로 경로를 조회해야 대화와 결과가 어긋나지 않는다
   const departureRef = useRef<string>('')
@@ -205,7 +208,12 @@ export function ServerChatScreen({
           </>,
         )
         window.setTimeout(
-          () => onDone(destNameRef.current, departureRef.current || departureAfter(0)),
+          () =>
+            onDone(
+              destNameRef.current,
+              departureRef.current || departureAfter(0),
+              destCoordsRef.current ?? undefined,
+            ),
           1100,
         )
       }
@@ -321,6 +329,7 @@ export function ServerChatScreen({
     if (busy) return
     userSay(`${p.name}, 맞아요`)
     destNameRef.current = p.name
+    destCoordsRef.current = { latitude: p.latitude, longitude: p.longitude }
     setBusy(true)
     showTyping()
     try {
