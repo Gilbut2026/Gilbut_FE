@@ -3,7 +3,8 @@ import { LocationScreen } from './LocationScreen'
 import { getHome, searchPlacesNear } from '../api/place'
 import { departureAfter, parseDepartureMinutes } from '../api/time'
 import { SEARCH_RADIUS_KM, SUWON_CENTER, isInServiceArea } from '../api/geo'
-import { areaOf, areasDiffer, rankPlaceCandidates } from '../api/placeRank'
+import { rankPlaceCandidates } from '../api/placeRank'
+import { PlaceCandidates } from '../components/PlaceCandidates'
 import { ChatView, useChatLog } from '../components/ChatView'
 import { QUICK_DESTINATION_NAMES } from './quickDestinations'
 import type { LatLng, PlaceItemResponse } from '../types/dto'
@@ -131,32 +132,7 @@ export function ScriptedChatScreen({
    * 1순위로 잡히는 사례가 확인돼(2026-08-15), 사용자가 직접 고르도록 바꿨다.
    */
   function placeCard(places: PlaceItemResponse[]) {
-    const shown = places.slice(0, 4)
-    // 후보가 다 같은 동네면 지역을 안 붙인다 — 같은 글자를 네 번 읽게 하지 않는다
-    const showArea = areasDiffer(shown)
-    return (
-      <>
-        <h3>어디로 모실까요?</h3>
-        <p>가시려는 곳을 골라주세요.</p>
-        {/* key 에 순번을 섞는다 — BE 응답에서 placeId 가 중복으로 온다
-            (본원·정문·후문·지하주차장이 모두 "159346"). placeId 만 쓰면 React 가
-            항목을 잘못 매칭해 누른 것과 다른 곳이 선택될 수 있다. */}
-        {shown.map((p, i) => (
-          <button key={`${p.placeId}-${i}`} className="chat-place pick" onClick={() => confirmPlace(p)}>
-            <span className="pin">📍</span>
-            <span>
-              <b>{p.name}</b>
-              {showArea && <span>{areaOf(p.address)}</span>}
-            </span>
-          </button>
-        ))}
-        <div className="chat-card-actions">
-          <button className="full" onClick={redoDestination}>
-            찾는 곳이 없어요 · 다시 말하기
-          </button>
-        </div>
-      </>
-    )
+    return <PlaceCandidates places={places} onPick={confirmPlace} onRedo={redoDestination} />
   }
 
   async function chooseDestination(name: string) {

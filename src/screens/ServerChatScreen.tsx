@@ -10,7 +10,8 @@ import {
 } from '../api/chat'
 import { ApiError } from '../api/client'
 import { departureAfter, parseDepartureMinutes } from '../api/time'
-import { areaOf, areasDiffer, rankPlaceCandidates } from '../api/placeRank'
+import { rankPlaceCandidates } from '../api/placeRank'
+import { PlaceCandidates } from '../components/PlaceCandidates'
 import { SEARCH_RADIUS_KM } from '../api/geo'
 import { QUICK_DESTINATION_NAMES } from './quickDestinations'
 import { ChatView, useChatLog } from '../components/ChatView'
@@ -277,48 +278,20 @@ export function ServerChatScreen({
 
   // ── 장소 후보 카드 ───────────────────────────────
   /**
-   * 장소 후보 — 각 줄이 곧 버튼인 카드 목록.
-   *
-   * 예전에는 후보가 여럿이면 알약 버튼(chat-reply)으로 냈는데, 그건 "지금 바로"처럼
-   * 짧은 답변용이라 긴 장소명이 들어가면 두 줄로 어색하게 깨졌다(2026-08-16 확인).
-   * 이름을 크게, 줄 전체를 터치 영역으로 두는 편이 어르신에게 훨씬 낫다.
-   * 스크립트 대화도 같은 모양을 쓴다 — 엔진이 바뀌어도 화면은 같아야 한다.
+   * 장소 후보 — 화면 모양과 더 보기 동작은 PlaceCandidates 가 갖고 있다.
+   * 스크립트 대화도 같은 것을 쓴다 — 엔진이 바뀌어도 화면은 같아야 한다.
    */
   function placeCandidates(places: PlaceItemResponse[], onPick: (p: PlaceItemResponse) => void) {
-    const shown = places.slice(0, 4)
-    // 후보가 다 같은 동네면 지역을 안 붙인다 — 같은 글자를 네 번 읽게 하지 않는다
-    const showArea = areasDiffer(shown)
     return (
-      <>
-        <h3>어디로 모실까요?</h3>
-        <p>가시려는 곳을 골라주세요.</p>
-        {/* key 에 순번을 섞는다 — BE 응답의 placeId 가 중복으로 온다(본원·정문·후문이 같은 ID) */}
-        {shown.map((p, i) => (
-          <button
-            key={`${p.placeId}-${i}`}
-            className="chat-place pick"
-            disabled={busy}
-            onClick={() => onPick(p)}
-          >
-            <span className="pin">📍</span>
-            <span>
-              <b>{p.name}</b>
-              {showArea && <span>{areaOf(p.address)}</span>}
-            </span>
-          </button>
-        ))}
-        <div className="chat-card-actions">
-          <button
-            className="full"
-            onClick={() => {
-              botSay('다시 말씀해 주세요. 어디로 가고 싶으세요?')
-              actions(destinationReplies())
-            }}
-          >
-            찾는 곳이 없어요 · 다시 말하기
-          </button>
-        </div>
-      </>
+      <PlaceCandidates
+        places={places}
+        onPick={onPick}
+        disabled={busy}
+        onRedo={() => {
+          botSay('다시 말씀해 주세요. 어디로 가고 싶으세요?')
+          actions(destinationReplies())
+        }}
+      />
     )
   }
 
