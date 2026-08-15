@@ -123,7 +123,7 @@ function RouteView({
   result: RouteResult
   selected: RouteOption
   onNext: () => void
-  onGuide: (guide: RouteOption['guide'], result: RouteResult) => void
+  onGuide: (guide: RouteOption['guide'], result: RouteResult, option: RouteOption) => void
 }) {
   const isRec = selected.key === result.recommendedKey
   return (
@@ -195,7 +195,7 @@ function RouteView({
         </div>
 
         <div className="result-actions">
-          <button className="btn primary" onClick={() => onGuide(selected.guide, result)}>
+          <button className="btn primary" onClick={() => onGuide(selected.guide, result, selected)}>
             {selected.guide === 'drt'
               ? '똑버스 이용 방법 보기'
               : selected.guide === 'calltaxi'
@@ -238,7 +238,7 @@ export function ResultsScreen({
   /** 목적지를 다시 말하러 대화 화면으로 */
   onRestartChat: () => void
   onSos: () => void
-  onGuide: (guide: RouteOption['guide'], result: RouteResult) => void
+  onGuide: (guide: RouteOption['guide'], result: RouteResult, option: RouteOption) => void
 }) {
   const [result, setResult] = useState<RouteResult | null>(null)
   const [selectedKey, setSelectedKey] = useState<RouteKey | null>(null)

@@ -507,3 +507,36 @@ button { color: inherit; }
 .time-row:hover:not(:disabled) { border-color: rgba(103, 85, 245, 0.45); }
 .time-row.on { color: #fff; border-color: transparent; background: linear-gradient(145deg, var(--violet), var(--blue)); }
 .time-row:disabled { color: rgba(21, 33, 59, 0.24); background: rgba(21, 33, 59, 0.04); border-color: transparent; cursor: default; }
+
+/* ── 길 안내 (NavigateScreen) ──────────────────────────────
+   지금 할 일 하나만 크게. 지도는 참고로 둔다 — 어르신은 지도를 읽는 것보다
+   "오른쪽으로 도세요"를 듣는 편이 쉽다. */
+.nav-head { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; margin-bottom: 11px; }
+.nav-head b { font-size: 21px; font-weight: 920; letter-spacing: -0.02em; }
+.nav-head span { color: var(--ink-3); font-size: 17px; font-weight: 850; flex: 0 0 auto; }
+
+.route-map { width: 100%; border-radius: 18px; overflow: hidden; border: 1px solid rgba(148, 163, 184, 0.22); background: rgba(255, 255, 255, 0.6); }
+.route-map.empty { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 5px; text-align: center; padding: 16px; }
+.route-map.empty b { font-size: 18px; font-weight: 900; color: var(--ink-2); }
+.route-map.empty span { font-size: 16px; font-weight: 700; color: var(--ink-3); }
+
+.nav-step { display: flex; align-items: center; gap: 14px; margin: 14px 0; padding: 20px 18px; border-radius: 22px; background: linear-gradient(150deg, rgba(103, 85, 245, 0.12), rgba(52, 136, 244, 0.08)); border: 1.5px solid rgba(103, 85, 245, 0.2); }
+.nav-step .ico { width: 58px; height: 58px; border-radius: 19px; display: grid; place-items: center; flex: 0 0 auto; background: #fff; font-size: 30px; box-shadow: 0 12px 24px -18px rgba(21, 33, 59, 0.7); }
+.nav-step > div { min-width: 0; }
+.nav-step b { display: block; font-size: 24px; font-weight: 920; line-height: 1.3; letter-spacing: -0.02em; word-break: keep-all; }
+.nav-step span { display: block; margin-top: 4px; color: var(--ink-2); font-size: 18px; font-weight: 720; word-break: keep-all; }
+
+.nav-actions { display: grid; grid-template-columns: 1fr 1.4fr; gap: 9px; margin-bottom: 9px; }
+
+.nav-toggle { width: 100%; min-height: 48px; margin-top: 9px; border: 0; border-radius: 14px; background: transparent; color: var(--violet-deep); font-size: 17px; font-weight: 850; font-family: inherit; cursor: pointer; }
+
+.nav-all { list-style: none; margin: 4px 0 0; padding: 0; display: flex; flex-direction: column; gap: 7px; }
+.nav-all li button { display: flex; align-items: center; gap: 11px; width: 100%; min-height: 58px; padding: 11px 14px; border-radius: 15px; border: 1.5px solid rgba(103, 85, 245, 0.14); background: #fff; font-family: inherit; text-align: left; cursor: pointer; }
+.nav-all li.on button { border-color: transparent; background: linear-gradient(145deg, var(--violet), var(--blue)); color: #fff; }
+.nav-all li button > span:first-child { font-size: 21px; flex: 0 0 auto; }
+.nav-all b { display: block; font-size: 17px; font-weight: 880; word-break: keep-all; }
+.nav-all em { display: block; margin-top: 2px; font-size: 15px; font-weight: 700; font-style: normal; opacity: 0.78; }
+
+.empty-note { padding: 26px 20px; border-radius: 22px; background: rgba(255, 255, 255, 0.72); border: 1px solid rgba(148, 163, 184, 0.22); text-align: center; }
+.empty-note b { display: block; font-size: 21px; font-weight: 920; margin-bottom: 8px; }
+.empty-note p { margin: 0 0 16px; color: var(--ink-2); font-size: 17px; font-weight: 700; word-break: keep-all; }

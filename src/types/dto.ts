@@ -391,6 +391,11 @@ export interface RouteOption {
   notice: string
   /** 주 버튼이 어디로 가는지 — 길 안내 / 똑버스 안내 / 콜택시 안내 */
   guide: 'navigate' | 'drt' | 'calltaxi'
+  /**
+   * 길 안내 상세 (단계 목록 + 지도에 그릴 좌표).
+   * BE 가 안 주면 없다 — 없으면 안내 화면이 "길 안내를 준비하지 못했어요"로 알린다.
+   */
+  directions?: RouteDirections
 }
 
 /**
@@ -617,11 +622,65 @@ export interface DrtGuideResponse {
   message: string | null
 }
 
+/* ── 길 안내에 쓰는 상세 구조 ──────────────────────────────
+ *
+ * 예전에는 walkingRoute·transitRoutes 를 unknown 으로 두고 버렸다. "화면이 안 써서"가
+ * 이유였는데, 정작 여기에 **TMAP 이 준 실제 경로 좌표와 턴바이턴 안내문**이 들어 있다.
+ * 가짜 지도를 그려놓고 진짜 좌표는 버리고 있었던 셈이다(2026-08-16).
+ */
+
+/** 경로 위 한 점 */
+export interface RoutePointDto {
+  latitude: number
+  longitude: number
+}
+
+/** 보행 안내 한 단계 — TMAP 보행자 경로안내의 description 이 instruction 으로 온다 */
+export interface WalkingStepDto {
+  stepIndex: number
+  /** "횡단보도 후 직진" 같은 안내문. 없을 수 있다 */
+  instruction: string | null
+  distanceM: number | null
+  durationSec: number | null
+  /** TMAP turnType — 11 직진 · 12 좌회전 · 13 우회전 · 211 횡단보도 … */
+  turnType: number | null
+  pointType: string | null
+  points: RoutePointDto[] | null
+}
+
+export interface WalkingRouteItemDto {
+  routeId: string
+  routeOption: WalkingRouteOption | null
+  routePoints: RoutePointDto[] | null
+  steps: WalkingStepDto[] | null
+}
+
+/** 대중교통 한 구간 — 걷기 / 버스 / 지하철 */
+export interface TransitLegDto {
+  legIndex: number
+  /** 'WALK' · 'BUS' · 'SUBWAY' 등 */
+  mode: string | null
+  /** "3-1" 같은 노선 이름 */
+  routeName: string | null
+  startName: string | null
+  endName: string | null
+  distanceM: number | null
+  durationSec: number | null
+  /** 몇 정거장 가는지 */
+  stationCount: number | null
+  routePoints: RoutePointDto[] | null
+  steps: { stepIndex: number; instruction: string | null; distanceM: number | null }[] | null
+}
+
+export interface TransitRouteItemDto {
+  routeId: string
+  routePoints: RoutePointDto[] | null
+  legs: TransitLegDto[] | null
+}
+
 /**
  * POST /api/routes/recommendations 응답.
- * walkingRoute/transitRoutes/filteredResults 는 지도·상세용 큰 구조라 지금 화면이 안 써서
- * unknown 으로 둔다(붙일 때 walking/transit 응답 타입을 별도 이식).
- * 어댑터가 쓰는 것은 recommendations · drtDecision · drtGuide 셋이다.
+ * filteredResults 는 아직 화면이 안 써서 unknown 으로 둔다.
  */
 export interface RouteRecommendationResult {
   requestId: string
@@ -630,8 +689,25 @@ export interface RouteRecommendationResult {
   filteredResults: unknown[] | null
   drtDecision: DrtDecision | null
   drtGuide: DrtGuideResponse | null
-  walkingRoute: unknown | null
-  transitRoutes: unknown | null
+  walkingRoute: { routes: WalkingRouteItemDto[] | null } | null
+  transitRoutes: { routes: TransitRouteItemDto[] | null } | null
+}
+
+/* ── 화면이 쓰는 길 안내 ─────────────────────────────── */
+
+/** 안내 한 단계 — 걷기 / 타기 / 내리기 */
+export interface GuideStep {
+  kind: 'walk' | 'ride' | 'getoff'
+  /** 크게 보여줄 한 줄 — "300m 걷기" · "3-1번 버스" */
+  title: string
+  /** 작게 덧붙일 설명 — "횡단보도 건너 직진" · "시청 정류장에서 타요" */
+  detail?: string
+}
+
+/** 한 경로의 안내 — 단계 목록과 지도에 그릴 좌표 */
+export interface RouteDirections {
+  steps: GuideStep[]
+  path: LatLng[]
 }
 
 /* ============================================================

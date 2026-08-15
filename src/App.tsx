@@ -14,6 +14,7 @@ import { HelpScreen } from './screens/HelpScreen'
 import { ChatScreen } from './screens/ChatScreen'
 import { DrtScreen } from './screens/DrtScreen'
 import { CallTaxiScreen } from './screens/CallTaxiScreen'
+import { NavigateScreen } from './screens/NavigateScreen'
 import { StairChoiceScreen } from './screens/StairChoiceScreen'
 import { useSettings, updateSettings } from './state/settings'
 import { HAS_MOCK, mockBadgeLabel, useMock } from './api/mode'
@@ -23,7 +24,7 @@ import { warmUpAi } from './api/warmup'
 import { ApiError } from './api/client'
 import { isLoggedIn, onSessionExpired } from './state/auth'
 import { TAB_SCREENS, type ChatOutcome, type Screen } from './types/nav'
-import type { DrtGuideResponse, DrtReasonCode, LatLng, StairComparison } from './types/dto'
+import type { DrtGuideResponse, DrtReasonCode, LatLng, RouteOption, StairComparison } from './types/dto'
 
 /** 카카오 로그인 콜백(`/auth/kakao/callback?code=…`)으로 들어왔는지 최초 1회 판단 */
 function initialAuthPhase(): 'idle' | 'loading' {
@@ -106,6 +107,8 @@ export default function App() {
     reasons: DrtReasonCode[]
   } | null>(null)
   const [chatPrefill, setChatPrefill] = useState<string | null>(null)
+  // 길 안내 화면이 안내할 경로 — 결과 화면에서 고른 그 카드
+  const [guideOption, setGuideOption] = useState<RouteOption | null>(null)
   // 계단 있는 길 ↔ 없는 길 선택. 한 번 고르면 그 이동에서는 다시 묻지 않는다(7/31 회의)
   const [stairChoice, setStairChoice] = useState<'with' | 'none' | null>(null)
   const [stairComparison, setStairComparison] = useState<StairComparison | null>(null)
@@ -330,12 +333,15 @@ export default function App() {
             setScreen('chat')
           }}
           onSos={onSos}
-          onGuide={(guide, result) => {
+          onGuide={(guide, result, option) => {
             // 똑버스 안내 화면이 실제 권역·번호를 쓰도록 결과에서 받아 넘긴다
             setDrtInfo({ guide: result.drtGuide ?? null, reasons: result.drtReasons ?? [] })
             if (guide === 'drt') setScreen('drt')
             else if (guide === 'calltaxi') setScreen('calltaxi')
-            else toast('길 안내 화면은 곧 준비할게요')
+            else {
+              setGuideOption(option)
+              setScreen('navigate')
+            }
           }}
         />
       )}
@@ -349,6 +355,16 @@ export default function App() {
             toast(pick === 'with' ? '계단이 있는 길로 안내할게요' : '계단 없는 길로 안내할게요')
           }}
           onBack={() => setScreen('chat')}
+          onSos={onSos}
+          onToast={toast}
+        />
+      )}
+
+      {screen === 'navigate' && guideOption && (
+        <NavigateScreen
+          option={guideOption}
+          destination={destination}
+          onBack={() => setScreen('results')}
           onSos={onSos}
           onToast={toast}
         />

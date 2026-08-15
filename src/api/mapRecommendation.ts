@@ -22,6 +22,7 @@
  *      계단을 '조금 어려움'으로 답한 분에게만 물어보는 화면이라(7/31 회의), 두 후보가
  *      모두 있을 때만 만든다. 하나뿐이면 비교할 것이 없어 null 이다.
  */
+import { buildDirections } from './directions'
 import type {
   AccessibilitySignal,
   DrtGuideResponse,
@@ -155,7 +156,11 @@ function buildStairComparison(items: RouteRecommendationItemDto[]): StairCompari
 }
 
 /** 추천 후보 1건 → 카드 1장 (지표·사유는 BE 값, 나머지 문구는 템플릿). */
-function itemToOption(item: RouteRecommendationItemDto, key: RouteKey): RouteOption {
+function itemToOption(
+  item: RouteRecommendationItemDto,
+  key: RouteKey,
+  be: RouteRecommendationResult,
+): RouteOption {
   const m = item.candidate.metrics
   const text = CARD_TEXT[key]
   return {
@@ -169,6 +174,8 @@ function itemToOption(item: RouteRecommendationItemDto, key: RouteKey): RouteOpt
     // BE 가 추천 사유를 주면 그것이 템플릿 문구보다 정확하다(실제 경로를 보고 쓴 문장이므로)
     notice: item.recommendationReason?.trim() || text.notice,
     guide: 'navigate',
+    // 길 안내 상세 — TMAP 이 준 안내문과 좌표. 없으면 안내 화면이 그렇다고 알린다
+    directions: buildDirections(be, item.routeId),
   }
 }
 
@@ -237,7 +244,7 @@ export function mapRecommendationToRouteResult(
 
   // 1. rank 1 → 가장 편한 길
   const comfortItem = ranked[0]
-  if (comfortItem) options.push(itemToOption(comfortItem, 'comfort'))
+  if (comfortItem) options.push(itemToOption(comfortItem, 'comfort', be))
 
   // 2. 나머지 중 걷는 시간이 가장 짧은 후보 → 걷기 적은 길
   const rest = ranked.slice(1)
@@ -245,7 +252,7 @@ export function mapRecommendationToRouteResult(
     if (!best) return cur
     return cur.candidate.metrics.totalWalkTimeSec < best.candidate.metrics.totalWalkTimeSec ? cur : best
   }, null)
-  if (shortItem) options.push(itemToOption(shortItem, 'short'))
+  if (shortItem) options.push(itemToOption(shortItem, 'short', be))
 
   // 3. DRT/콜택시 (drtDecision.show 일 때만)
   const drt = be.drtDecision
