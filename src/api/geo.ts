@@ -42,3 +42,17 @@ export function distanceKm(a: LatLng, b: LatLng): number {
 export function isInServiceArea(coords: LatLng): boolean {
   return distanceKm(coords, SUWON_CENTER) <= SERVICE_RADIUS_KM
 }
+
+/**
+ * 장소 검색에 함께 보낼 반경(km).
+ *
+ * 백엔드는 이 값을 안 보내면 5km 를 강제한다(DEFAULT_RADIUS_KM). 그런데 수원 시내
+ * 주요 지점끼리도 3분의 1이 5km 를 넘어서(영통역↔권선구청 8.9km, 수원역↔영통역 6.5km),
+ * 같은 시 안의 이동조차 검색 단계에서 막혔다.
+ *
+ * 20km 로 잡으면 수원 전역(동서 약 13km)에 여유를 두고 덮으면서, 반경을 지나치게 넓혀
+ * 먼 동네 결과가 섞이는 것도 피할 수 있다. 백엔드 상한은 33km 라 여유가 있다.
+ *
+ * ※ 문자열인 이유 — 백엔드 PlaceSearchRequest 가 쿼리 파라미터를 문자열로 받는다.
+ */
+export const SEARCH_RADIUS_KM = '20'

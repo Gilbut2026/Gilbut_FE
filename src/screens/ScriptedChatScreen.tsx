@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { LocationScreen } from './LocationScreen'
 import { getHome, searchPlaces } from '../api/place'
 import { departureAfter, parseDepartureMinutes } from '../api/time'
-import { SUWON_CENTER, isInServiceArea } from '../api/geo'
+import { SEARCH_RADIUS_KM, SUWON_CENTER, isInServiceArea } from '../api/geo'
 import { rankPlaceCandidates } from '../api/placeRank'
 import { ChatView, useChatLog } from '../components/ChatView'
 import type { LatLng, PlaceItemResponse } from '../types/dto'
@@ -164,6 +164,8 @@ export function ScriptedChatScreen({
         keyword: name,
         lat: String(center.latitude),
         lon: String(center.longitude),
+        // 반경을 명시하지 않으면 백엔드 기본값 5km 라 같은 수원 안에서도 검색이 막힌다
+        radiusKm: SEARCH_RADIUS_KM,
       })
       hideTyping()
 

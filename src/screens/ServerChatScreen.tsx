@@ -12,6 +12,7 @@ import {
 import { ApiError } from '../api/client'
 import { departureAfter, parseDepartureMinutes } from '../api/time'
 import { rankPlaceCandidates } from '../api/placeRank'
+import { SEARCH_RADIUS_KM } from '../api/geo'
 import { ChatView, useChatLog } from '../components/ChatView'
 import type {
   ChatMessageResponse,
@@ -449,6 +450,8 @@ export function ServerChatScreen({
         keyword,
         lat: c ? String(c.latitude) : undefined,
         lon: c ? String(c.longitude) : undefined,
+        // 좌표를 보낼 때만 반경을 함께 보낸다 (백엔드가 좌표 없는 반경은 400 으로 거절한다)
+        radiusKm: c ? SEARCH_RADIUS_KM : undefined,
       })
       hideTyping()
       if (!res.places?.length) {
