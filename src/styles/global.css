@@ -184,8 +184,20 @@ button { color: inherit; }
 /* ---------- 오버레이 · 시트 · 토스트 ---------- */
 .scrim { position: absolute; inset: 0; z-index: 20; background: rgba(16, 24, 42, 0.52); opacity: 0; pointer-events: none; transition: 0.2s; backdrop-filter: blur(3px); }
 .scrim.show { opacity: 1; pointer-events: auto; }
-.sheet { position: absolute; left: 11px; right: 11px; bottom: 11px; z-index: 21; border-radius: 27px; padding: 21px 18px 18px; background: rgba(255, 255, 255, 0.94); border: 1px solid rgba(255, 255, 255, 0.95); box-shadow: 0 28px 70px rgba(15, 23, 42, 0.35); transform: translateY(115%); transition: 0.25s cubic-bezier(0.2, 0.8, 0.2, 1); pointer-events: none; backdrop-filter: blur(24px); }
-.sheet.show { transform: translateY(0); pointer-events: auto; }
+/*
+ * 바텀시트.
+ *
+ * 닫힌 시트는 transform 으로 아래에 밀어두는데, **그것만으로는 부족하다.**
+ *   · 셸 밖으로 삐져나와 보이는 경우가 있다(2026-08-16 확인 — 대화 화면에서 SOS 시트가
+ *     출발 시각 시트 아래에 같이 보였다)
+ *   · 눈에 안 보여도 버튼은 살아 있어서 Tab 으로 잡히고 화면낭독기도 읽는다
+ * 그래서 visibility 로 확실히 뺀다. transition 에 visibility 를 함께 걸어 두면
+ * 닫히는 동안은 보이다가 다 내려간 뒤에 사라져서, 밀려나는 모습은 그대로 남는다.
+ *
+ * 높이는 셸을 넘지 않게 막고 넘치면 시트 안에서 굴린다 — 달력을 펼치면 길어진다.
+ */
+.sheet { position: absolute; left: 11px; right: 11px; bottom: 11px; z-index: 21; max-height: calc(100% - 22px); overflow-y: auto; border-radius: 27px; padding: 21px 18px 18px; background: rgba(255, 255, 255, 0.94); border: 1px solid rgba(255, 255, 255, 0.95); box-shadow: 0 28px 70px rgba(15, 23, 42, 0.35); transform: translateY(115%); visibility: hidden; transition: transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1), visibility 0.25s; pointer-events: none; backdrop-filter: blur(24px); }
+.sheet.show { transform: translateY(0); visibility: visible; pointer-events: auto; }
 .sheet-grip { width: 42px; height: 5px; border-radius: 999px; background: #CCD4E2; margin: -5px auto 15px; }
 .sheet h3 { margin: 0; font-size: 23px; font-weight: 920; letter-spacing: -0.03em; }
 .sheet p { margin: 7px 0 16px; color: var(--ink-3); font-size: 18px; font-weight: 660; }
