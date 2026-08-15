@@ -80,6 +80,8 @@ export function ServerChatScreen({
   const destNameRef = useRef('')
   // 확인한 목적지 좌표 — 결과 화면이 이름으로 다시 검색하지 않도록 함께 넘긴다
   const destCoordsRef = useRef<LatLng | null>(null)
+  // 마지막 발화 — 서버가 준 장소 후보를 사용자가 말한 이름 기준으로 다시 정렬하는 데 쓴다
+  const lastUtteranceRef = useRef('')
   const homeAddrRef = useRef<string | null>(null)
   // 서버에 확정한 출발 시각 — 결과 화면이 같은 값으로 경로를 조회해야 대화와 결과가 어긋나지 않는다
   const departureRef = useRef<string>('')
@@ -289,8 +291,8 @@ export function ServerChatScreen({
 
       if (res.responseType === 'PLACE_CANDIDATES' && res.places?.length) {
         const pick = (p: PlaceItemResponse) => confirmDestination(p)
-        // 부속시설을 뒤로 보내고 같은 주소는 하나로 묶는다 (api/placeRank 주석 참고)
-        const ranked = rankPlaceCandidates(res.places)
+        // TMAP 순서는 대표 시설이 한참 아래에 오므로 다시 정렬한다 (api/placeRank 주석 참고)
+        const ranked = rankPlaceCandidates(res.places, lastUtteranceRef.current)
         if (ranked.length === 1) card(placeCandidates(ranked, pick))
         else actions(placeChoiceList(ranked, pick))
         return
@@ -313,6 +315,7 @@ export function ServerChatScreen({
         return
       }
       userSay(value)
+      lastUtteranceRef.current = value
       setBusy(true)
       showTyping()
       try {
@@ -459,7 +462,7 @@ export function ServerChatScreen({
         return
       }
       botSay('찾은 장소예요. 출발지가 맞는 것을 골라주세요.')
-      actions(placeChoiceList(rankPlaceCandidates(res.places), pickPlaceOrigin))
+      actions(placeChoiceList(rankPlaceCandidates(res.places, keyword), pickPlaceOrigin))
     } catch (e) {
       fail(e)
     } finally {

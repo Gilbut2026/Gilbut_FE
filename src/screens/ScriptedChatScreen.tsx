@@ -181,9 +181,9 @@ export function ScriptedChatScreen({
           <b>{name}</b>으로 들었어요. 어디를 말씀하신 건지 한 번만 확인할게요.
         </>,
       )
-      // 주차장 같은 부속시설을 뒤로 보내고 같은 주소는 하나로 묶는다
-      // (TMAP 은 "아주대학교병원"에 주차빌딩 4개를 함께 준다)
-      card(placeCard(rankPlaceCandidates(res.places)))
+      // TMAP 순서를 그대로 쓰면 대표 시설이 한참 아래에 온다
+      // ("아주대학교병원" 검색에 본원이 17위였다) — 검색어와의 일치도로 다시 정렬한다
+      card(placeCard(rankPlaceCandidates(res.places, name)))
     } catch {
       hideTyping()
       // 백엔드가 결과 0건도 502 로 내려주기 때문에, 지역 밖이면 그쪽 안내를 먼저 한다
