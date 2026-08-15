@@ -18,11 +18,14 @@
  *   5. 문구(title·sub)·미니맵: BE 가 안 주는 편집 정보라 아래 CARD_TEXT 템플릿을 유지한다(mock 과 동일 voice).
  *      단 notice 는 BE recommendationReason 이 있으면 그것을 우선한다(사람이 읽는 추천 사유).
  *   6. stairComparison: BE WALKING DEFAULT ↔ AVOID_STAIRS 두 후보로 구성한다. 계단 신호가
- *      노출되면서 "계단 몇 개" 를 실제로 채울 수 있게 됐다.
+ *      노출되면서 "계단 몇 곳" 을 실제로 채울 수 있게 됐다.
+ *      계단을 '조금 어려움'으로 답한 분에게만 물어보는 화면이라(7/31 회의), 두 후보가
+ *      모두 있을 때만 만든다. 하나뿐이면 비교할 것이 없어 null 이다.
  */
 import type {
   AccessibilitySignal,
   DrtGuideResponse,
+  StairComparison,
   RouteFacility,
   RouteKey,
   RouteOption,
@@ -114,6 +117,41 @@ function facilitiesFromMetrics(item: RouteRecommendationItemDto): RouteFacility[
     })
   }
   return rows
+}
+
+/**
+ * 계단 있는 길 ↔ 없는 길 비교 구성.
+ * BE 는 보행 경로를 DEFAULT(계단 허용)와 AVOID_STAIRS(계단 회피) 두 갈래로 뽑아준다.
+ * 둘 다 있을 때만 비교가 성립한다 — 하나뿐이면 고를 것이 없다.
+ */
+function buildStairComparison(items: RouteRecommendationItemDto[]): StairComparison | null {
+  const withStairs = items.find(
+    (i) => i.candidate.routeType === 'WALKING' && i.candidate.routeOption === 'DEFAULT',
+  )
+  const noStairs = items.find(
+    (i) => i.candidate.routeType === 'WALKING' && i.candidate.routeOption === 'AVOID_STAIRS',
+  )
+  if (!withStairs || !noStairs) return null
+
+  const toOption = (i: RouteRecommendationItemDto) => ({
+    minutes: toMinutes(i.candidate.metrics.totalTimeSec),
+    walkMinutes: toMinutes(i.candidate.metrics.totalWalkTimeSec),
+    meters: i.candidate.metrics.totalWalkDistanceM,
+  })
+
+  // 계단이 몇 곳인지 BE 접근성 신호에서 가져온다. 모르면 숫자를 지어내지 않는다.
+  const stair = withStairs.accessibilitySummary?.stair
+  const stairFact =
+    stair?.state === 'PRESENT' && stair.count
+      ? `계단 ${stair.count}곳을 지나요`
+      : stair?.state === 'PRESENT'
+        ? '계단을 지나요'
+        : '계단 정보는 확인되지 않았어요'
+
+  return {
+    withStairs: { ...toOption(withStairs), stairFact },
+    noStairs: toOption(noStairs),
+  }
 }
 
 /** 추천 후보 1건 → 카드 1장 (지표·사유는 BE 값, 나머지 문구는 템플릿). */
@@ -220,8 +258,8 @@ export function mapRecommendationToRouteResult(
     origin: ctx.origin,
     options,
     recommendedKey,
-    // 🚨 위 주석 6 — 접근성 신호가 응답에 노출되면 DEFAULT↔AVOID_STAIRS 두 후보로 구성한다.
-    stairComparison: null,
+    // 계단 있는 길 ↔ 없는 길. 두 후보가 다 있을 때만 물어본다(위 주석 6).
+    stairComparison: buildStairComparison(ranked),
     // 똑버스·콜택시 안내 화면이 자리표시자 대신 실제 값을 쓰도록 함께 넘긴다
     drtGuide: be.drtGuide ?? null,
     drtReasons: drt?.reasonCodes ?? [],
