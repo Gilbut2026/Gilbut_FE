@@ -20,7 +20,7 @@ import { HAS_MOCK, mockBadgeLabel } from './api/mode'
 import { kakaoLogin, KAKAO_CALLBACK_PATH } from './api/auth'
 import { onSessionExpired } from './state/auth'
 import { TAB_SCREENS, type Screen } from './types/nav'
-import type { LatLng, StairComparison } from './types/dto'
+import type { DrtGuideResponse, DrtReasonCode, LatLng, StairComparison } from './types/dto'
 
 /** 카카오 로그인 콜백(`/auth/kakao/callback?code=…`)으로 들어왔는지 최초 1회 판단 */
 function initialAuthPhase(): 'idle' | 'loading' {
@@ -80,6 +80,11 @@ export default function App() {
   // 대화에서 사용자가 "이 장소가 맞나요?"로 확인한 목적지 좌표.
   // 이름으로 다시 검색하면 1순위가 달라져 확인한 곳과 다른 데로 안내될 수 있어 좌표째 넘긴다.
   const [destCoords, setDestCoords] = useState<LatLng | null>(null)
+  // 똑버스 안내 화면에 넘길 실데이터 (권역명·대표번호·추천 이유)
+  const [drtInfo, setDrtInfo] = useState<{
+    guide: DrtGuideResponse | null
+    reasons: DrtReasonCode[]
+  } | null>(null)
   const [chatPrefill, setChatPrefill] = useState<string | null>(null)
   // 계단 있는 길 ↔ 없는 길 선택. 한 번 고르면 그 이동에서는 다시 묻지 않는다(7/31 회의)
   const [stairChoice, setStairChoice] = useState<'with' | 'none' | null>(null)
@@ -238,7 +243,9 @@ export default function App() {
             setScreen('chat')
           }}
           onSos={onSos}
-          onGuide={(guide) => {
+          onGuide={(guide, result) => {
+            // 똑버스 안내 화면이 실제 권역·번호를 쓰도록 결과에서 받아 넘긴다
+            setDrtInfo({ guide: result.drtGuide ?? null, reasons: result.drtReasons ?? [] })
             if (guide === 'drt') setScreen('drt')
             else if (guide === 'calltaxi') setScreen('calltaxi')
             else toast('길 안내 화면은 곧 준비할게요')
@@ -261,7 +268,14 @@ export default function App() {
       )}
 
       {screen === 'drt' && (
-        <DrtScreen destination={destination} onBack={() => setScreen('results')} onSos={onSos} onToast={toast} />
+        <DrtScreen
+          destination={destination}
+          drtGuide={drtInfo?.guide ?? null}
+          reasons={drtInfo?.reasons ?? []}
+          onBack={() => setScreen('results')}
+          onSos={onSos}
+          onToast={toast}
+        />
       )}
 
       {screen === 'calltaxi' && (

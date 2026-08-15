@@ -7,10 +7,21 @@
  * (똑버스 미운행 지역도 같은 화면으로 통일)
  *
  * TODO(기획): 콜센터 정식 명칭·대표번호·이용 대상 기준은 기획팀 자료 수령 후 확정.
- *             아래 번호(1666-0000)는 자리표시자이며 실제 번호가 아니다.
  */
 
-const CALL_CENTER_TEL = '1666-0000'
+/**
+ * 콜센터 대표번호. **자료를 받기 전까지는 null 이다.**
+ *
+ * 예전에는 `1666-0000` 이라는 자리표시자를 화면에 띄우고 tel: 링크까지 걸어뒀다.
+ * 실제 번호가 아닌데 누르면 전화가 걸린다 — 어르신 대상 서비스에서 있어선 안 되는 상태였다.
+ * 없는 번호를 지어내느니 "확인이 필요하다"고 말하는 편이 맞다.
+ *
+ * BE 에도 콜택시 데이터는 없다. AI 가 주는 DrtDecision.taxiGuide(콜택시로 안내할지)만 있고
+ * 번호·명칭·이용 대상은 어디에도 없다(2026-08-15 확인).
+ * 노션 「7/31 회의」의 '장애인 콜택시 콜센터 정보 — 조건희님 자료 대기' 항목이 해결되면
+ * 여기에 넣고, 가능하면 BE 응답으로 받아 지역별로 다르게 안내하는 것이 낫다.
+ */
+const CALL_CENTER_TEL: string | null = null
 
 import { speak as playVoice } from '../state/tts'
 import { TopBar } from '../components/TopBar'
@@ -95,7 +106,7 @@ export function CallTaxiScreen({
           <div className="kv-list">
             <div className="kv">
               <span>대표 번호</span>
-              <b>{CALL_CENTER_TEL}</b>
+              <b>{CALL_CENTER_TEL ?? '콜센터 확인'}</b>
             </div>
             <div className="kv">
               <span>이용 대상</span>
@@ -107,11 +118,22 @@ export function CallTaxiScreen({
             </div>
           </div>
           <div className="channel-grid">
-            <a className="channel" href={`tel:${CALL_CENTER_TEL.replace(/-/g, '')}`}>
-              <span className="channel-icon">☎️</span>
-              <strong>전화 걸기</strong>
-              <span>콜센터에 바로 연결</span>
-            </a>
+            {CALL_CENTER_TEL ? (
+              <a className="channel" href={`tel:${CALL_CENTER_TEL.replace(/[^0-9]/g, '')}`}>
+                <span className="channel-icon">☎️</span>
+                <strong>전화 걸기</strong>
+                <span>콜센터에 바로 연결</span>
+              </a>
+            ) : (
+              <button
+                className="channel"
+                onClick={() => onToast('콜센터 번호는 준비되는 대로 안내해 드릴게요')}
+              >
+                <span className="channel-icon">☎️</span>
+                <strong>전화 걸기</strong>
+                <span>번호 확인이 필요해요</span>
+              </button>
+            )}
             <button className="channel" onClick={copyTrip}>
               <span className="channel-icon">📋</span>
               <strong>위치 복사</strong>

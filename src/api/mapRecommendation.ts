@@ -222,5 +222,8 @@ export function mapRecommendationToRouteResult(
     recommendedKey,
     // 🚨 위 주석 6 — 접근성 신호가 응답에 노출되면 DEFAULT↔AVOID_STAIRS 두 후보로 구성한다.
     stairComparison: null,
+    // 똑버스·콜택시 안내 화면이 자리표시자 대신 실제 값을 쓰도록 함께 넘긴다
+    drtGuide: be.drtGuide ?? null,
+    drtReasons: drt?.reasonCodes ?? [],
   }
 }

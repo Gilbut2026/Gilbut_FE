@@ -242,8 +242,9 @@ export function ServerChatScreen({
       <>
         <h3>이 장소가 맞나요?</h3>
         <p>비슷한 이름이 있을 수 있어 주소까지 확인해 주세요.</p>
-        {places.map((p) => (
-          <div key={p.placeId} className="chat-place" style={{ marginTop: 10 }}>
+        {/* key 에 순번을 섞는다 — BE 응답의 placeId 가 중복으로 온다(본원·정문·후문이 같은 ID) */}
+        {places.map((p, i) => (
+          <div key={`${p.placeId}-${i}`} className="chat-place" style={{ marginTop: 10 }}>
             <span className="pin">📍</span>
             <span>
               <b>{p.name}</b>
@@ -252,8 +253,8 @@ export function ServerChatScreen({
           </div>
         ))}
         <div className="chat-card-actions">
-          {places.slice(0, 1).map((p) => (
-            <button key={p.placeId} className="primary full" onClick={() => onPick(p)}>
+          {places.slice(0, 1).map((p, i) => (
+            <button key={`${p.placeId}-${i}`} className="primary full" onClick={() => onPick(p)}>
               네, 맞아요
             </button>
           ))}
@@ -269,8 +270,8 @@ export function ServerChatScreen({
   function placeChoiceList(places: PlaceItemResponse[], onPick: (p: PlaceItemResponse) => void) {
     return (
       <>
-        {places.map((p) => (
-          <button key={p.placeId} className="chat-reply" onClick={() => onPick(p)}>
+        {places.map((p, i) => (
+          <button key={`${p.placeId}-${i}`} className="chat-reply" onClick={() => onPick(p)}>
             {p.name} · {p.address}
           </button>
         ))}

@@ -36,7 +36,7 @@ const STEP_META: Record<Step, [string, string, string]> = {
  * 예전에는 `○○병원` 같은 와이어프레임 자리표시자였는데, 실제 장소 검색을 붙이면서
  * 검색이 되는 실제 낱말로 바꿨다(자리표시자는 검색 결과가 0건이라 그대로 막힌다).
  */
-const QUICK_DESTINATIONS = ['병원', '전통시장', '주민센터', '수원역']
+const QUICK_DESTINATIONS = ['병원', '약국', '전통시장', '주민센터']
 
 export function ScriptedChatScreen({
   prefill,
@@ -132,8 +132,11 @@ export function ScriptedChatScreen({
       <>
         <h3>이 장소가 맞나요?</h3>
         <p>비슷한 이름이 있을 수 있어요. 가시려는 곳을 골라주세요.</p>
-        {places.slice(0, 4).map((p) => (
-          <button key={p.placeId} className="chat-place pick" onClick={() => confirmPlace(p)}>
+        {/* key 에 순번을 섞는다 — BE 응답에서 placeId 가 중복으로 온다
+            (본원·정문·후문·지하주차장이 모두 "159346"). placeId 만 쓰면 React 가
+            항목을 잘못 매칭해 누른 것과 다른 곳이 선택될 수 있다. */}
+        {places.slice(0, 4).map((p, i) => (
+          <button key={`${p.placeId}-${i}`} className="chat-place pick" onClick={() => confirmPlace(p)}>
             <span className="pin">📍</span>
             <span>
               <b>{p.name}</b>

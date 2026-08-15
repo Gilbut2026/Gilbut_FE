@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { getHome, saveHome, searchPlaces } from '../api/place'
+import { SUWON_CENTER } from '../api/geo'
 
 /**
  * 집 주소 등록/수정 바텀시트 — 7차 와이어프레임 #homeSheet 이식.
@@ -44,9 +45,9 @@ export function HomeAddressSheet({
     }
     setSaving(true)
     try {
-      // 입력 주소를 place 검색으로 실좌표 변환(첫 결과). 못 찾으면 수원 기본 좌표로 폴백.
-      let latitude = 37.2636
-      let longitude = 127.0286
+      // 입력 주소를 place 검색으로 실좌표 변환(첫 결과). 못 찾으면 서비스 지역 기준점으로 폴백.
+      let latitude = SUWON_CENTER.latitude
+      let longitude = SUWON_CENTER.longitude
       try {
         const first = (await searchPlaces({ keyword: address })).places[0]
         if (first) {

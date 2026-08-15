@@ -432,6 +432,13 @@ export interface RouteResult {
   recommendedKey: RouteKey
   /** 계단 선택을 물어야 하는 경우에만 채워진다 (아니면 null) */
   stairComparison: StairComparison | null
+  /**
+   * 똑버스 안내 상세 — 권역명·대표번호. 콜택시 안내 대상이면 BE 가 권역을 조회하지 않아 null 이다.
+   * 똑버스 안내 화면이 자리표시자 대신 실제 값을 보여주는 데 쓴다.
+   */
+  drtGuide?: DrtGuideResponse | null
+  /** 똑버스·콜택시를 권한 이유 (AI 판단) — 안내 화면의 "추천한 이유"에 쓴다 */
+  drtReasons?: DrtReasonCode[]
 }
 
 /** 지난 길찾기 기록 한 건 — 화면용(프론트가 만든 형태). BE 응답은 아래 RouteHistoryResponse. */

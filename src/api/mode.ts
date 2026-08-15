@@ -40,12 +40,15 @@ export const DOMAIN_LABEL: Record<ApiDomain, string> = {
  *   배포(gilbut-ai.onrender.com)로 실호출 가능해졌다.
  * 2026-08-15 history 제거: 배포 BE 에 GET /api/routes/history · /{historyId} 가 확인됐고(/v3/api-docs)
  *   mapHistory 어댑터도 준비돼 있다. route 실호출이 돌면 이력이 쌓인다.
+ * 2026-08-15 chat 제거: AI 서버가 BE 계약(intent·action·value·referencePlace)대로 재배포됐고,
+ *   POST /api/chat 실호출로 PLACE_CANDIDATES 응답까지 확인했다. 화면도 ServerChatScreen 으로
+ *   재작성돼 있어 이제 스위치만 켜면 된다.
  *
- * chat 만 남긴 이유는 BE 미배포가 아니다 — 배포 BE 에 chat 6개 엔드포인트가 다 있다.
- * ChatScreen 이 아직 서버 주도 상태머신을 쓰지 않고 화면 안 스크립트 대화로 동작해서,
- * 여기서 빼도 실연동이 되지 않고 배지만 거짓말을 하게 된다. 화면을 재작성하면서 함께 뺀다.
+ * 이제 강제 Mock 인 도메인은 없다. 특정 도메인을 Mock 으로 돌리려면 .env 의
+ * VITE_MOCK_DOMAINS 를 쓴다 — 예를 들어 시연 중 AI 서버가 느리면 VITE_MOCK_DOMAINS=chat 으로
+ * 스크립트 대화(ScriptedChatScreen) 안전판으로 즉시 되돌릴 수 있다.
  */
-const FORCED_MOCK: ReadonlySet<ApiDomain> = new Set<ApiDomain>(['chat'])
+const FORCED_MOCK: ReadonlySet<ApiDomain> = new Set<ApiDomain>()
 
 const ALL_DOMAINS: ApiDomain[] = ['auth', 'user', 'place', 'safety', 'route', 'chat', 'history']
 

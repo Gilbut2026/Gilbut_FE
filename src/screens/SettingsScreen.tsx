@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { TopBar } from '../components/TopBar'
 import { getSettings, saveAccessibility } from '../api/user'
 import { getHome, saveHome, searchPlaces } from '../api/place'
+import { SUWON_CENTER } from '../api/geo'
 import { FONT_SIZES, type Settings } from '../state/settings'
 import type {
   FontSize,
@@ -79,9 +80,9 @@ export function SettingsScreen({
     setSavingHome(true)
     try {
       const address = homeInput.trim()
-      // 입력 주소를 place 검색으로 실좌표 변환(첫 결과). 못 찾으면 수원 기본 좌표로 폴백.
-      let latitude = 37.2636
-      let longitude = 127.0286
+      // 입력 주소를 place 검색으로 실좌표 변환(첫 결과). 못 찾으면 서비스 지역 기준점으로 폴백.
+      let latitude = SUWON_CENTER.latitude
+      let longitude = SUWON_CENTER.longitude
       try {
         const first = (await searchPlaces({ keyword: address })).places[0]
         if (first) {
