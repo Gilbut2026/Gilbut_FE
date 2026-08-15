@@ -10,7 +10,7 @@ import {
 } from '../api/chat'
 import { ApiError } from '../api/client'
 import { departureAfter, parseDepartureMinutes } from '../api/time'
-import { rankPlaceCandidates } from '../api/placeRank'
+import { rankPlaceCandidates, type RankedPlaces } from '../api/placeRank'
 import { PlaceCandidates } from '../components/PlaceCandidates'
 import { SEARCH_RADIUS_KM } from '../api/geo'
 import { QUICK_DESTINATION_NAMES } from './quickDestinations'
@@ -323,10 +323,10 @@ export function ServerChatScreen({
    * 장소 후보 — 화면 모양과 더 보기 동작은 PlaceCandidates 가 갖고 있다.
    * 스크립트 대화도 같은 것을 쓴다 — 엔진이 바뀌어도 화면은 같아야 한다.
    */
-  function placeCandidates(places: PlaceItemResponse[], onPick: (p: PlaceItemResponse) => void) {
+  function placeCandidates(ranked: RankedPlaces, onPick: (p: PlaceItemResponse) => void) {
     return (
       <PlaceCandidates
-        places={places}
+        ranked={ranked}
         onPick={onPick}
         disabled={busy}
         // 화면만 되돌리면 서버는 그대로라 다음 발화가 409 가 된다 (restartDestination 주석 참고)

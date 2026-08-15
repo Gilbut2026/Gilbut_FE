@@ -101,7 +101,8 @@ export function HomeAddressSheet({
         lon: String(c.longitude),
         radiusKm: '1',
       })
-      const ranked = rankPlaceCandidates(res.places)
+      // 집 주소는 대표 장소만 보여준다 — 같은 건물의 정문·주차장까지 고를 이유가 없다
+      const ranked = rankPlaceCandidates(res.places).primary
       if (ranked.length === 0) {
         onToast('근처에서 찾은 곳이 없어요. 주소를 적어주세요')
         return
@@ -128,7 +129,7 @@ export function HomeAddressSheet({
     setSaving(true)
     try {
       const res = await searchPlacesNear(address, posRef.current, SEARCH_RADIUS_KM)
-      const ranked = rankPlaceCandidates(res.places, address)
+      const ranked = rankPlaceCandidates(res.places, address).primary
       if (ranked.length === 0) {
         onToast('그 주소로는 장소를 찾지 못했어요')
         return

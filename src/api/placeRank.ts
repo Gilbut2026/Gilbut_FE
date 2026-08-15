@@ -59,6 +59,37 @@ export function areasDiffer(places: { address?: string | null }[]): boolean {
 }
 
 /**
+ * 검색어와 조금이라도 관계가 있는 이름인가.
+ *
+ * 검색어의 글자가 **순서대로** 이름 안에 나오면 관계가 있다고 본다.
+ *   "아주대병원"  → "아주대**학교**병원"   ○ (아·주·대·병·원이 순서대로 있다)
+ *   "수원시청"    → "밤밭청개구리공원"     ✗ ('수'가 아예 없다)
+ *
+ * 왜 이렇게 느슨한가 — 사람은 줄여 말한다. "아주대병원"이라 하지 "아주대학교병원"이라
+ * 하지 않는다. 글자가 그대로 들어있는지만 보면(includes) 이런 것들이 전부 탈락한다.
+ *
+ * 왜 이게 필요한가 — TMAP 은 관계없는 곳도 결과로 준다. 서울에서 "수원시청"을 찾으면
+ * '밤밭청개구리공원'이 왔다(2026-08-16). 0건이 아니라고 해서 찾은 것이 아니다.
+ * 이 판단이 있어야 "여기서는 못 찾았으니 수원에서 다시 찾자"로 넘어갈 수 있다.
+ */
+export function isRelevantPlace(name: string, keyword: string): boolean {
+  const n = normalize(name)
+  const k = normalize(keyword)
+  if (!k) return true
+  let i = 0
+  for (const ch of n) {
+    if (ch === k[i]) i += 1
+    if (i === k.length) return true
+  }
+  return false
+}
+
+/** 이 결과들 중에 검색어와 관계있는 것이 하나라도 있는가 */
+export function hasRelevantPlace(places: { name: string }[], keyword: string): boolean {
+  return places.some((p) => isRelevantPlace(p.name, keyword))
+}
+
+/**
  * 검색어와의 일치 정도. 낮을수록 먼저.
  * 0 완전히 같음 · 1 검색어로 시작 · 2 검색어를 품음 · 3 그 밖
  */
@@ -73,13 +104,29 @@ function matchTier(name: string, keyword: string): number {
 }
 
 /**
+ * 정리된 후보.
+ *
+ *   primary — 주소가 서로 다른 대표 장소. 처음에 보여줄 것들이다
+ *   more    — 같은 주소라 대표에 가려진 것들("아주대학교병원 별관"·"웰빙센터"·"정문")
+ *
+ * 예전에는 `more` 를 **버렸다.** 같은 주소가 넷씩 나열되면 구분이 안 돼서였는데,
+ * 그러다 보니 아주대병원 검색 41건이 2건으로 줄었다(2026-08-16). 「더 보기」를 만들
+ * 여지도 사라졌고, 정말 별관에 가려던 사람은 갈 방법이 없었다.
+ * 지금은 버리지 않고 접어둔다 — 첫 화면은 여전히 대표만, 필요하면 펼쳐서 본다.
+ */
+export interface RankedPlaces {
+  primary: PlaceItemResponse[]
+  more: PlaceItemResponse[]
+}
+
+/**
  * 후보 목록을 사람이 고를 수 있게 정리한다.
  * @param keyword 사용자가 말한 목적지. 넘기면 일치 정도로 먼저 정렬한다.
  */
 export function rankPlaceCandidates(
   places: PlaceItemResponse[],
   keyword?: string,
-): PlaceItemResponse[] {
+): RankedPlaces {
   const scored = places.map((place, index) => ({
     place,
     index,
@@ -96,20 +143,24 @@ export function rankPlaceCandidates(
       a.index - b.index, // 그래도 같으면 서버 순서를 지킨다
   )
 
-  // 같은 주소는 대표 하나만 남긴다.
+  // 같은 주소에서는 대표 하나만 앞에 세우고, 나머지는 뒤로 접어둔다.
   // ※ 반드시 정렬 뒤에 해야 한다. 먼저 묶으면 서버 순서상 앞이라는 이유만으로
   //   웰빙센터가 본원의 자리를 차지해버린다(실제로 그렇게 밀려났었다).
   const seen = new Set<string>()
-  const result: PlaceItemResponse[] = []
+  const primary: PlaceItemResponse[] = []
+  const more: PlaceItemResponse[] = []
 
   for (const { place } of scored) {
     const key = place.address?.trim()
     if (key) {
-      if (seen.has(key)) continue
+      if (seen.has(key)) {
+        more.push(place)
+        continue
+      }
       seen.add(key)
     }
-    result.push(place)
+    primary.push(place)
   }
 
-  return result
+  return { primary, more }
 }

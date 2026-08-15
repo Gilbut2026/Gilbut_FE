@@ -1,5 +1,5 @@
 import { useLayoutEffect, useRef, useState } from 'react'
-import { areaOf, areasDiffer } from '../api/placeRank'
+import { areaOf, areasDiffer, type RankedPlaces } from '../api/placeRank'
 import type { PlaceItemResponse } from '../types/dto'
 
 /**
@@ -32,12 +32,12 @@ const FIRST_PAGE = 3
 const MAX_SHOWN = 8
 
 export function PlaceCandidates({
-  places,
+  ranked,
   onPick,
   onRedo,
   disabled,
 }: {
-  places: PlaceItemResponse[]
+  ranked: RankedPlaces
   onPick: (place: PlaceItemResponse) => void
   /** "찾는 곳이 없어요" — 목적지를 처음부터 다시 묻는다 */
   onRedo: () => void
@@ -61,9 +61,15 @@ export function PlaceCandidates({
     endRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' })
   }, [expanded])
 
-  const all = places.slice(0, MAX_SHOWN)
-  const shown = expanded ? all : all.slice(0, FIRST_PAGE)
-  const more = all.length - FIRST_PAGE
+  /*
+   * 첫 화면은 **대표 장소만** 보여준다. 접어둔 것(같은 건물의 별관·정문·주차장)은
+   * 더 보기에서 나온다 — 처음부터 섞으면 "아주대학교병원" 아래에 "아주대학교병원 정문"이
+   * 붙어서, 무엇이 다른지 읽어봐야 알 수 있다.
+   */
+  const all = [...ranked.primary, ...ranked.more].slice(0, MAX_SHOWN)
+  const firstCount = Math.min(ranked.primary.length, FIRST_PAGE)
+  const shown = expanded ? all : all.slice(0, firstCount)
+  const more = all.length - firstCount
   // 후보가 다 같은 동네면 지역을 안 붙인다 — 같은 글자를 세 번 읽게 하지 않는다
   const showArea = areasDiffer(shown)
 

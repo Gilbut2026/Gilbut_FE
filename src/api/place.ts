@@ -26,6 +26,7 @@ import {
 
 import { useMock } from './mode'
 import { SERVICE_SEARCH_RADIUS_KM, SUWON_CENTER } from './geo'
+import { hasRelevantPlace } from './placeRank'
 
 const USE_MOCK = () => useMock('place')
 
@@ -59,6 +60,11 @@ export function searchPlaces(req: PlaceSearchRequest): Promise<PlaceSearchRespon
  *    서울에서 "수원시청"을 찾았더니 '밤밭청개구리공원'이 왔다(2026-08-16 확인).
  *    이 앱은 수원 서비스이므로, 못 찾았을 때 갈 곳은 "전국"이 아니라 "수원"이다.
  *
+ * ⚠️ **0건이 아니라고 해서 찾은 것이 아니다.** TMAP 은 관계없는 곳도 결과로 준다 —
+ *    서울에서 "수원시청"을 찾았더니 '밤밭청개구리공원' 한 건이 왔고, 0건이 아니라는
+ *    이유로 1단계에서 멈춰서 수원에서 다시 찾아보지도 못했다(2026-08-16).
+ *    그래서 각 단계는 **검색어와 관계있는 결과가 하나라도 있을 때만** 성공으로 친다.
+ *
  * ※ 백엔드가 **검색 결과 0건을 502 로 내려주기 때문에** 1단계 실패가 예외로 온다.
  *   여기서 삼키고 다음 단계로 넘어간다.
  *   (백엔드가 빈 목록을 정상 응답으로 주도록 고치면 catch 는 없어도 된다)
@@ -83,17 +89,19 @@ export async function searchPlacesNear(
   }
 
   // 1. 현재 위치 근처
-  if (center) {
-    const near = await attempt(center, radiusKm)
-    if (near) return near
-  }
+  const near = center ? await attempt(center, radiusKm) : null
+  if (near && hasRelevantPlace(near.places, keyword)) return near
 
   // 2. 서비스 지역(수원) 안 — 수원 밖에서 앱을 열어도 수원 장소를 찾을 수 있어야 한다
   const inService = await attempt(SUWON_CENTER, SERVICE_SEARCH_RADIUS_KM)
-  if (inService) return inService
+  if (inService && hasRelevantPlace(inService.places, keyword)) return inService
 
-  // 어느 쪽에서도 못 찾았다 — 빈 목록으로 돌려주고 화면이 안내하게 한다
-  return { places: [], pagination: { page: 1, size: 0, totalCount: 0, hasNext: false } }
+  // 3. 어디서도 딱 맞는 게 없었다. 그래도 받아온 것이 있으면 보여준다 —
+  //    우리 판단이 틀렸을 수도 있고, 화면에 「다시 말하기」가 있으니 막다른 길은 아니다.
+  return (
+    near ??
+    inService ?? { places: [], pagination: { page: 1, size: 0, totalCount: 0, hasNext: false } }
+  )
 }
 
 /** 즐겨찾기 목록 */

@@ -3,7 +3,7 @@ import { LocationScreen } from './LocationScreen'
 import { getHome, searchPlacesNear } from '../api/place'
 import { departureAfter, parseDepartureMinutes } from '../api/time'
 import { SEARCH_RADIUS_KM, SUWON_CENTER, isInServiceArea } from '../api/geo'
-import { rankPlaceCandidates } from '../api/placeRank'
+import { rankPlaceCandidates, type RankedPlaces } from '../api/placeRank'
 import { PlaceCandidates } from '../components/PlaceCandidates'
 import { ChatView, useChatLog } from '../components/ChatView'
 import { QUICK_DESTINATION_NAMES } from './quickDestinations'
@@ -131,8 +131,8 @@ export function ScriptedChatScreen({
    * **1순위를 말없이 채택**했다. "수원역"을 찾았는데 '팀에이치짐 수원시청역점 주차장'이
    * 1순위로 잡히는 사례가 확인돼(2026-08-15), 사용자가 직접 고르도록 바꿨다.
    */
-  function placeCard(places: PlaceItemResponse[]) {
-    return <PlaceCandidates places={places} onPick={confirmPlace} onRedo={redoDestination} />
+  function placeCard(ranked: RankedPlaces) {
+    return <PlaceCandidates ranked={ranked} onPick={confirmPlace} onRedo={redoDestination} />
   }
 
   async function chooseDestination(name: string) {
