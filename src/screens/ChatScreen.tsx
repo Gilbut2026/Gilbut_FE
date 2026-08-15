@@ -1,7 +1,7 @@
 import { useMock } from '../api/mode'
 import { ScriptedChatScreen } from './ScriptedChatScreen'
 import { ServerChatScreen } from './ServerChatScreen'
-import type { LatLng } from '../types/dto'
+import type { ChatOutcome } from '../types/nav'
 
 /**
  * 대화로 길찾기 — 엔진 선택자.
@@ -18,8 +18,8 @@ export function ChatScreen(props: {
   onBack: () => void
   onSos: () => void
   onToast: (msg: string) => void
-  /** 대화 끝 — 목적지 이름·고른 출발 시각('YYYY-MM-DDTHH:mm:ss')·확인한 목적지 좌표 */
-  onDone: (destination: string, departureDateTime: string, coords?: LatLng) => void
+  /** 대화 끝 — 목적지·출발지·출발 시각을 한 덩어리로 넘긴다 */
+  onDone: (outcome: ChatOutcome) => void
 }) {
   return useMock('chat') ? <ScriptedChatScreen {...props} /> : <ServerChatScreen {...props} />
 }

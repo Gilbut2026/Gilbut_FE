@@ -15,6 +15,7 @@ import { PlaceCandidates } from '../components/PlaceCandidates'
 import { SEARCH_RADIUS_KM } from '../api/geo'
 import { QUICK_DESTINATION_NAMES } from './quickDestinations'
 import { ChatView, useChatLog } from '../components/ChatView'
+import type { ChatOutcome } from '../types/nav'
 import type {
   ChatMessageResponse,
   ChatSessionResponse,
@@ -66,8 +67,8 @@ export function ServerChatScreen({
   onBack: () => void
   onSos: () => void
   onToast: (msg: string) => void
-  /** 대화 끝 — 목적지 이름·확정한 출발 시각·확인한 목적지 좌표 */
-  onDone: (destination: string, departureDateTime: string, coords?: LatLng) => void
+  /** 대화 끝 — 목적지·출발지·출발 시각을 한 덩어리로 넘긴다 */
+  onDone: (outcome: ChatOutcome) => void
 }) {
   const log = useChatLog()
   const { botSay, userSay, actions, card, push, showTyping, hideTyping } = log
@@ -86,6 +87,13 @@ export function ServerChatScreen({
   const homeAddrRef = useRef<string | null>(null)
   // 서버에 확정한 출발 시각 — 결과 화면이 같은 값으로 경로를 조회해야 대화와 결과가 어긋나지 않는다
   const departureRef = useRef<string>('')
+  /*
+   * 서버가 확정해준 출발지. 결과 화면이 이 좌표로 길을 찾는다.
+   *
+   * 서버 스냅샷에서 가져오는 이유 — '집'을 골랐을 때 좌표를 아는 쪽은 서버다.
+   * 화면은 집 주소 문자열만 갖고 있어서, 화면이 직접 만들면 집 출발만 좌표가 빈다.
+   */
+  const originRef = useRef<{ name: string; coords: LatLng } | null>(null)
   // 발화에 실어 보낼 현재 좌표 — "내 근처 병원" 같은 기준 위치 검색에 쓰인다(있으면 보내고 없으면 생략)
   const coordsRef = useRef<{ latitude: number; longitude: number } | null>(null)
 
@@ -135,6 +143,7 @@ export function ServerChatScreen({
         destNameRef.current = ''
         destCoordsRef.current = null
         departureRef.current = ''
+        originRef.current = null
         setState('DESTINATION_WAITING')
         botSay(message)
         actions(destinationReplies())
@@ -295,11 +304,12 @@ export function ServerChatScreen({
         )
         window.setTimeout(
           () =>
-            onDone(
-              destNameRef.current,
-              departureRef.current || departureAfter(0),
-              destCoordsRef.current ?? undefined,
-            ),
+            onDone({
+              destination: destNameRef.current,
+              destinationCoords: destCoordsRef.current ?? undefined,
+              departureDateTime: departureRef.current || departureAfter(0),
+              origin: originRef.current,
+            }),
           1100,
         )
       }
@@ -312,6 +322,12 @@ export function ServerChatScreen({
   const advance = useCallback(
     (session: ChatSessionResponse) => {
       if (session.destination?.name) destNameRef.current = session.destination.name
+      if (session.origin) {
+        originRef.current = {
+          name: session.origin.name,
+          coords: { latitude: session.origin.latitude, longitude: session.origin.longitude },
+        }
+      }
       setState(session.currentState)
       askFor(session.currentState)
     },

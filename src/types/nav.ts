@@ -1,3 +1,5 @@
+import type { LatLng } from './dto'
+
 /**
  * 화면 식별자 — App 의 화면 전환에 사용. 7차 와이어프레임 화면 구성과 대응한다.
  * (✅ 이식 완료 / ⬜ 이식 예정)
@@ -23,3 +25,23 @@ export type Screen =
 
 /** 하단 탭이 보이는 화면 */
 export const TAB_SCREENS: Screen[] = ['home', 'chat', 'results', 'settings']
+
+/**
+ * 대화가 끝나고 결과 화면으로 넘기는 것.
+ *
+ * `origin` 이 여기 있는 이유 — 예전에는 대화에서 출발지를 확정해도 결과 화면이 그걸
+ * 받지 못하고 **무조건 브라우저 현재 위치로** 길을 찾았다. 서울에서 "수원시청 출발"로
+ * 정해도 서울에서 출발하는 경로가 나왔고, 그 좌표로 똑버스 권역을 물으니
+ * "이 지역은 운행하지 않아요"가 떴다(2026-08-16). 물어본 위치가 틀렸던 것이다.
+ *
+ * 사용자가 대화에서 정한 것은 결과에 그대로 반영돼야 한다. 아니면 대화를 왜 하는가.
+ */
+export interface ChatOutcome {
+  destination: string
+  /** 사용자가 확인한 목적지 좌표. 이름으로 다시 검색하면 다른 곳이 잡힐 수 있다 */
+  destinationCoords?: LatLng
+  /** 대화에서 고른 출발 시각 'YYYY-MM-DDTHH:mm:ss' */
+  departureDateTime: string
+  /** 확정한 출발지. null 이면 결과 화면이 현재 위치로 찾는다 */
+  origin: { name: string; coords: LatLng } | null
+}

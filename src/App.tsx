@@ -22,7 +22,7 @@ import { getMobilityProfile } from './api/user'
 import { warmUpAi } from './api/warmup'
 import { ApiError } from './api/client'
 import { isLoggedIn, onSessionExpired } from './state/auth'
-import { TAB_SCREENS, type Screen } from './types/nav'
+import { TAB_SCREENS, type ChatOutcome, type Screen } from './types/nav'
 import type { DrtGuideResponse, DrtReasonCode, LatLng, StairComparison } from './types/dto'
 
 /** 카카오 로그인 콜백(`/auth/kakao/callback?code=…`)으로 들어왔는지 최초 1회 판단 */
@@ -97,6 +97,9 @@ export default function App() {
   // 대화에서 사용자가 "이 장소가 맞나요?"로 확인한 목적지 좌표.
   // 이름으로 다시 검색하면 1순위가 달라져 확인한 곳과 다른 데로 안내될 수 있어 좌표째 넘긴다.
   const [destCoords, setDestCoords] = useState<LatLng | null>(null)
+  // 대화에서 확정한 출발지. 없으면 결과 화면이 현재 위치로 찾는다.
+  // 이걸 안 넘겨서 "수원시청 출발"로 정해도 서울에서 출발하는 경로가 나왔다(2026-08-16).
+  const [origin, setOrigin] = useState<ChatOutcome['origin']>(null)
   // 똑버스 안내 화면에 넘길 실데이터 (권역명·대표번호·추천 이유)
   const [drtInfo, setDrtInfo] = useState<{
     guide: DrtGuideResponse | null
@@ -203,6 +206,7 @@ export default function App() {
         setDestination(null)
         setDestCoords(null)
         setDeparture(null)
+        setOrigin(null)
         setToastMsg('로그인이 만료됐어요. 다시 로그인해 주세요.')
       }),
     [],
@@ -306,10 +310,11 @@ export default function App() {
           onBack={() => setScreen('home')}
           onSos={onSos}
           onToast={toast}
-          onDone={(dest, departureDateTime, coords) => {
-            setDestination(dest)
-            setDeparture(departureDateTime)
-            setDestCoords(coords ?? null)
+          onDone={(outcome) => {
+            setDestination(outcome.destination)
+            setDeparture(outcome.departureDateTime)
+            setDestCoords(outcome.destinationCoords ?? null)
+            setOrigin(outcome.origin)
             // 새 이동이므로 지난번 계단 선택은 초기화한다 (갈 때와 올 때가 다를 수 있음)
             setStairChoice(null)
             setScreen('results')
@@ -322,6 +327,7 @@ export default function App() {
           destination={destination}
           departureDateTime={departure}
           destinationCoords={destCoords}
+          origin={origin}
           stairChoice={stairChoice}
           onNeedStairChoice={onNeedStairChoice}
           onGoHome={() => setScreen('home')}
@@ -396,9 +402,10 @@ export default function App() {
           onSos={onSos}
           onPick={(dest) => {
             setDestination(dest)
-            // 대화를 거치지 않고 바로 보는 경로다 — 지난 대화의 출발 시각·목적지 좌표가 남으면 안 된다
+            // 대화를 거치지 않고 바로 보는 경로다 — 지난 대화의 출발지·시각·목적지 좌표가 남으면 안 된다
             setDeparture(null)
             setDestCoords(null)
+            setOrigin(null)
             setStairChoice(null)
             setScreen('results')
           }}
@@ -421,6 +428,7 @@ export default function App() {
             // 위와 같은 이유 — 즐겨찾기에서 바로 오면 지금 기준으로 새로 조회한다
             setDeparture(null)
             setDestCoords(null)
+            setOrigin(null)
             setStairChoice(null)
             setScreen('results')
           }}

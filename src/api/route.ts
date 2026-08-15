@@ -50,13 +50,37 @@ async function resolveDestination(
   return { coords: { latitude: first.latitude, longitude: first.longitude }, name: first.name }
 }
 
+/**
+ * 경로 조회에 필요한 것들.
+ * 화면이 위치별로 인자를 세는 대신 이름으로 넘긴다 — 좌표가 두 개(출발지·목적지)라
+ * 자리만 바뀌어도 조용히 엉뚱한 경로가 나온다.
+ */
+export interface RouteQuery {
+  destination: string
+  /** 대화에서 확인한 목적지 좌표. 있으면 이름으로 다시 검색하지 않는다 */
+  destinationCoords?: LatLng
+  /** 대화에서 고른 출발 시각. 없으면 '지금' */
+  departureDateTime?: string
+  /** 대화에서 확정한 출발지. 없으면 현재 위치에서 출발하는 것으로 본다 */
+  origin?: { name: string; coords: LatLng } | null
+}
+
 /** BE 「맞춤 경로 추천」 실호출 → 어댑터로 화면 RouteResult 번역 */
-async function getRoutesReal(
-  destination: string,
-  departureDateTime?: string,
-  destinationCoords?: LatLng,
-): Promise<RouteResult> {
-  const origin = (await getCurrentPosition()) ?? DEFAULT_ORIGIN
+async function getRoutesReal(query: RouteQuery): Promise<RouteResult> {
+  const { destination, destinationCoords, departureDateTime } = query
+
+  /*
+   * 출발지는 **대화에서 확정한 것이 먼저다.**
+   *
+   * 예전에는 이 줄이 무조건 브라우저 현재 위치였다. 그래서 대화에서 "수원시청에서
+   * 출발할게요"라고 확정해도 결과는 지금 서 있는 자리(서울)에서 출발하는 경로가 나왔고,
+   * 그 좌표로 똑버스 권역을 물으니 "이 지역은 운행하지 않아요"가 떴다(2026-08-16).
+   * 대화에서 정한 것이 결과에 반영되지 않으면 대화를 할 이유가 없다.
+   *
+   * 대화를 거치지 않고 온 경우(즐겨찾기·최근 기록)에만 현재 위치를 쓴다.
+   */
+  const originName = query.origin?.name ?? '현재 위치'
+  const origin = query.origin?.coords ?? (await getCurrentPosition()) ?? DEFAULT_ORIGIN
 
   // 대화에서 사용자가 직접 고른 좌표가 있으면 다시 검색하지 않는다.
   // 같은 이름이라도 검색 1순위가 달라져 확인한 곳과 다른 데로 안내될 수 있기 때문이다
@@ -77,7 +101,7 @@ async function getRoutesReal(
     departureDateTime: departureDateTime ?? departureAfter(0),
   }
   const be = await api.post<RouteRecommendationResult>('/api/routes/recommendations', request)
-  return mapRecommendationToRouteResult(be, { destination: dest.name, origin: '현재 위치' })
+  return mapRecommendationToRouteResult(be, { destination: dest.name, origin: originName })
 }
 
 /**
@@ -85,12 +109,6 @@ async function getRoutesReal(
  * @param departureDateTime 대화에서 고른 출발 시각('YYYY-MM-DDTHH:mm:ss'). 없으면 지금 기준.
  *   Mock 은 시각을 쓰지 않는다(고정 데이터라 시각별 차이가 없다).
  */
-export function getRoutes(
-  destination: string,
-  departureDateTime?: string,
-  destinationCoords?: LatLng,
-): Promise<RouteResult> {
-  return useMock('route')
-    ? mockGetRoutes(destination)
-    : getRoutesReal(destination, departureDateTime, destinationCoords)
+export function getRoutes(query: RouteQuery): Promise<RouteResult> {
+  return useMock('route') ? mockGetRoutes(query.destination) : getRoutesReal(query)
 }

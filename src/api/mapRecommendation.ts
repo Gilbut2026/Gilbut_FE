@@ -209,7 +209,10 @@ function drtOption(key: 'drt' | 'calltaxi', guide: DrtGuideResponse | null): Rou
     title: !isTaxi && guide?.serviceName ? `${guide.serviceName} 이용 추천` : text.title,
     sub: text.sub,
     time: '예약 후 확정',
-    walk: isTaxi ? '0분' : '4분',
+    // 똑버스는 예약 전까지 어디서 타는지 정해지지 않는다 — 걷는 시간을 알 수 없다.
+    // 여기 '4분'이 하드코딩돼 있었다(2026-08-16). 모르는 것을 아는 척하면 안 된다.
+    // 콜택시는 집 앞에서 타므로 걷지 않는 것이 맞다.
+    walk: isTaxi ? '0분' : '예약 후 확정',
     transfer: '없음',
     facilities,
     notice: (!isTaxi && guide?.message?.trim()) || text.notice,

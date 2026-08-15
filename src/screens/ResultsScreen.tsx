@@ -1,9 +1,10 @@
 import { useCallback, useEffect, useState } from 'react'
 import { getRoutes } from '../api/route'
+import type { ChatOutcome } from '../types/nav'
 import { ApiError } from '../api/client'
 import { speak } from '../state/tts'
 import { TopBar } from '../components/TopBar'
-import { MINI_PATHS, MINI_RESTS, applyStairChoice } from '../mock/route'
+import { applyStairChoice } from '../mock/route'
 import type { LatLng, RouteErrorKind, RouteKey, RouteOption, RouteResult } from '../types/dto'
 
 /**
@@ -64,55 +65,51 @@ function toErrorKind(e: unknown): RouteErrorKind {
   return 'server'
 }
 
-/** 쉼터 마커 — 점수에 반영하지 않고 지도에 보여주기만 하는 참고 정보(7/31 회의) */
-function RestMark({ x, y }: { x: number; y: number }) {
-  return (
-    <g transform={`translate(${x},${y})`}>
-      <circle r="7.5" fill="#fff" stroke="#167A55" strokeWidth="2" />
-      <path
-        d="M-3.4 -1.4h6.8M-3.4 -1.4v2.8M3.4 -1.4v2.8M-2.2 1.6h4.4"
-        stroke="#167A55"
-        strokeWidth="1.6"
-        strokeLinecap="round"
-      />
-    </g>
-  )
+/**
+ * 출발지 → 목적지 요약 띠.
+ *
+ * 여기 원래 지도가 있었는데 **가짜였다.** 도로도 건물도 경로선도 전부 하드코딩된
+ * 그림이라 실제 경로와 아무 관계가 없었다. 그런데 라벨은 "🗺️ 경로 미리보기"라고
+ * 경로라고 주장했다(2026-08-16 지적).
+ *
+ * 똑버스에서는 특히 나빴다. 수요응답형이라 **예약 전에는 경로가 정해지지도 않는다.**
+ * 없는 길을 그려놓고 있었던 셈이다.
+ *
+ * 어르신은 화면에 그려진 것을 사실로 믿는다. 그러니 모르는 것은 그리지 않는다.
+ * 대신 우리가 **확실히 아는 것**만 보여준다 — 어디서 어디로 가는지, 어떻게 가는지.
+ * 지도처럼 보이지 않게 만든 것도 일부러다. 지도인 척하면 지도로 읽힌다.
+ *
+ * 진짜 지도는 지도 SDK 를 붙여야 한다(노션 고도화 목록).
+ */
+const MODE_ICON: Record<RouteKey, string> = {
+  comfort: '🚌',
+  short: '🚶',
+  drt: '🚐',
+  calltaxi: '🚕',
 }
 
-function MiniMap({ routeKey }: { routeKey: RouteKey }) {
-  const accent = routeKey === 'drt' || routeKey === 'calltaxi' ? '#167A55' : '#6755F5'
-  const d = MINI_PATHS[routeKey]
-  const rests = MINI_RESTS[routeKey]
+function RouteStrip({
+  routeKey,
+  origin,
+  destination,
+}: {
+  routeKey: RouteKey
+  origin: string
+  destination: string
+}) {
   return (
-    <div className="mini-map">
-      <svg viewBox="0 0 300 120" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
-        <rect x="-10" y="-10" width="320" height="140" fill="#ECEAE2" />
-        <path d="M-10 -6 L60 -6 C56 26 34 40 -10 42 Z" fill="#CFE3BE" />
-        <path d="M250 96 C270 92 290 100 310 96 L310 130 L250 130 Z" fill="#CFE3BE" />
-        <g fill="#E2DDD1">
-          <rect x="150" y="6" width="52" height="26" rx="3" />
-          <rect x="228" y="8" width="60" height="24" rx="3" />
-          <rect x="150" y="72" width="46" height="30" rx="3" />
-        </g>
-        <path d="M-10 46 C120 40 200 44 310 38" fill="none" stroke="#D8D3C6" strokeWidth="15" />
-        <path d="M-10 46 C120 40 200 44 310 38" fill="none" stroke="#fff" strokeWidth="9" />
-        <path d="M120 -10 C116 50 124 90 120 130" fill="none" stroke="#D8D3C6" strokeWidth="12" />
-        <path d="M120 -10 C116 50 124 90 120 130" fill="none" stroke="#fff" strokeWidth="6.5" />
-        <path d="M212 -10 C208 50 216 90 212 130" fill="none" stroke="#D8D3C6" strokeWidth="10" />
-        <path d="M212 -10 C208 50 216 90 212 130" fill="none" stroke="#fff" strokeWidth="5.5" />
-        <path d={d} fill="none" stroke="#3A2CA8" strokeWidth="7" strokeLinecap="round" strokeLinejoin="round" opacity="0.9" />
-        <path d={d} fill="none" stroke={accent} strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" />
-        <path className="route-flow" d={d} fill="none" stroke="#fff" strokeWidth="1.6" strokeLinecap="round" />
-        <circle cx="18" cy="94" r="6.5" fill="#3488F4" stroke="#fff" strokeWidth="2.5" />
-        {rests.map(([x, y]) => (
-          <RestMark key={`${x}-${y}`} x={x} y={y} />
-        ))}
-        <g transform="translate(284,34)">
-          <path d="M0 0 C-5 -8 -9 -12 -9 -17 A9 9 0 1 1 9 -17 C9 -12 5 -8 0 0 Z" fill={accent} stroke="#fff" strokeWidth="1.6" />
-          <circle cx="0" cy="-17" r="4.6" fill="#fff" />
-        </g>
-      </svg>
-      <span className="mini-map-badge">{rests.length > 0 ? '🗺️ 경로 · 쉼터 표시' : '🗺️ 경로 미리보기'}</span>
+    <div className="route-strip">
+      <div className="route-strip-end">
+        <span className="dot start" aria-hidden="true" />
+        <b>{origin}</b>
+      </div>
+      <div className="route-strip-line" aria-hidden="true">
+        <span>{MODE_ICON[routeKey]}</span>
+      </div>
+      <div className="route-strip-end">
+        <span className="dot goal" aria-hidden="true" />
+        <b>{destination}</b>
+      </div>
     </div>
   )
 }
@@ -169,7 +166,7 @@ function RouteView({
               <strong>{selected.transfer}</strong>
             </div>
           </div>
-          <MiniMap routeKey={selected.key} />
+          <RouteStrip routeKey={selected.key} origin={result.origin} destination={result.destination} />
         </article>
 
         <div className="section-label">편의시설과 이동 조건</div>
@@ -218,6 +215,7 @@ export function ResultsScreen({
   destination,
   departureDateTime,
   destinationCoords,
+  origin,
   stairChoice,
   onNeedStairChoice,
   onGoHome,
@@ -226,6 +224,8 @@ export function ResultsScreen({
   onGuide,
 }: {
   destination: string | null
+  /** 대화에서 확정한 출발지. 없으면 현재 위치에서 출발하는 것으로 본다. */
+  origin?: ChatOutcome['origin']
   /** 대화에서 고른 출발 시각('YYYY-MM-DDTHH:mm:ss'). 없으면 지금 기준으로 조회한다. */
   departureDateTime: string | null
   /** 대화에서 사용자가 확인한 목적지 좌표. 있으면 이름으로 다시 검색하지 않는다. */
@@ -255,7 +255,12 @@ export function ResultsScreen({
     let alive = true
     setError(null)
     setResult(null)
-    getRoutes(destination, departureDateTime ?? undefined, destinationCoords ?? undefined).then(
+    getRoutes({
+      destination,
+      destinationCoords: destinationCoords ?? undefined,
+      departureDateTime: departureDateTime ?? undefined,
+      origin: origin ?? null,
+    }).then(
       (r) => {
         if (!alive) return
         // 후보가 하나도 없으면 오류가 아니라 '갈 수 있는 길 없음'
@@ -275,7 +280,7 @@ export function ResultsScreen({
       alive = false
     }
     // 출발 시각이 바뀌면 다시 조회한다 — 시간대에 따라 대중교통 후보가 달라진다
-  }, [destination, departureDateTime, destinationCoords, attempt])
+  }, [destination, departureDateTime, destinationCoords, origin, attempt])
 
   const retry = useCallback(() => setAttempt((n) => n + 1), [])
 

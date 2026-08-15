@@ -7,6 +7,7 @@ import { rankPlaceCandidates, type RankedPlaces } from '../api/placeRank'
 import { PlaceCandidates } from '../components/PlaceCandidates'
 import { ChatView, useChatLog } from '../components/ChatView'
 import { QUICK_DESTINATION_NAMES } from './quickDestinations'
+import type { ChatOutcome } from '../types/nav'
 import type { LatLng, PlaceItemResponse } from '../types/dto'
 
 /**
@@ -54,11 +55,11 @@ export function ScriptedChatScreen({
   onSos: () => void
   onToast: (msg: string) => void
   /**
-   * 대화 끝 — 목적지 이름, 고른 출발 시각, 그리고 사용자가 확인한 목적지 좌표.
+   * 대화 끝 — 목적지·출발지·출발 시각을 한 덩어리로 넘긴다.
    * 좌표를 함께 넘기는 이유: 결과 화면이 이름으로 다시 검색하면 같은 이름이라도
    * 1순위가 달라져 사용자가 확인한 곳과 다른 데로 안내될 수 있다.
    */
-  onDone: (destination: string, departureDateTime: string, coords?: LatLng) => void
+  onDone: (outcome: ChatOutcome) => void
 }) {
   const log = useChatLog()
   const { botSay, userSay, actions, card, typing, push } = log
@@ -73,8 +74,12 @@ export function ScriptedChatScreen({
   // (이름으로 다시 검색하면 같은 이름이라도 1순위가 달라질 수 있다).
   const destCoordsRef = useRef<LatLng | null>(null)
   const departRef = useRef('')
+  // 사용자가 고른 출발지 — 결과 화면이 여기서 출발하는 길을 찾는다
+  const originRef = useRef<{ name: string; coords: LatLng } | null>(null)
   const startedRef = useRef(false)
   const homeAddrRef = useRef<string | null>(null)
+  // 집 좌표 — '집에서 출발'을 고르면 결과 화면이 이 좌표로 길을 찾는다
+  const homeCoordsRef = useRef<LatLng | null>(null)
   const posRef = useRef<LatLng | null>(null)
 
   const { showTyping, hideTyping } = log
@@ -85,7 +90,9 @@ export function ScriptedChatScreen({
     let alive = true
     getHome()
       .then((h) => {
-        if (alive) homeAddrRef.current = h?.address ?? null
+        if (!alive) return
+        homeAddrRef.current = h?.address ?? null
+        homeCoordsRef.current = h ? { latitude: h.latitude, longitude: h.longitude } : null
       })
       .catch(() => {})
 
@@ -198,7 +205,7 @@ export function ScriptedChatScreen({
         📍 현재 위치
       </button>
       {homeAddrRef.current && (
-        <button className="chat-reply" onClick={() => chooseOrigin('집')}>
+        <button className="chat-reply" onClick={() => chooseOrigin('집', homeCoordsRef.current)}>
           🏠 집
         </button>
       )}
@@ -223,8 +230,9 @@ export function ScriptedChatScreen({
     })
   }
 
-  function chooseOrigin(value: string) {
+  function chooseOrigin(value: string, coords?: LatLng | null) {
     userSay(`${value}에서 출발할게요`)
+    originRef.current = coords ? { name: value, coords } : null
     askDepartTime()
   }
 
@@ -235,7 +243,11 @@ export function ScriptedChatScreen({
     }
     onToast('현재 위치를 확인하고 있어요…')
     navigator.geolocation.getCurrentPosition(
-      () => chooseOrigin('현재 위치'),
+      (p) => {
+        const coords = { latitude: p.coords.latitude, longitude: p.coords.longitude }
+        posRef.current = coords
+        chooseOrigin('현재 위치', coords)
+      },
       () => setLocationDenied(true),
       { enableHighAccuracy: true, timeout: 8000 },
     )
@@ -248,9 +260,11 @@ export function ScriptedChatScreen({
     }
     onToast('현재 위치를 확인하고 있어요…')
     navigator.geolocation.getCurrentPosition(
-      () => {
+      (p) => {
         setLocationDenied(false)
-        chooseOrigin('현재 위치')
+        const coords = { latitude: p.coords.latitude, longitude: p.coords.longitude }
+        posRef.current = coords
+        chooseOrigin('현재 위치', coords)
       },
       () => onToast('위치가 아직 꺼져 있어요. 휴대폰 설정에서 위치를 켠 뒤 다시 눌러주세요'),
       { enableHighAccuracy: true, timeout: 8000 },
@@ -259,7 +273,7 @@ export function ScriptedChatScreen({
 
   function locationUseHome() {
     setLocationDenied(false)
-    chooseOrigin('집')
+    chooseOrigin('집', homeCoordsRef.current)
   }
 
   function locationTypeOrigin() {
@@ -338,7 +352,13 @@ export function ScriptedChatScreen({
         </>,
       )
       window.setTimeout(
-        () => onDone(destRef.current, departureDateTime, destCoordsRef.current ?? undefined),
+        () =>
+          onDone({
+            destination: destRef.current,
+            destinationCoords: destCoordsRef.current ?? undefined,
+            departureDateTime,
+            origin: originRef.current,
+          }),
         1100,
       )
     })

@@ -428,3 +428,13 @@ button { color: inherit; }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
 }
+
+/* 출발지 → 목적지 요약 띠 (가짜 지도를 대신한다 — ResultsScreen RouteStrip 주석 참고) */
+.route-strip { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 10px; margin: 13px 0 2px; padding: 13px 14px; border-radius: 16px; background: rgba(239, 236, 255, 0.6); border: 1px solid rgba(148, 163, 184, 0.18); }
+.route-strip-end { display: flex; align-items: center; gap: 7px; min-width: 0; }
+.route-strip-end b { font-size: 16px; font-weight: 900; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.route-strip-end .dot { width: 12px; height: 12px; border-radius: 50%; flex: 0 0 auto; }
+.route-strip-end .dot.start { background: #3488F4; }
+.route-strip-end .dot.goal { background: var(--violet); }
+.route-strip-line { position: relative; height: 2px; background: repeating-linear-gradient(90deg, rgba(103, 85, 245, 0.45) 0 6px, transparent 6px 12px); display: grid; place-items: center; }
+.route-strip-line span { position: absolute; padding: 0 7px; font-size: 20px; background: #F6F4FF; }
