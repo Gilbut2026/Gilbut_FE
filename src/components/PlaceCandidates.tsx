@@ -58,7 +58,10 @@ export function PlaceCandidates({
    */
   useLayoutEffect(() => {
     if (!expanded) return
-    endRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' })
+    // ⚠️ scrollIntoView 는 스크롤되는 조상을 전부 굴려서 **창까지 밀어버린다.**
+    //    우리가 굴릴 것은 대화 목록 하나뿐이다.
+    const box = endRef.current?.closest<HTMLElement>('.chat-scroll')
+    box?.scrollTo({ top: box.scrollHeight, behavior: 'smooth' })
   }, [expanded])
 
   /*

@@ -149,16 +149,24 @@ export function DepartureSheet({
   picked.setHours(hour, minute, 0, 0)
 
   /*
-   * 시각 목록을 열면 지금 고른 줄이 보이게 스크롤한다.
-   * 목록이 서른 줄이 넘어서, 맨 위(새벽 5시)에서 시작하면 오후를 고르려는 분은
-   * 한참을 내려야 한다. 이미 고른 것이 어디 있는지도 안 보인다.
+   * 시각 목록을 열면 지금 고른 줄이 가운데 보이게 굴린다.
+   * 목록이 열아홉 줄이라 맨 위(새벽 5시)에서 시작하면 오후를 고르려는 분은
+   * 한참을 내려야 하고, 이미 고른 것이 어디 있는지도 안 보인다.
+   *
+   * ⚠️ scrollIntoView 를 쓰면 안 된다. **스크롤되는 조상을 전부 굴려서 창까지 밀어버린다.**
+   *    실제로 시간 고르기를 열면 앱 전체가 위로 밀렸고, 창 스크롤이 남아 그 뒤로도
+   *    계속 밀린 채로 보였다(2026-08-16). 우리가 굴리려는 것은 이 목록 하나뿐이므로
+   *    목록의 scrollTop 만 직접 옮긴다.
    */
   const hourListRef = useRef<HTMLDivElement>(null)
   const minuteListRef = useRef<HTMLDivElement>(null)
   useLayoutEffect(() => {
     if (view !== 'clock') return
     for (const ref of [hourListRef, minuteListRef]) {
-      ref.current?.querySelector<HTMLElement>('[data-on="y"]')?.scrollIntoView({ block: 'center' })
+      const list = ref.current
+      const row = list?.querySelector<HTMLElement>('[data-on="y"]')
+      if (!list || !row) continue
+      list.scrollTop = row.offsetTop - (list.clientHeight - row.offsetHeight) / 2
     }
   }, [view])
 
