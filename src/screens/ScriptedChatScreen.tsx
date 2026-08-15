@@ -6,6 +6,7 @@ import { SEARCH_RADIUS_KM, SUWON_CENTER, isInServiceArea } from '../api/geo'
 import { rankPlaceCandidates, type RankedPlaces } from '../api/placeRank'
 import { PlaceCandidates } from '../components/PlaceCandidates'
 import { ChatView, useChatLog } from '../components/ChatView'
+import { DepartureSheet } from '../components/DepartureSheet'
 import { QUICK_DESTINATION_NAMES } from './quickDestinations'
 import type { ChatOutcome } from '../types/nav'
 import type { LatLng, PlaceItemResponse } from '../types/dto'
@@ -68,6 +69,8 @@ export function ScriptedChatScreen({
   const [input, setInput] = useState('')
   const [busy, setBusy] = useState(false)
   const [locationDenied, setLocationDenied] = useState(false)
+  // 출발 날짜·시간 고르기 시트 — 실연동 화면과 같은 것을 쓴다
+  const [timeSheet, setTimeSheet] = useState(false)
 
   const destRef = useRef('')
   // 사용자가 확인한 목적지의 실제 좌표. 결과 화면이 이 좌표로 바로 조회한다
@@ -282,6 +285,14 @@ export function ScriptedChatScreen({
     botSay('출발지를 아래 입력창에 적어주세요. 예: 행복아파트 정문')
   }
 
+  /**
+   * 출발 시각 묻기 — 실연동 화면(ServerChatScreen timeReplies)과 같은 선택지를 쓴다.
+   * 엔진이 바뀌어도 어르신이 보는 화면은 같아야 한다.
+   *
+   * 예전에는 「시간을 정할게요」를 눌러야 30분·1시간·2시간 뒤가 나왔다. 한 단계 더
+   * 들어가서 결국 상대 시각을 고르는 건데, 그건 「날짜·시간 고르기」가 다 한다.
+   * 누를 것을 줄이는 게 아니라 **누르는 횟수**를 줄여야 한다.
+   */
   function askDepartTime() {
     setStep('depart')
     typing(() => {
@@ -297,24 +308,6 @@ export function ScriptedChatScreen({
           <button className="chat-reply" onClick={() => chooseTime('지금 바로', 0)}>
             🚶 지금 바로 출발
           </button>
-          <button className="chat-reply" onClick={pickTime}>
-            🕐 시간을 정할게요
-          </button>
-          <button className="chat-reply" onClick={() => chooseTime('내일', 24 * 60)}>
-            📅 내일 갈 거예요
-          </button>
-        </>,
-      )
-    })
-  }
-
-  function pickTime() {
-    userSay('시간을 정할게요')
-    setStep('depart')
-    typing(() => {
-      botSay('몇 시쯤 나서실 예정인가요? 아래에서 고르시거나 “오후 3시”처럼 적어주셔도 돼요.')
-      actions(
-        <>
           {([
             ['30분 뒤', 30],
             ['1시간 뒤', 60],
@@ -324,6 +317,10 @@ export function ScriptedChatScreen({
               {label}
             </button>
           ))}
+          {/* 오늘이 아닐 수도 있다 — 병원 예약은 내일 아침인 경우가 흔하다 */}
+          <button className="chat-reply" onClick={() => setTimeSheet(true)}>
+            📅 날짜·시간 고르기
+          </button>
         </>,
       )
     })
@@ -335,10 +332,13 @@ export function ScriptedChatScreen({
   }
 
   function finishChat(label: string, minutesFromNow: number) {
+    finishChatAt(label, departureAfter(minutesFromNow))
+  }
+
+  /** 화면 문구가 아니라 실제 시각을 결과 조회에 넘긴다 — 시간대에 따라 대중교통 후보가 달라진다 */
+  function finishChatAt(label: string, departureDateTime: string) {
     departRef.current = label
     setStep('analysis')
-    // 화면 문구가 아니라 실제 시각을 결과 조회에 넘긴다 — 시간대에 따라 대중교통 후보가 달라진다
-    const departureDateTime = departureAfter(minutesFromNow)
     typing(() => {
       botSay(
         <>
@@ -433,20 +433,31 @@ export function ScriptedChatScreen({
   const [title, desc, width] = STEP_META[step]
 
   return (
-    <ChatView
-      title={title}
-      desc={desc}
-      width={width}
-      messages={log.messages}
-      scrollRef={log.scrollRef}
-      input={input}
-      onInputChange={setInput}
-      onSend={send}
-      onTranscript={handleText}
-      onBack={onBack}
-      onSos={onSos}
-      onToast={onToast}
-      busy={busy}
-    />
+    <>
+      <ChatView
+        title={title}
+        desc={desc}
+        width={width}
+        messages={log.messages}
+        scrollRef={log.scrollRef}
+        input={input}
+        onInputChange={setInput}
+        onSend={send}
+        onTranscript={handleText}
+        onBack={onBack}
+        onSos={onSos}
+        onToast={onToast}
+        busy={busy}
+      />
+      <DepartureSheet
+        open={timeSheet}
+        onClose={() => setTimeSheet(false)}
+        onToast={onToast}
+        onPick={(dateTime, label) => {
+          userSay(`${label}에 출발할게요`)
+          finishChatAt(label, dateTime)
+        }}
+      />
+    </>
   )
 }

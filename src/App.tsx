@@ -139,13 +139,7 @@ export default function App() {
    */
   useEffect(() => {
     if (!booting) return
-    // Mock 은 저장되는 곳이 없다. 이동특성을 물으면 늘 있다고 답해서, 그대로 두면
-    // 온보딩을 건너뛰어 Mock 시연이 통째로 막힌다. 복구할 것도 없으니 그냥 온보딩부터.
-    if (useMock('user')) {
-      setScreen('onboarding')
-      setBooting(false)
-      return
-    }
+    // Mock 도 실서버와 같은 규칙을 따른다(mock/user.ts) — 여기 예외를 두지 않는다.
     let alive = true
     // 화면 결정과 복구 종료를 같은 콜백에서 함께 처리한다.
     // 따로 하면(.finally) 렌더가 두 번 나뉘어 홈이 탭바 없이 한 번 깜빡인다.

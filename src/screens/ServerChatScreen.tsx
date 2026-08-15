@@ -15,6 +15,7 @@ import { PlaceCandidates } from '../components/PlaceCandidates'
 import { SEARCH_RADIUS_KM } from '../api/geo'
 import { QUICK_DESTINATION_NAMES } from './quickDestinations'
 import { ChatView, useChatLog } from '../components/ChatView'
+import { DepartureSheet } from '../components/DepartureSheet'
 import type { ChatOutcome } from '../types/nav'
 import type {
   ChatMessageResponse,
@@ -77,6 +78,8 @@ export function ServerChatScreen({
   const [input, setInput] = useState('')
   const [busy, setBusy] = useState(false)
   const [locationNeeded, setLocationNeeded] = useState(false)
+  // 출발 날짜·시간 고르기 시트 — 빠른 답변만으로는 오늘 안에서만 고를 수 있다
+  const [timeSheet, setTimeSheet] = useState(false)
 
   const startedRef = useRef(false)
   const destNameRef = useRef('')
@@ -255,6 +258,10 @@ export function ServerChatScreen({
       </button>
       <button className="chat-reply" onClick={() => pickDeparture('2시간 뒤에 출발할게요', 120)}>
         2시간 뒤
+      </button>
+      {/* 오늘이 아닐 수도 있다 — 병원 예약은 내일 아침인 경우가 흔하다 */}
+      <button className="chat-reply" onClick={() => setTimeSheet(true)}>
+        📅 날짜·시간 고르기
       </button>
     </>
   )
@@ -515,12 +522,16 @@ export function ServerChatScreen({
   }
 
   async function pickDeparture(label: string, minutesFromNow: number) {
+    return submitDeparture(label, departureAfter(minutesFromNow))
+  }
+
+  /** 확정한 시각을 서버에 보낸다. 빠른 답변도 날짜·시간 고르기도 여기로 모인다 */
+  async function submitDeparture(label: string, departureDateTime: string) {
     if (busy) return
     userSay(label)
     setBusy(true)
     showTyping()
     try {
-      const departureDateTime = departureAfter(minutesFromNow)
       const session = await confirmDepartureTime({ departureDateTime })
       // 결과 화면이 같은 시각으로 조회하도록 기억해둔다
       departureRef.current = departureDateTime
@@ -682,20 +693,28 @@ export function ServerChatScreen({
   const [title, desc, width] = STEP_META[state] ?? STEP_META.DESTINATION_WAITING
 
   return (
-    <ChatView
-      title={title}
-      desc={desc}
-      width={width}
-      messages={log.messages}
-      scrollRef={log.scrollRef}
-      input={input}
-      onInputChange={setInput}
-      onSend={send}
-      onTranscript={handleText}
-      onBack={onBack}
-      onSos={onSos}
-      onToast={onToast}
-      busy={busy}
-    />
+    <>
+      <ChatView
+        title={title}
+        desc={desc}
+        width={width}
+        messages={log.messages}
+        scrollRef={log.scrollRef}
+        input={input}
+        onInputChange={setInput}
+        onSend={send}
+        onTranscript={handleText}
+        onBack={onBack}
+        onSos={onSos}
+        onToast={onToast}
+        busy={busy}
+      />
+      <DepartureSheet
+        open={timeSheet}
+        onClose={() => setTimeSheet(false)}
+        onToast={onToast}
+        onPick={(dateTime, label) => void submitDeparture(`${label}에 출발할게요`, dateTime)}
+      />
+    </>
   )
 }
