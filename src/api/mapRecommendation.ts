@@ -188,7 +188,9 @@ export function mapRecommendationToRouteResult(
   be: RouteRecommendationResult,
   ctx: RouteDisplayContext,
 ): RouteResult {
-  const ranked = [...be.recommendations].sort((a, b) => a.rank - b.rank)
+  // 후보가 전부 Hard Filter 에 걸리면 BE 가 recommendations 를 비우거나 null 로 줄 수 있다.
+  // 그대로 펼치면 TypeError 로 화면이 죽으므로, 빈 배열로 받아 '갈 수 있는 길 없음' 안내로 흘린다.
+  const ranked = [...(be.recommendations ?? [])].sort((a, b) => a.rank - b.rank)
 
   const options: RouteOption[] = []
 
