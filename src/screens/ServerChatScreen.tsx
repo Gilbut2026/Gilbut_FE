@@ -11,6 +11,7 @@ import {
 } from '../api/chat'
 import { ApiError } from '../api/client'
 import { departureAfter, parseDepartureMinutes } from '../api/time'
+import { rankPlaceCandidates } from '../api/placeRank'
 import { ChatView, useChatLog } from '../components/ChatView'
 import type {
   ChatMessageResponse,
@@ -287,8 +288,10 @@ export function ServerChatScreen({
 
       if (res.responseType === 'PLACE_CANDIDATES' && res.places?.length) {
         const pick = (p: PlaceItemResponse) => confirmDestination(p)
-        if (res.places.length === 1) card(placeCandidates(res.places, pick))
-        else actions(placeChoiceList(res.places, pick))
+        // 부속시설을 뒤로 보내고 같은 주소는 하나로 묶는다 (api/placeRank 주석 참고)
+        const ranked = rankPlaceCandidates(res.places)
+        if (ranked.length === 1) card(placeCandidates(ranked, pick))
+        else actions(placeChoiceList(ranked, pick))
         return
       }
 
@@ -453,7 +456,7 @@ export function ServerChatScreen({
         return
       }
       botSay('찾은 장소예요. 출발지가 맞는 것을 골라주세요.')
-      actions(placeChoiceList(res.places, pickPlaceOrigin))
+      actions(placeChoiceList(rankPlaceCandidates(res.places), pickPlaceOrigin))
     } catch (e) {
       fail(e)
     } finally {

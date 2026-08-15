@@ -3,6 +3,7 @@ import { LocationScreen } from './LocationScreen'
 import { getHome, searchPlaces } from '../api/place'
 import { departureAfter, parseDepartureMinutes } from '../api/time'
 import { SUWON_CENTER, isInServiceArea } from '../api/geo'
+import { rankPlaceCandidates } from '../api/placeRank'
 import { ChatView, useChatLog } from '../components/ChatView'
 import type { LatLng, PlaceItemResponse } from '../types/dto'
 
@@ -178,7 +179,9 @@ export function ScriptedChatScreen({
           <b>{name}</b>으로 들었어요. 어디를 말씀하신 건지 한 번만 확인할게요.
         </>,
       )
-      card(placeCard(res.places))
+      // 주차장 같은 부속시설을 뒤로 보내고 같은 주소는 하나로 묶는다
+      // (TMAP 은 "아주대학교병원"에 주차빌딩 4개를 함께 준다)
+      card(placeCard(rankPlaceCandidates(res.places)))
     } catch {
       hideTyping()
       // 백엔드가 결과 0건도 502 로 내려주기 때문에, 지역 밖이면 그쪽 안내를 먼저 한다

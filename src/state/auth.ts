@@ -38,3 +38,29 @@ export function clearTokens(): void {
 export function isLoggedIn(): boolean {
   return getAccessToken() !== null
 }
+
+/* ------------------------------------------------------------
+ *  세션 만료 알림
+ *
+ *  토큰이 만료되고 재발급도 실패하면 앱이 할 수 있는 게 없다. 그때 화면마다
+ *  제각기 실패하도록 두면 사용자는 원인을 알 수 없다 — 경로는 "길을 찾지 못했어요",
+ *  자주 가는 곳은 빈 목록, 온보딩 저장은 조용한 실패로 보인다.
+ *  그래서 한 곳에서 알리고 App 이 로그인 화면으로 되돌린다.
+ * ------------------------------------------------------------ */
+
+type Listener = () => void
+const expiredListeners = new Set<Listener>()
+
+/** 세션이 끊겼을 때 부를 콜백 등록 — 해제 함수를 돌려준다 */
+export function onSessionExpired(cb: Listener): () => void {
+  expiredListeners.add(cb)
+  return () => {
+    expiredListeners.delete(cb)
+  }
+}
+
+/** client.ts 가 재발급까지 실패했을 때 호출한다 */
+export function notifySessionExpired(): void {
+  clearTokens()
+  expiredListeners.forEach((cb) => cb())
+}

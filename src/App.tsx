@@ -18,6 +18,7 @@ import { StairChoiceScreen } from './screens/StairChoiceScreen'
 import { useSettings, updateSettings } from './state/settings'
 import { HAS_MOCK, mockBadgeLabel } from './api/mode'
 import { kakaoLogin, KAKAO_CALLBACK_PATH } from './api/auth'
+import { onSessionExpired } from './state/auth'
 import { TAB_SCREENS, type Screen } from './types/nav'
 import type { LatLng, StairComparison } from './types/dto'
 
@@ -114,6 +115,20 @@ export default function App() {
       })
       .catch(() => setAuthPhase('error'))
   }, [authPhase])
+
+  // 토큰이 만료되고 재발급도 실패하면 로그인 화면으로 되돌린다.
+  // 화면마다 제각기 실패해서 사용자가 원인을 못 알아채는 것이 가장 나쁘다.
+  useEffect(
+    () =>
+      onSessionExpired(() => {
+        setScreen('signup')
+        setDestination(null)
+        setDestCoords(null)
+        setDeparture(null)
+        setToastMsg('로그인이 만료됐어요. 다시 로그인해 주세요.')
+      }),
+    [],
+  )
 
   const toast = useCallback((msg: string) => {
     setToastMsg(msg)
