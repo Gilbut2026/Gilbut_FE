@@ -10,18 +10,31 @@
  */
 
 /**
- * 콜센터 대표번호. **자료를 받기 전까지는 null 이다.**
+ * 콜센터 정보 — **프론트 하드코딩(임시)**.
  *
- * 예전에는 `1666-0000` 이라는 자리표시자를 화면에 띄우고 tel: 링크까지 걸어뒀다.
- * 실제 번호가 아닌데 누르면 전화가 걸린다 — 어르신 대상 서비스에서 있어선 안 되는 상태였다.
- * 없는 번호를 지어내느니 "확인이 필요하다"고 말하는 편이 맞다.
+ * 예전에는 `1666-0000` 이라는 자리표시자를 띄우고 tel: 링크까지 걸어뒀다. 실제 번호가 아닌데
+ * 누르면 전화가 걸리는 상태였다. 어르신 대상 서비스에서 있어선 안 될 일이라 실제 정보로 바꿨다.
  *
- * BE 에도 콜택시 데이터는 없다. AI 가 주는 DrtDecision.taxiGuide(콜택시로 안내할지)만 있고
- * 번호·명칭·이용 대상은 어디에도 없다(2026-08-15 확인).
- * 노션 「7/31 회의」의 '장애인 콜택시 콜센터 정보 — 조건희님 자료 대기' 항목이 해결되면
- * 여기에 넣고, 가능하면 BE 응답으로 받아 지역별로 다르게 안내하는 것이 낫다.
+ * 출처 (2026-08-15 확인, 두 곳이 일치)
+ *   · 공공데이터포털 「전국교통약자이동지원센터정보표준데이터」 — 수원시교통약자이동지원센터 031-253-5525
+ *   · 수원도시공사 한아름콜센터 안내 (suwonudc.co.kr/swcall)
+ *
+ * ⚠️ 여기 있는 값은 **수원시 고정**이다. 서비스 지역이 넓어지면 지역마다 센터가 다르므로
+ *    BE 응답으로 받아야 한다. BE 에는 아직 콜택시 데이터가 없다 — AI 가 주는
+ *    DrtDecision.taxiGuide(콜택시로 안내할지) 판단만 있고 번호·명칭·이용 대상은 없다.
+ *    노션 고도화 목록에 「콜택시 안내 정보 BE 연동」으로 올려두었다.
  */
-const CALL_CENTER_TEL: string | null = null
+const CALL_CENTER = {
+  name: '수원시교통약자이동지원센터',
+  alias: '한아름콜택시',
+  tel: '031-253-5525',
+  /** 휠체어 슬로프 차량은 연중무휴 24시간, 일반 차량은 22시까지 */
+  hours: '휠체어 차량 24시간',
+  target: '장애인·국가유공자·임산부 등',
+  fare: '수원시 안 1,250원',
+} as const
+
+const CALL_CENTER_TEL: string | null = CALL_CENTER.tel
 
 import { speak as playVoice } from '../state/tts'
 import { TopBar } from '../components/TopBar'
@@ -55,8 +68,12 @@ export function CallTaxiScreen({
   }
 
   function speakCallTaxi() {
+    // 번호는 한 자씩 끊어 읽어야 어르신이 받아 적을 수 있다 ("공삼일 이오삼 오오이오")
+    const telPart = CALL_CENTER_TEL
+      ? `전화번호는 ${CALL_CENTER_TEL.split('').join(' ')} 입니다. `
+      : ''
     const ok = playVoice(
-      '장애인 콜택시 안내입니다. 콜센터로 전화를 걸어 휠체어를 이용한다고 먼저 말씀하시고, 출발지와 목적지, 타실 시간을 알려주세요. 예약은 콜센터에서 직접 하셔야 해요.',
+      `${CALL_CENTER.alias} 안내입니다. ${telPart}콜센터로 전화를 걸어 휠체어를 이용한다고 먼저 말씀하시고, 출발지와 목적지, 타실 시간을 알려주세요. 예약은 콜센터에서 직접 하셔야 해요.`,
     )
     if (!ok) onToast('이 기기에서는 음성 안내를 쓸 수 없어요')
   }
@@ -97,7 +114,7 @@ export function CallTaxiScreen({
         <div className="section-label">전화로 부르실 수 있어요</div>
         <div className="service-card glass">
           <div className="service-head">
-            <h3>장애인 콜택시 콜센터</h3>
+            <h3>{CALL_CENTER.alias}</h3>
             <span className="service-status">
               <i />
               전화 예약
@@ -109,8 +126,16 @@ export function CallTaxiScreen({
               <b>{CALL_CENTER_TEL ?? '콜센터 확인'}</b>
             </div>
             <div className="kv">
+              <span>운영 시간</span>
+              <b>{CALL_CENTER.hours}</b>
+            </div>
+            <div className="kv">
               <span>이용 대상</span>
-              <b>콜센터 확인</b>
+              <b>{CALL_CENTER.target}</b>
+            </div>
+            <div className="kv">
+              <span>요금</span>
+              <b>{CALL_CENTER.fare}</b>
             </div>
             <div className="kv">
               <span>준비 정보</span>
