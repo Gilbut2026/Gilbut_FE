@@ -16,15 +16,31 @@ import { DrtScreen } from './screens/DrtScreen'
 import { CallTaxiScreen } from './screens/CallTaxiScreen'
 import { StairChoiceScreen } from './screens/StairChoiceScreen'
 import { useSettings, updateSettings } from './state/settings'
-import { HAS_MOCK, mockBadgeLabel } from './api/mode'
+import { HAS_MOCK, mockBadgeLabel, useMock } from './api/mode'
 import { kakaoLogin, KAKAO_CALLBACK_PATH } from './api/auth'
-import { onSessionExpired } from './state/auth'
+import { getMobilityProfile } from './api/user'
+import { ApiError } from './api/client'
+import { isLoggedIn, onSessionExpired } from './state/auth'
 import { TAB_SCREENS, type Screen } from './types/nav'
 import type { DrtGuideResponse, DrtReasonCode, LatLng, StairComparison } from './types/dto'
 
 /** 카카오 로그인 콜백(`/auth/kakao/callback?code=…`)으로 들어왔는지 최초 1회 판단 */
 function initialAuthPhase(): 'idle' | 'loading' {
   return window.location.pathname.endsWith(KAKAO_CALLBACK_PATH) ? 'loading' : 'idle'
+}
+
+/**
+ * 새로고침했을 때 어디서부터 시작할지 서버에 물어봐야 하는가.
+ *
+ * 토큰은 localStorage 에 남아 있으니 이미 로그인된 상태다. 그런데 화면은 늘 'signup'
+ * 부터 시작해서, 새로고침할 때마다 온보딩 7문항을 다시 물었다.
+ * 답이 서버에 저장돼 있는데도 다시 묻는 것은 그냥 고장이다 —
+ * 어르신이 앱을 다시 열 때마다 설문을 하라는 뜻이 된다.
+ *
+ * 로그인 전이면 물어볼 것도 없으니 곧바로 시작 화면을 보여준다(깜빡임 없음).
+ */
+function needsBootCheck(): boolean {
+  return initialAuthPhase() === 'idle' && isLoggedIn()
 }
 
 /** 하단 탭 정의 (7차 와이어프레임 bottom-nav). ⬜ 표시는 아직 이식 전 화면. */
@@ -100,7 +116,50 @@ export default function App() {
   // 콜백 코드 교환은 딱 한 번만. StrictMode 가 dev 에서 effect 를 두 번 돌려도 두 번째는 건너뛴다
   // (그러지 않으면 인가 코드가 두 번 소비되거나, 주소가 이미 비어 실패로 표시된다).
   const authHandled = useRef(false)
+  // 새로고침 복구 중 — 온보딩을 이미 했는지 서버에 확인하는 동안
+  const [booting, setBooting] = useState(needsBootCheck)
 
+  /*
+   * 새로고침 복구 — 이미 로그인돼 있으면 온보딩을 마쳤는지 확인하고 알맞은 화면에서 시작한다.
+   *
+   * 판단 근거는 이동특성(온보딩 답) 이 서버에 있는가다. 백엔드는 온보딩을 저장할 때만
+   * 프로필을 만들고, 없으면 404 를 준다(MOBILITY_PROFILE_NOT_FOUND). 그래서
+   * "404 = 아직 온보딩 안 함" 이 정확한 신호다.
+   *
+   * 404 가 아닌 실패(서버가 잠깐 죽었다, 인터넷이 끊겼다)에는 홈으로 보낸다.
+   * 확실하지 않을 때 온보딩으로 보내면, 이미 답한 어르신에게 설문을 다시 시키게 된다.
+   * 잘못 홈으로 보내는 쪽이 덜 나쁘다 — 설정에서 언제든 다시 할 수 있다.
+   *
+   * 401 은 건드리지 않는다. 토큰 재발급까지 실패한 경우라 onSessionExpired 가 이미
+   * 시작 화면으로 되돌려놨다. 여기서 또 화면을 정하면 그걸 덮어써버린다.
+   */
+  useEffect(() => {
+    if (!booting) return
+    // Mock 은 저장되는 곳이 없다. 이동특성을 물으면 늘 있다고 답해서, 그대로 두면
+    // 온보딩을 건너뛰어 Mock 시연이 통째로 막힌다. 복구할 것도 없으니 그냥 온보딩부터.
+    if (useMock('user')) {
+      setScreen('onboarding')
+      setBooting(false)
+      return
+    }
+    let alive = true
+    // 화면 결정과 복구 종료를 같은 콜백에서 함께 처리한다.
+    // 따로 하면(.finally) 렌더가 두 번 나뉘어 홈이 탭바 없이 한 번 깜빡인다.
+    const settle = (next: Screen | null) => {
+      if (!alive) return
+      if (next) setScreen(next)
+      setBooting(false)
+    }
+    getMobilityProfile()
+      .then(() => settle('home'))
+      .catch((e) => {
+        if (e instanceof ApiError && e.status === 401) return settle(null)
+        settle(e instanceof ApiError && e.status === 404 ? 'onboarding' : 'home')
+      })
+    return () => {
+      alive = false
+    }
+  }, [booting])
 
   // 카카오 인가 코드(?code=…)를 받아 토큰으로 교환한다. 최초 1회만.
   useEffect(() => {
@@ -116,7 +175,9 @@ export default function App() {
     kakaoLogin(code)
       .then(() => {
         setAuthPhase('idle')
-        setScreen('onboarding')
+        // 처음 온 사람인지 다시 온 사람인지는 위 복구 절차가 판단한다.
+        // 무조건 온보딩으로 보내면, 다시 로그인한 사람에게 설문을 또 시키게 된다.
+        setBooting(true)
       })
       .catch(() => setAuthPhase('error'))
   }, [authPhase])
@@ -148,7 +209,7 @@ export default function App() {
     setScreen('stairs')
   }, [])
 
-  const showTabBar = TAB_SCREENS.includes(screen) && authPhase === 'idle'
+  const showTabBar = TAB_SCREENS.includes(screen) && authPhase === 'idle' && !booting
 
   return (
     <div id="app-shell" className={`font-${settings.fontSize}${settings.highContrast ? ' high-contrast' : ''}`}>
@@ -177,8 +238,18 @@ export default function App() {
         </section>
       )}
 
-      {authPhase === 'idle' && screen === 'signup' && (
-        <SignupScreen onSignedIn={() => setScreen('onboarding')} />
+      {/* 새로고침 복구 중 — 온보딩을 이미 했는지 확인하는 아주 짧은 동안 */}
+      {booting && (
+        <section className="screen">
+          <div className="screen-body signup-body">
+            <h1 className="signup-title">준비하고 있어요…</h1>
+            <p className="signup-lead">잠시만 기다려 주세요.</p>
+          </div>
+        </section>
+      )}
+
+      {!booting && authPhase === 'idle' && screen === 'signup' && (
+        <SignupScreen onSignedIn={() => setBooting(true)} />
       )}
 
       {screen === 'onboarding' && (
