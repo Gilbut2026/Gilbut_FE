@@ -32,6 +32,15 @@ const STEP_META: Record<Step, [string, string, string]> = {
   analysis: ['편한 길 찾는 중', '대화가 끝나면 편한 길을 보여드려요', '100%'],
 }
 
+/**
+ * 자연 발화에서 목적지만 추려낸다.
+ * "아주대병원 가고 싶어요" → "아주대병원"
+ * 홈 마이크로 들은 말과 입력창에 적은 말이 같은 방식으로 처리돼야 한다.
+ */
+function destinationFrom(text: string): string {
+  return text.replace(/(에|으로)?\s*(가고 싶어요|가고 싶어|가는 길|어떻게 가).*$/, '').trim() || text
+}
+
 export function ScriptedChatScreen({
   prefill,
   onBack,
@@ -362,8 +371,10 @@ export function ScriptedChatScreen({
     startedRef.current = true
     push({ type: 'day', text: '오늘' })
     if (prefill) {
-      // 자주 가는 곳에서 들어온 경우 — 이름만 아는 상태라 똑같이 검색해서 확인받는다
-      chooseDestination(prefill)
+      // 홈 마이크로 들은 말이거나 자주 가는 곳에서 온 이름.
+      // 자연 발화("아주대병원 가고 싶어요")가 그대로 오므로 목적지만 추려낸다 —
+      // 안 그러면 "아주대병원 가고 싶어요"를 통째로 장소 이름으로 검색하게 된다.
+      chooseDestination(destinationFrom(prefill))
     } else {
       botSay(
         <>
@@ -380,9 +391,7 @@ export function ScriptedChatScreen({
     const text = value.trim()
     if (!text) return
     if (step === 'destination') {
-      const name =
-        text.replace(/(에|으로)?\s*(가고 싶어요|가고 싶어|가는 길|어떻게 가).*$/, '').trim() || text
-      chooseDestination(name)
+      chooseDestination(destinationFrom(text))
     } else if (step === 'origin') {
       const from = text.replace(/(에서|에)?\s*(출발.*)$/, '').trim() || text
       chooseOrigin(from)

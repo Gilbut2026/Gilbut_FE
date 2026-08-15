@@ -12,9 +12,10 @@
  *        현재 위치를 중심으로 검색하므로, 어디서 열든 근처 장소가 나온다.
  */
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { TopBar } from '../components/TopBar'
 import { listFavorites } from '../api/place'
+import { SPEECH_ERROR_TEXT, listenOnce, type SpeechSession } from '../state/speech'
 import type { FavoritePlaceResponse } from '../types/dto'
 import { QUICK_DESTINATIONS } from './quickDestinations'
 
@@ -44,12 +45,22 @@ export function HomeScreen({
   onMic,
   onPlace,
   onSos,
+  onToast,
 }: {
-  onMic: () => void
+  /**
+   * 마이크로 들은 말을 그대로 넘긴다. 대화 화면이 이 말을 **사용자의 첫 발화**로 이어받는다.
+   * 못 들었으면 인자 없이 부른다(대화 화면이 처음부터 물어본다).
+   */
+  onMic: (utterance?: string) => void
   onPlace: (destination: string) => void
   onSos: () => void
+  onToast: (msg: string) => void
 }) {
   const [favorites, setFavorites] = useState<FavoritePlaceResponse[] | null>(null)
+  // 듣는 중 화면. 예전에는 마이크를 눌러도 대화창으로 넘어가기만 해서,
+  // 거기서 마이크를 한 번 더 눌러야 했다. 홈에서 바로 듣고 그 말을 들고 넘어간다.
+  const [listening, setListening] = useState(false)
+  const sessionRef = useRef<SpeechSession | null>(null)
 
   useEffect(() => {
     let alive = true
@@ -65,6 +76,32 @@ export function HomeScreen({
       alive = false
     }
   }, [])
+
+  // 화면을 떠날 때 듣던 것을 정리한다 (마이크가 계속 열려 있지 않도록)
+  useEffect(() => () => sessionRef.current?.cancel(), [])
+
+  function startListening() {
+    if (listening) return
+    setListening(true)
+    sessionRef.current = listenOnce({
+      onResult: (text) => {
+        sessionRef.current = null
+        setListening(false)
+        onMic(text) // 들은 말을 그대로 대화로 넘긴다
+      },
+      onError: (kind) => {
+        sessionRef.current = null
+        setListening(false)
+        onToast(SPEECH_ERROR_TEXT[kind])
+      },
+    })
+  }
+
+  function stopListening() {
+    sessionRef.current?.cancel()
+    sessionRef.current = null
+    setListening(false)
+  }
 
   const hasFavorites = favorites !== null && favorites.length > 0
 
@@ -88,7 +125,12 @@ export function HomeScreen({
         </div>
 
         <div className="mic-zone">
-          <button className="mic-button" onClick={onMic} aria-label="목적지를 음성으로 말하기">
+          <button
+            className={`mic-button${listening ? ' listening' : ''}`}
+            onClick={startListening}
+            aria-label="목적지를 음성으로 말하기"
+            disabled={listening}
+          >
             <MicIcon />
           </button>
           <div className="mic-label">누르고 목적지를 말씀하세요</div>
@@ -105,6 +147,32 @@ export function HomeScreen({
           ))}
         </div>
       </div>
+
+      {/*
+        듣는 중 화면. 화면을 덮어 "지금 듣고 있다"를 분명히 한다 —
+        어르신이 말해도 되는 때를 몰라 머뭇거리는 것이 가장 흔한 실패다.
+        말이 끝나면 브라우저가 알아서 인식을 끝내므로 따로 누를 필요가 없다.
+      */}
+      {listening && (
+        <div className="listening" role="status" aria-live="assertive">
+          <div className="listening-wave" aria-hidden="true">
+            <i />
+            <i />
+            <i />
+            <i />
+            <i />
+          </div>
+          <div className="listening-mic" aria-hidden="true">
+            <MicIcon />
+          </div>
+          <h2>듣고 있어요</h2>
+          <p>어디로 가고 싶으신지 말씀해 주세요</p>
+          <span className="listening-help">말씀이 끝나면 저절로 넘어가요</span>
+          <button className="btn neutral listening-cancel" onClick={stopListening}>
+            그만두기
+          </button>
+        </div>
+      )}
     </section>
   )
 }

@@ -148,6 +148,31 @@ button { color: inherit; }
 .mic-button { width: 126px; height: 126px; border-radius: 50%; border: 0; display: grid; place-items: center; cursor: pointer; color: #fff; position: relative; background: radial-gradient(circle at 35% 24%, #8D77FF, var(--violet) 43%, #3B74E7 100%); box-shadow: 0 22px 45px -16px rgba(80, 64, 216, 0.72), inset 0 2px 2px rgba(255, 255, 255, 0.4), inset 0 -8px 16px rgba(40, 42, 130, 0.24); }
 .mic-button::before { content: ""; position: absolute; inset: -11px; border-radius: 50%; border: 3px solid rgba(103, 85, 245, 0.2); animation: micPulse 2.2s ease-out infinite; }
 .mic-button svg { width: 49px; height: 49px; }
+.mic-button.listening { opacity: 0.6; cursor: default; }
+
+/* ── 듣는 중 화면 ────────────────────────────────
+   화면을 덮어 "지금 말해도 된다"를 분명히 한다. 어르신이 말할 때를 몰라
+   머뭇거리는 것이 음성 입력의 가장 흔한 실패라서 크게 알린다. */
+.listening { position: absolute; inset: 0; z-index: 25; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; padding: 24px; text-align: center; background: rgba(244, 246, 255, 0.94); backdrop-filter: blur(14px); animation: screenIn 0.18s ease both; }
+.listening h2 { margin: 18px 0 0; font-size: 30px; font-weight: 920; letter-spacing: -0.03em; color: var(--ink); }
+.listening p { margin: 8px 0 0; font-size: 19px; font-weight: 720; color: var(--ink-2); }
+.listening-help { margin-top: 6px; font-size: 16px; font-weight: 700; color: var(--ink-3); }
+.listening-mic { width: 108px; height: 108px; border-radius: 50%; display: grid; place-items: center; color: #fff; background: radial-gradient(circle at 35% 24%, #8D77FF, var(--violet) 43%, #3B74E7 100%); box-shadow: 0 22px 45px -16px rgba(80, 64, 216, 0.72); }
+.listening-mic svg { width: 44px; height: 44px; }
+/* 소리 파형 — 지금 듣고 있다는 것이 정적인 그림보다 확실히 전달된다 */
+.listening-wave { display: flex; align-items: flex-end; gap: 7px; height: 46px; margin-bottom: 14px; }
+.listening-wave i { width: 8px; border-radius: 999px; background: var(--violet); animation: listenWave 1s ease-in-out infinite; }
+.listening-wave i:nth-child(1) { height: 16px; animation-delay: 0s; }
+.listening-wave i:nth-child(2) { height: 30px; animation-delay: 0.12s; }
+.listening-wave i:nth-child(3) { height: 44px; animation-delay: 0.24s; }
+.listening-wave i:nth-child(4) { height: 30px; animation-delay: 0.36s; }
+.listening-wave i:nth-child(5) { height: 16px; animation-delay: 0.48s; }
+.listening-cancel { margin-top: 26px; min-width: 168px; }
+@keyframes listenWave { 0%, 100% { transform: scaleY(0.45); } 50% { transform: scaleY(1); } }
+@media (prefers-reduced-motion: reduce) {
+  .listening-wave i { animation: none; }
+  .listening { animation: none; }
+}
 @keyframes micPulse { 0% { transform: scale(0.94); opacity: 1; } 75%, 100% { transform: scale(1.2); opacity: 0; } }
 .mic-label { margin-top: 17px; font-size: 24px; font-weight: 900; text-align: center; }
 .mic-help { margin-top: 3px; color: var(--ink-3); font-size: 19px; font-weight: 650; }

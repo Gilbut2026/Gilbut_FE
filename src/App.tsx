@@ -201,8 +201,9 @@ export default function App() {
 
       {screen === 'home' && (
         <HomeScreen
-          onMic={() => {
-            setChatPrefill(null)
+          onMic={(utterance) => {
+            // 홈에서 들은 말을 대화의 첫 발화로 이어받는다 (못 들었으면 처음부터 물어본다)
+            setChatPrefill(utterance ?? null)
             setScreen('chat')
           }}
           onPlace={(dest) => {
@@ -210,6 +211,7 @@ export default function App() {
             setScreen('chat')
           }}
           onSos={onSos}
+          onToast={toast}
         />
       )}
 
