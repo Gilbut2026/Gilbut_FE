@@ -4,6 +4,7 @@
  */
 import { api, toQuery } from './client'
 import type {
+  LatLng,
   FavoritePlaceResponse,
   FavoritePlaceSaveRequest,
   FavoritePlaceUpdateRequest,
@@ -42,6 +43,40 @@ export function searchPlaces(req: PlaceSearchRequest): Promise<PlaceSearchRespon
     size: req.size,
   })
   return api.get<PlaceSearchResponse>(`/api/places/search${qs}`)
+}
+
+/**
+ * 장소 검색 (2단계) — 화면에서는 이걸 쓴다.
+ *
+ *   1. 현재 위치 근처(반경 SEARCH_RADIUS_KM)에서 먼저 찾는다.
+ *      "병원"·"약국" 처럼 어디에나 있는 낱말은 가까운 곳이 나와야 한다.
+ *   2. 근처에서 못 찾으면 **지역 제한 없이** 다시 찾는다.
+ *      "수원시청" 처럼 멀리 있는 특정 장소는 반경 안에 없어서 1단계가 실패한다.
+ *      서울에서 수원 목적지를 정하는 경우가 실제로 있다(발표 시연도 그렇다).
+ *
+ * ※ 2단계가 필요한 또 다른 이유 — 백엔드가 **검색 결과 0건을 502 로 내려준다.**
+ *   그래서 1단계 실패는 예외로 오고, 여기서 삼키고 넘어간다.
+ *   (백엔드가 빈 목록을 정상 응답으로 주도록 고치면 catch 는 없어도 된다)
+ */
+export async function searchPlacesNear(
+  keyword: string,
+  center: LatLng | null,
+  radiusKm: string,
+): Promise<PlaceSearchResponse> {
+  if (center) {
+    try {
+      const near = await searchPlaces({
+        keyword,
+        lat: String(center.latitude),
+        lon: String(center.longitude),
+        radiusKm,
+      })
+      if (near.places?.length) return near
+    } catch {
+      /* 0건이 502 로 오므로 여기서 멈추지 않고 전국 검색으로 넘어간다 */
+    }
+  }
+  return searchPlaces({ keyword })
 }
 
 /** 즐겨찾기 목록 */

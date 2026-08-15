@@ -17,7 +17,7 @@
 import type { LatLng, RouteRecommendationRequest, RouteRecommendationResult, RouteResult } from '../types/dto'
 import { api, ApiError } from './client'
 import { useMock } from './mode'
-import { searchPlaces } from './place'
+import { searchPlacesNear } from './place'
 import { departureAfter } from './time'
 import { SEARCH_RADIUS_KM } from './geo'
 import { mockGetRoutes } from '../mock/route'
@@ -43,13 +43,8 @@ async function resolveDestination(
   keyword: string,
   center: LatLng,
 ): Promise<{ coords: LatLng; name: string } | null> {
-  const res = await searchPlaces({
-    keyword,
-    lat: String(center.latitude),
-    lon: String(center.longitude),
-    // 반경을 명시하지 않으면 백엔드가 5km 를 강제해 수원 시내 이동도 검색이 막힌다
-    radiusKm: SEARCH_RADIUS_KM,
-  })
+  // 근처에서 먼저 찾고, 못 찾으면 지역 제한 없이 (api/place searchPlacesNear 주석 참고)
+  const res = await searchPlacesNear(keyword, center, SEARCH_RADIUS_KM)
   const first = res.places[0]
   if (!first) return null
   return { coords: { latitude: first.latitude, longitude: first.longitude }, name: first.name }

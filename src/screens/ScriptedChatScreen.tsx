@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { LocationScreen } from './LocationScreen'
-import { getHome, searchPlaces } from '../api/place'
+import { getHome, searchPlacesNear } from '../api/place'
 import { departureAfter, parseDepartureMinutes } from '../api/time'
 import { SEARCH_RADIUS_KM, SUWON_CENTER, isInServiceArea } from '../api/geo'
 import { rankPlaceCandidates } from '../api/placeRank'
@@ -157,13 +157,8 @@ export function ScriptedChatScreen({
     const outside = !isInServiceArea(center)
 
     try {
-      const res = await searchPlaces({
-        keyword: name,
-        lat: String(center.latitude),
-        lon: String(center.longitude),
-        // 반경을 명시하지 않으면 백엔드 기본값 5km 라 같은 수원 안에서도 검색이 막힌다
-        radiusKm: SEARCH_RADIUS_KM,
-      })
+      // 근처에서 먼저 찾고, 못 찾으면 지역 제한 없이 찾는다 (api/place searchPlacesNear 주석 참고)
+      const res = await searchPlacesNear(name, posRef.current, SEARCH_RADIUS_KM)
       hideTyping()
 
       if (!res.places.length) {

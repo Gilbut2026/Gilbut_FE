@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
-import { getHome, saveHome, searchPlaces } from '../api/place'
-import { SEARCH_RADIUS_KM, SUWON_CENTER } from '../api/geo'
+import { getHome, saveHome, searchPlaces, searchPlacesNear } from '../api/place'
+import { SEARCH_RADIUS_KM } from '../api/geo'
 import { rankPlaceCandidates } from '../api/placeRank'
 import type { LatLng, PlaceItemResponse } from '../types/dto'
 
@@ -127,13 +127,7 @@ export function HomeAddressSheet({
     }
     setSaving(true)
     try {
-      const c = posRef.current
-      const res = await searchPlaces({
-        keyword: address,
-        lat: String((c ?? SUWON_CENTER).latitude),
-        lon: String((c ?? SUWON_CENTER).longitude),
-        radiusKm: SEARCH_RADIUS_KM,
-      })
+      const res = await searchPlacesNear(address, posRef.current, SEARCH_RADIUS_KM)
       const ranked = rankPlaceCandidates(res.places, address)
       if (ranked.length === 0) {
         onToast('그 주소로는 장소를 찾지 못했어요')

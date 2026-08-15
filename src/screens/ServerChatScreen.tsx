@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { LocationScreen } from './LocationScreen'
-import { getHome } from '../api/place'
-import { searchPlaces } from '../api/place'
+import { getHome, searchPlacesNear } from '../api/place'
 import {
   confirmDepartureTime,
   confirmOrigin,
@@ -474,15 +473,9 @@ export function ServerChatScreen({
     setBusy(true)
     showTyping()
     try {
-      const c = coordsRef.current
-      // 좌표가 있으면 함께 넘겨 가까운 곳이 위로 오게 한다 (BE 가 lat/lon 을 문자열 쿼리로 받는다)
-      const res = await searchPlaces({
-        keyword,
-        lat: c ? String(c.latitude) : undefined,
-        lon: c ? String(c.longitude) : undefined,
-        // 좌표를 보낼 때만 반경을 함께 보낸다 (백엔드가 좌표 없는 반경은 400 으로 거절한다)
-        radiusKm: c ? SEARCH_RADIUS_KM : undefined,
-      })
+      // 근처에서 먼저 찾고, 못 찾으면 지역 제한 없이 찾는다.
+      // 서울에서 "수원시청"을 출발지로 정하는 경우가 있다 — 발표 시연이 그렇다.
+      const res = await searchPlacesNear(keyword, coordsRef.current, SEARCH_RADIUS_KM)
       hideTyping()
       if (!res.places?.length) {
         botSay('그 이름으로는 장소를 찾지 못했어요. 조금 더 자세히 적어주시겠어요?')
