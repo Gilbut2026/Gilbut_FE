@@ -26,13 +26,15 @@ import { buildDirections } from './directions'
 import type {
   AccessibilitySignal,
   DrtGuideResponse,
-  StairComparison,
+  FilteredRouteDto,
   RouteFacility,
+  RouteFilterCode,
   RouteKey,
   RouteOption,
   RouteRecommendationItemDto,
   RouteRecommendationResult,
   RouteResult,
+  StairComparison,
 } from '../types/dto'
 
 /** 목적지·출발지 이름은 BE 응답이 아니라 화면 흐름(대화/좌표해석)에서 온다 → 어댑터에 함께 넘긴다. */
@@ -232,6 +234,20 @@ function drtOption(key: 'drt' | 'calltaxi', guide: DrtGuideResponse | null): Rou
  * @param be   POST /api/routes/recommendations 응답 (봉투 해제 후 data)
  * @param ctx  목적지·출발지 표시 이름 (BE 응답이 아니라 화면 흐름에서 온다)
  */
+/**
+ * 제외 사유 코드를 중복 없이 모은다.
+ *
+ * 사용자에게 "길을 못 찾았어요"만 말하면 다음에 무엇을 해야 할지 알 수 없다.
+ * BE·AI 는 왜 걸렀는지 알고 있다(filteredResults). 그걸 그대로 옮긴다.
+ */
+function filterReasons(filtered: FilteredRouteDto[] | null): RouteFilterCode[] {
+  const seen = new Set<RouteFilterCode>()
+  for (const f of filtered ?? []) {
+    for (const code of f.filterCodes ?? []) seen.add(code)
+  }
+  return [...seen]
+}
+
 export function mapRecommendationToRouteResult(
   be: RouteRecommendationResult,
   ctx: RouteDisplayContext,
@@ -267,6 +283,8 @@ export function mapRecommendationToRouteResult(
     destination: ctx.destination,
     origin: ctx.origin,
     options,
+    // 왜 길이 줄었는지 설명할 수 있게 제외 사유를 함께 넘긴다
+    filteredReasons: filterReasons(be.filteredResults),
     recommendedKey,
     // 계단 있는 길 ↔ 없는 길. 두 후보가 다 있을 때만 물어본다(위 주석 6).
     stairComparison: buildStairComparison(ranked),

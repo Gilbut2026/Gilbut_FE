@@ -5,7 +5,14 @@ import { ApiError } from '../api/client'
 import { speak } from '../state/tts'
 import { TopBar } from '../components/TopBar'
 import { applyStairChoice } from '../api/stairChoice'
-import type { LatLng, RouteErrorKind, RouteKey, RouteOption, RouteResult } from '../types/dto'
+import type {
+  LatLng,
+  RouteErrorKind,
+  RouteFilterCode,
+  RouteKey,
+  RouteOption,
+  RouteResult,
+} from '../types/dto'
 
 /**
  * 가는 길 (결과) — 7차 와이어프레임 #screen-results 이식.
@@ -196,11 +203,15 @@ function RouteView({
 
         {/*
           똑버스·콜택시 안내만 남았다는 것은 걷거나 타고 갈 길을 하나도 찾지 못했다는 뜻이다.
-          그냥 카드 한 장만 보여주면 "왜 이것뿐이지" 하고 끝난다 — 이유를 적어준다.
+          카드 한 장만 덩그러니 두면 "왜 이것뿐이지" 하고 끝난다 — 이유와 할 일을 적어준다.
+          BE·AI 는 왜 걸렀는지 알고 있다(filteredResults). 우리가 안 쓸 이유가 없다.
         */}
         {result.options.length === 1 && selected.guide !== 'navigate' && (
           <div className="result-note">
             지금 조건으로는 <b>걸어가거나 타고 갈 길</b>을 찾지 못했어요. 대신 이 방법을 안내해 드려요.
+            {result.filteredReasons?.map((code) => (
+              <span key={code}>{FILTER_TEXT[code]}</span>
+            ))}
           </div>
         )}
 
@@ -226,6 +237,21 @@ function RouteView({
       </div>
     </div>
   )
+}
+
+/**
+ * 후보가 제외된 이유를 사람 말로.
+ *
+ * "길을 못 찾았어요"만 보여주면 사용자가 할 수 있는 것이 없다. 무엇 때문에 빠졌는지와
+ * **무엇을 바꾸면 되는지**를 함께 적는다. 설정을 고치면 되는 것은 고칠 수 있다고 말해준다.
+ */
+const FILTER_TEXT: Record<RouteFilterCode, string> = {
+  WALK_TIME_EXCEEDED:
+    '걷는 시간이 설정하신 시간을 넘어서 제외했어요. 내 정보에서 걷는 시간을 늘리면 이 길도 보실 수 있어요.',
+  STAIR_DIFFICULT_WITH_EXTERNAL_STAIR:
+    '계단이 있는 길이라 제외했어요. 계단 이용을 「조금 어려움」으로 바꾸면 함께 보여드려요.',
+  WHEELCHAIR_WITH_EXTERNAL_STAIR:
+    '휠체어로 지나기 어려운 계단이 있어 제외했어요. 콜택시 안내를 함께 보여드려요.',
 }
 
 export function ResultsScreen({

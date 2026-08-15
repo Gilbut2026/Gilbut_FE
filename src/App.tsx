@@ -268,8 +268,9 @@ export default function App() {
       {screen === 'onboarding' && (
         <OnboardingScreen
           onSos={onSos}
-          onComplete={(voiceEnabled) => {
-            updateSettings({ voiceGuide: voiceEnabled })
+          onComplete={() => {
+            // 음성 안내는 여기서 건드리지 않는다. 문항을 고른 순간과 상단바 토글이
+            // 이미 반영했고, 여기서 또 정하면 토글로 끄신 것을 되살려버린다.
             // 앱 열 때 못 보냈으면 여기서 한 번 더. 성공했으면 아무 일도 하지 않는다.
             if (!useMock('chat')) warmUpAi()
             setScreen('home')

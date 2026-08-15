@@ -444,6 +444,11 @@ export interface RouteResult {
   drtGuide?: DrtGuideResponse | null
   /** 똑버스·콜택시를 권한 이유 (AI 판단) — 안내 화면의 "추천한 이유"에 쓴다 */
   drtReasons?: DrtReasonCode[]
+  /**
+   * 후보가 제외된 이유. 길이 줄었을 때 "왜 이것뿐인지" 알려주는 데 쓴다.
+   * "길을 못 찾았어요"로 끝내면 사용자가 다음에 할 일을 알 수 없다.
+   */
+  filteredReasons?: RouteFilterCode[]
 }
 
 /** 지난 길찾기 기록 한 건 — 화면용(프론트가 만든 형태). BE 응답은 아래 RouteHistoryResponse. */
@@ -580,6 +585,24 @@ export interface RouteRecommendationItemDto {
   slopeSummary: SlopeSummary | null
 }
 
+/**
+ * 후보가 제외된 이유 (AI Hard Filter).
+ * 감점이 아니라 제외인 이유는, 계단을 못 쓰는 분에게 계단 경로가 '불편'이 아니라
+ * '통행 불가'이기 때문이다. 감점만 하면 통행 불가 경로가 1순위가 될 수 있다.
+ */
+export type RouteFilterCode =
+  | 'WALK_TIME_EXCEEDED' //                걷는 시간이 설정을 크게 넘음
+  | 'STAIR_DIFFICULT_WITH_EXTERNAL_STAIR' // 계단 '이용 어려움'인데 경로에 계단이 있음
+  | 'WHEELCHAIR_WITH_EXTERNAL_STAIR' //      휠체어인데 계단이 있거나 확인 불가
+
+/** 제외된 후보 한 건 — 왜 뺐는지 사용자에게 설명하는 데 쓴다 */
+export interface FilteredRouteDto {
+  routeId: string
+  status: 'FILTERED'
+  filterCodes: RouteFilterCode[] | null
+  slopeSummary: SlopeSummary | null
+}
+
 /** DRT/콜택시 판단 근거 코드 */
 export type DrtReasonCode =
   | 'ASSISTIVE_DEVICE'
@@ -686,7 +709,7 @@ export interface RouteRecommendationResult {
   requestId: string
   scoringVersion: string
   recommendations: RouteRecommendationItemDto[]
-  filteredResults: unknown[] | null
+  filteredResults: FilteredRouteDto[] | null
   drtDecision: DrtDecision | null
   drtGuide: DrtGuideResponse | null
   walkingRoute: { routes: WalkingRouteItemDto[] | null } | null

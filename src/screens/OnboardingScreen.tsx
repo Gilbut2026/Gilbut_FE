@@ -87,7 +87,8 @@ export function OnboardingScreen({
   onComplete,
   onSos,
 }: {
-  onComplete: (voiceEnabled: boolean) => void
+  /** 저장까지 끝났을 때. 음성 안내 값은 넘기지 않는다 — 설정은 이미 반영돼 있다 */
+  onComplete: () => void
   onSos: () => void
 }) {
   const [index, setIndex] = useState(0)
@@ -128,7 +129,18 @@ export function OnboardingScreen({
         transferLevel: TRANSFER_MAP[answers.transfer],
         mobilityAid: AID_MAP[answers.aid],
       }
-      const voiceEnabled = answers.voice === '사용'
+      /*
+       * 문항의 답이 아니라 **지금 설정**을 저장한다.
+       *
+       * 첫 문항에 '사용'이라 답한 뒤 상단바 토글로 소리를 끄시는 분이 있다
+       * (시연에서도 그렇게 한다 — 한 번 들려주고 끈다). 그때 답을 그대로 저장하면
+       * 온보딩이 끝나는 순간 음성이 되살아난다. 서버에도 '켬'으로 저장돼 다음에 열어도
+       * 다시 켜져 있다(2026-08-16 확인).
+       *
+       * 나중에 한 행동이 사용자의 뜻이다. 답은 문항을 고른 순간 이미 반영돼 있으므로
+       * (아래 chooseOption 의 updateSettings), 여기서는 현재 값을 그대로 쓰면 된다.
+       */
+      const voiceEnabled = loadSettings().voiceGuide
       const current = await getAccessibility()
       await Promise.all([
         saveMobilityProfile(profile),
@@ -139,7 +151,7 @@ export function OnboardingScreen({
           voiceSpeed: current.voiceSpeed,
         }),
       ])
-      onComplete(voiceEnabled)
+      onComplete()
     } catch {
       setSaving(false)
     }
