@@ -106,12 +106,48 @@ export function ServerChatScreen({
     if (e.status === 502) {
       return '응답이 늦어지고 있어요. 한 번만 다시 말씀해 주시겠어요?'
     }
-    if (e.status === 409) {
-      // 대화 상태가 어긋났다 — 다시 시작하면 풀린다
-      return '대화가 꼬였어요. 처음부터 다시 여쭤볼게요.'
-    }
+    // 409(CHAT_STATE_CONFLICT)는 여기서 문구만 만들지 않는다 — fail() 이 실제로 되돌린다
     return e.message
   }
+
+  /**
+   * 목적지부터 다시 — **서버 세션까지 함께 되돌린다.**
+   *
+   * 화면에서만 "어디로 가고 싶으세요?"로 돌아가면 서버는 그대로 출발지 단계에 남는다.
+   * 그 상태에서 "병원"을 보내면 BE 가 CHAT_STATE_CONFLICT(409)를 던진다 —
+   * `POST /api/chat` 의 목적지 처리는 DESTINATION_WAITING 에서만 받기 때문이다
+   * (ChatService.validateDestinationWaitingState).
+   *
+   * 실제로 그렇게 막혔다(2026-08-16). 목적지를 고른 뒤 「찾는 곳이 없어요 · 다시 말하기」를
+   * 누르자 화면만 목적지 질문으로 돌아갔고, 추천어 「병원」을 누를 때마다
+   * "대화가 꼬였어요"가 반복됐다. 되돌리는 시늉만 하고 아무것도 되돌리지 않았던 것이다.
+   *
+   * 화면을 되돌릴 때는 서버도 같이 되돌린다. 둘이 서로 다른 단계를 보고 있으면
+   * 사용자는 무엇을 해도 빠져나올 수 없다.
+   */
+  const restartDestination = useCallback(
+    async (message: string) => {
+      setBusy(true)
+      showTyping()
+      try {
+        await resetChatSession()
+        hideTyping()
+        destNameRef.current = ''
+        destCoordsRef.current = null
+        departureRef.current = ''
+        setState('DESTINATION_WAITING')
+        botSay(message)
+        actions(destinationReplies())
+      } catch {
+        hideTyping()
+        botSay('대화를 다시 시작하지 못했어요. 잠시 뒤 한 번만 더 시도해 주세요.')
+      } finally {
+        setBusy(false)
+      }
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    },
+    [botSay, actions, showTyping, hideTyping],
+  )
 
   /**
    * 실패했을 때 막다른 길을 만들지 않는다.
@@ -121,11 +157,17 @@ export function ServerChatScreen({
   const fail = useCallback(
     (e: unknown) => {
       hideTyping()
+      // 서버와 화면이 서로 다른 단계를 보고 있다. 문구만 내면 같은 말을 다시 해도
+      // 또 409 라서 빠져나올 수 없다 — 말한 대로 실제로 처음부터 다시 시작한다.
+      if (e instanceof ApiError && e.status === 409) {
+        void restartDestination('대화가 꼬였네요. 처음부터 다시 여쭤볼게요. 어디로 가고 싶으세요?')
+        return
+      }
       botSay(errorText(e))
       if (state === 'DESTINATION_WAITING') actions(destinationReplies())
       // eslint-disable-next-line react-hooks/exhaustive-deps
     },
-    [botSay, hideTyping, actions, state],
+    [botSay, hideTyping, actions, state, restartDestination],
   )
 
   // ── 위치·집 주소 준비 ────────────────────────────
@@ -287,10 +329,8 @@ export function ServerChatScreen({
         places={places}
         onPick={onPick}
         disabled={busy}
-        onRedo={() => {
-          botSay('다시 말씀해 주세요. 어디로 가고 싶으세요?')
-          actions(destinationReplies())
-        }}
+        // 화면만 되돌리면 서버는 그대로라 다음 발화가 409 가 된다 (restartDestination 주석 참고)
+        onRedo={() => void restartDestination('다시 말씀해 주세요. 어디로 가고 싶으세요?')}
       />
     )
   }
