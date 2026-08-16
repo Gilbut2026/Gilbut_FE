@@ -5,6 +5,26 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <meta name="theme-color" content="#4F46E5" />
     <title>AI 길벗 · 이동 상담</title>
+
+    <!--
+      「홈 화면에 추가」로 앱처럼 열리게 한다.
+      주소창이 사라지면 화면이 그만큼 넓어지고, 무엇보다 어르신이 브라우저 UI를
+      건드려 길을 잃는 일이 없다(주소창을 눌러 다른 곳으로 가버리는 일이 실제로 잦다).
+
+      서비스워커는 일부러 두지 않는다. 캐시가 남아 예전 화면이 뜨면 원인을 찾기 어렵고,
+      발표 당일에 그런 일이 나면 손쓸 수가 없다. 오프라인 지원은 발표 뒤에 붙인다.
+    -->
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <!-- 아이폰은 아직 apple- 접두사 쪽을 본다 -->
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <!-- default: 흰 상태바에 검은 글자. 밝은 화면이라 black-translucent 는 글자가 묻힌다 -->
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="길벗" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <!-- 탭 아이콘은 로고 전체를 넣으면 뭉갠다 — 핀 하나만 쓴다 -->
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png" />
+    <link rel="icon" type="image/png" sizes="48x48" href="/favicon-48.png" />
     <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
     <link
       rel="stylesheet"
