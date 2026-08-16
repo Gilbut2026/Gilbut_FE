@@ -408,6 +408,22 @@ export default function App() {
           option={guideOption}
           destination={destination}
           onBack={() => setScreen('results')}
+          onArrive={() => {
+            /*
+             * 이동이 끝났으니 이번 길은 정리한다.
+             * 남겨두면 「가는 길」 탭에 방금 다녀온 길이 계속 떠 있어서,
+             * 다음에 열었을 때 아직 가는 중인 것처럼 보인다.
+             * 지난 이동은 「최근 기록」에서 볼 수 있다.
+             */
+            setDestination(null)
+            setDestCoords(null)
+            setDeparture(null)
+            setOrigin(null)
+            setGuideOption(null)
+            setDrtInfo(null)
+            setStairChoice(null)
+            setScreen('home')
+          }}
           onSos={onSos}
           onToast={toast}
         />

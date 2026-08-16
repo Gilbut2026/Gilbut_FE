@@ -29,12 +29,15 @@ export function NavigateScreen({
   option,
   destination,
   onBack,
+  onArrive,
   onSos,
   onToast,
 }: {
   option: RouteOption
   destination: string | null
   onBack: () => void
+  /** 도착했을 때 — 이동이 끝났으므로 홈으로 돌려보낸다 */
+  onArrive: () => void
   onSos: () => void
   onToast: (msg: string) => void
 }) {
@@ -119,8 +122,15 @@ export function NavigateScreen({
             <button
               className="btn primary"
               onClick={() => {
+                /*
+                 * 도착하면 **홈으로** 돌려보낸다.
+                 *
+                 * 예전에는 결과 화면으로 되돌아갔는데, 이동이 끝났는데 가는 길이
+                 * 그대로 떠 있으면 「아직 안 간 건가」로 읽힌다.
+                 * 다음에 하실 일은 다른 곳에 가는 것이지 방금 온 길을 다시 보는 것이 아니다.
+                 */
                 onToast('안전하게 도착하셨길 바라요')
-                onBack()
+                onArrive()
               }}
             >
               도착했어요
