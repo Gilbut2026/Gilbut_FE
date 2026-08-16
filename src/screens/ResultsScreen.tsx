@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { getRoutes } from '../api/route'
 import type { ChatOutcome } from '../types/nav'
 import { ApiError } from '../api/client'
@@ -492,6 +492,7 @@ export function ResultsScreen({
   destinationCoords,
   origin,
   stairChoice,
+  onStairChoice,
   onNeedStairChoice,
   onGoHome,
   onRestartChat,
@@ -507,6 +508,8 @@ export function ResultsScreen({
   destinationCoords: LatLng | null
   /** 사용자가 이미 고른 계단 선택 (아직 안 골랐으면 null) */
   stairChoice: 'with' | 'none' | null
+  /** 시트에서 계단 갈래를 바꿨을 때 — 고른 값을 App 이 다시 들고 있어야 한다 */
+  onStairChoice?: (pick: 'with' | 'none') => void
   /** 계단 선택을 물어야 할 때 — App 이 계단 선택 화면으로 넘긴다 */
   onNeedStairChoice: (comparison: NonNullable<RouteResult['stairComparison']>) => void
   onGoHome: () => void
@@ -575,7 +578,19 @@ export function ResultsScreen({
    * 한 번만 맞춰준다. 그 뒤 「다른 길도 볼게요」로 옮기는 것은 그대로 둔다.
    */
   useEffect(() => {
-    if (stairChoice && result?.stairComparison) setSelectedKey('comfort')
+    if (!stairChoice || !result?.stairComparison) return
+    /*
+     * 고르신 쪽 **카드 자체**를 고른다.
+     *
+     * 예전에는 '가장 편한 길' 카드를 고른 쪽 값으로 덮어썼다. 그러면 원래 그 카드가
+     * 계단 없는 길이었을 때 그 길이 화면에서 통째로 사라진다 — 남은 카드도 계단
+     * 있는 길이라, 「다른 길도 볼게요」에 **같은 길이 두 개** 뜨는 것처럼 보였다
+     * (2026-08-16 스크린샷). 마음을 바꾸고 싶어도 바꿀 대상이 없었다.
+     *
+     * BE 가 두 갈래를 각각 온전한 후보로 준다. 덮어쓸 이유가 없다.
+     */
+    const match = result.options.find((o) => o.stairOption === stairChoice)
+    setSelectedKey(match ? match.key : 'comfort')
   }, [stairChoice, result])
 
   /*
@@ -609,13 +624,24 @@ export function ResultsScreen({
 
   // 고른 결과를 '가장 편한 길' 카드에 실제로 반영한다 (BE 실측값으로)
   const cmp = result?.stairComparison ?? null
+  /*
+   * 계단 갈래가 카드로 왔으면 덮어쓰지 않는다 — 고른 쪽 카드를 고르면 그만이다.
+   * 카드가 안 왔을 때만(옛 응답 등) 예전처럼 값을 반영한다.
+   */
+  const hasStairCards = result?.options.some((o) => o.stairOption) ?? false
   const options = result
     ? result.options.map((o) =>
-        o.key === 'comfort' && stairChoice && cmp ? applyStairChoice(o, stairChoice, cmp) : o,
+        !hasStairCards && o.key === 'comfort' && stairChoice && cmp
+          ? applyStairChoice(o, stairChoice, cmp)
+          : o,
       )
     : []
 
   const selected = result && selectedKey ? options.find((o) => o.key === selectedKey) ?? options[0] : null
+
+  // pickRoute 가 최신 목록을 보게 한다 — 목록을 의존성에 넣으면 매 렌더마다 콜백이 새로 만들어진다
+  const optionsRef = useRef(options)
+  optionsRef.current = options
 
   /*
    * 길 고르기 시트.
@@ -626,10 +652,22 @@ export function ResultsScreen({
    */
   const [compareOpen, setCompareOpen] = useState(false)
 
-  const pickRoute = useCallback((key: RouteKey) => {
-    setSelectedKey(key)
-    setCompareOpen(false)
-  }, [])
+  const pickRoute = useCallback(
+    (key: RouteKey) => {
+      /*
+       * 시트에서 계단 갈래를 바꾸면 그 선택도 함께 바꾼다.
+       * 안 그러면 「계단 없는 길」을 골랐다고 저장해두고 화면은 계단 있는 길을
+       * 보여주게 된다 — 되살아난 여정에서 어긋난다(state/journey).
+       */
+      const picked = optionsRef.current.find((o) => o.key === key)
+      if (picked?.stairOption && picked.stairOption !== stairChoice) {
+        onStairChoice?.(picked.stairOption)
+      }
+      setSelectedKey(key)
+      setCompareOpen(false)
+    },
+    [stairChoice, onStairChoice],
+  )
 
   return (
     <section className="screen">

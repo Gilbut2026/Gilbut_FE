@@ -402,6 +402,14 @@ export interface RouteOption {
   transfer: string
   facilities: RouteFacility[]
   notice: string
+  /**
+   * 이 카드가 계단 비교의 어느 쪽인가 — 두 갈래가 다 왔을 때만 붙는다.
+   *
+   * 이게 없으면 「다른 길도 볼게요」에서 두 보행 경로가 **구분되지 않는다.**
+   * 계단만 다르고 시간이 비슷하면 이름이 「가장 편한 길」·「다른 길」로 붙어서,
+   * 정작 두 길을 가르는 그 한 가지가 화면에 안 나온다(2026-08-16 스크린샷).
+   */
+  stairOption?: 'with' | 'none'
   /** 주 버튼이 어디로 가는지 — 길 안내 / 똑버스 안내 / 콜택시 안내 */
   guide: 'navigate' | 'drt' | 'calltaxi'
   /**

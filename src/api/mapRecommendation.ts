@@ -218,19 +218,47 @@ function secondLabel(
   return { title: '다른 길', sub: '걷는 양과 걸리는 시간이 비슷한 또 다른 경로' }
 }
 
+/**
+ * 계단 갈래 카드의 이름.
+ *
+ * 두 보행 경로가 계단만 다르고 시간이 비슷하면, 이름을 시간으로 붙이는 규칙
+ * (secondLabel)으로는 「다른 길」밖에 안 나온다. 계단이 어렵다고 답하신 분에게
+ * **두 길을 가르는 그 한 가지**를 이름이 말해주지 않는 셈이다.
+ */
+const STAIR_CARD: Record<'with' | 'none', { title: string; sub: string }> = {
+  none: { title: '계단 없는 길', sub: '계단을 피해 걷는 부담을 줄인 길' },
+  with: { title: '계단 있는 길', sub: '계단을 지나지만 걷는 거리가 짧은 길' },
+}
+
+/**
+ * 이 후보가 계단 비교의 어느 쪽인가.
+ * 보행 경로가 아니거나 옵션을 모르면 null — 아무 표시도 안 붙인다.
+ */
+function stairSideOf(item: RouteRecommendationItemDto): 'with' | 'none' | null {
+  if (item.candidate.routeType !== 'WALKING') return null
+  const opt = item.candidate.routeOption
+  if (opt === 'AVOID_STAIRS') return 'none'
+  if (opt === 'SHORTEST' || opt === 'DEFAULT') return 'with'
+  return null
+}
+
 function itemToOption(
   item: RouteRecommendationItemDto,
   key: RouteKey,
   be: RouteRecommendationResult,
   /** 기본 문구 대신 쓸 이름 — 「걷기 적은 길」이 사실이 아닐 때 바꾼다 */
   label?: { title: string; sub: string },
+  /** 계단 비교의 어느 쪽인가 — 두 갈래가 다 왔을 때만 넘어온다 */
+  stairOption?: 'with' | 'none',
 ): RouteOption {
   const m = item.candidate.metrics
   const text = CARD_TEXT[key]
   return {
     key,
-    title: label?.title ?? text.title,
-    sub: label?.sub ?? text.sub,
+    // 계단 갈래면 그 이름이 먼저다 — 시간으로 붙인 이름보다 사실을 더 말해준다
+    title: stairOption ? STAIR_CARD[stairOption].title : (label?.title ?? text.title),
+    sub: stairOption ? STAIR_CARD[stairOption].sub : (label?.sub ?? text.sub),
+    stairOption,
     time: formatTime(m.totalTimeSec),
     walk: formatWalk(m.totalWalkTimeSec),
     transfer: formatTransfer(m.transferCount),
@@ -320,9 +348,18 @@ export function mapRecommendationToRouteResult(
 
   const options: RouteOption[] = []
 
+  /*
+   * 계단 갈래가 **둘 다** 왔을 때만 카드에 계단 이름을 붙인다.
+   * 한쪽만 왔으면 견줄 것이 없어서, 「계단 있는 길」이라고 적어도 비교 대상이 없다.
+   */
+  const sides = new Set(ranked.map(stairSideOf).filter(Boolean))
+  const bothStairSides = sides.has('with') && sides.has('none')
+  const sideOf = (i: RouteRecommendationItemDto) =>
+    bothStairSides ? (stairSideOf(i) ?? undefined) : undefined
+
   // 1. rank 1 → 가장 편한 길
   const comfortItem = ranked[0]
-  if (comfortItem) options.push(itemToOption(comfortItem, 'comfort', be))
+  if (comfortItem) options.push(itemToOption(comfortItem, 'comfort', be, undefined, sideOf(comfortItem)))
 
   /*
    * 2. 두 번째 길 — 나머지 중 걷는 시간이 가장 짧은 것.
@@ -338,7 +375,9 @@ export function mapRecommendationToRouteResult(
     return cur.candidate.metrics.totalWalkTimeSec < best.candidate.metrics.totalWalkTimeSec ? cur : best
   }, null)
   if (shortItem) {
-    options.push(itemToOption(shortItem, 'short', be, secondLabel(comfortItem, shortItem)))
+    options.push(
+      itemToOption(shortItem, 'short', be, secondLabel(comfortItem, shortItem), sideOf(shortItem)),
+    )
   }
 
   /*

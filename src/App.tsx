@@ -386,6 +386,7 @@ export default function App() {
           destinationCoords={destCoords}
           origin={origin}
           stairChoice={stairChoice}
+          onStairChoice={setStairChoice}
           onNeedStairChoice={onNeedStairChoice}
           onGoHome={() => setScreen('home')}
           onRestartChat={() => {
