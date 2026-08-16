@@ -18,6 +18,7 @@ import type { LatLng, RouteRecommendationRequest, RouteRecommendationResult, Rou
 import { api, ApiError } from './client'
 import { useMock } from './mode'
 import { searchPlacesNear } from './place'
+import { rankPlaceCandidates } from './placeRank'
 import { departureAfter } from './time'
 import { SEARCH_RADIUS_KM } from './geo'
 import { mockGetRoutes } from '../mock/route'
@@ -38,14 +39,24 @@ function getCurrentPosition(): Promise<LatLng | null> {
   })
 }
 
-/** 목적지 이름 → 좌표 (place 검색 첫 결과). center 를 기준점으로 검색. 못 찾으면 null. */
+/**
+ * 목적지 이름 → 좌표. center 를 기준점으로 검색. 못 찾으면 null.
+ *
+ * 대화를 거쳐 왔으면 좌표가 이미 있어서 여기 오지 않는다. 여기 오는 것은
+ * 즐겨찾기·최근 기록처럼 **이름만 들고 온 경우**다.
+ *
+ * 검색 결과를 그냥 첫 번째로 쓰지 않고 한 번 정렬한다 — 서버 순서 첫 줄이
+ * 「아주대학교병원 웰빙센터 주차장」일 수 있다. 사람이 고르는 화면에서는 정렬해
+ * 보여주면서, 자동으로 고를 때는 안 하면 **화면과 다른 곳으로 안내하게 된다.**
+ */
 async function resolveDestination(
   keyword: string,
   center: LatLng,
 ): Promise<{ coords: LatLng; name: string } | null> {
   // 근처에서 먼저 찾고, 못 찾으면 지역 제한 없이 (api/place searchPlacesNear 주석 참고)
   const res = await searchPlacesNear(keyword, center, SEARCH_RADIUS_KM)
-  const first = res.places[0]
+  const ranked = rankPlaceCandidates(res.places, keyword)
+  const first = ranked.primary[0] ?? res.places[0]
   if (!first) return null
   return { coords: { latitude: first.latitude, longitude: first.longitude }, name: first.name }
 }

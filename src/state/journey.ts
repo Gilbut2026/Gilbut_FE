@@ -57,6 +57,12 @@ export function loadJourney(): Journey | null {
     const j = JSON.parse(raw) as Journey
     // 저장 형식이 바뀐 뒤 남은 옛 값에 걸려 화면이 죽지 않게 최소한만 확인한다
     if (!j || !RESUMABLE.includes(j.screen) || !j.destination) return null
+    /*
+     * 길 안내는 고른 경로가 있어야 그릴 수 있다.
+     * App 이 `screen === 'navigate' && guideOption` 으로 그리기 때문에, 경로 없이
+     * 되살리면 **아무것도 없는 화면**이 뜬다. 그럴 바에는 안 되살리는 편이 낫다.
+     */
+    if (j.screen === 'navigate' && !j.guideOption) return null
     return j
   } catch {
     return null

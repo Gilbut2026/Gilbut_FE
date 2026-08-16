@@ -183,13 +183,14 @@ export function buildDirections(
        * 지도가 「강조할 구간이 없음」 상태가 되어 다른 구간들의 모양까지 달라졌다
        * (2026-08-16 — 걷는 구간의 점 크기·모양이 앞뒤로 다르게 보이던 원인).
        */
-      if ((leg.mode ?? '').toUpperCase() === 'WALK' && !(leg.distanceM && leg.distanceM > 0)) {
-        continue
-      }
+      const isWalkLeg = (leg.mode ?? '').toUpperCase() === 'WALK'
+      // 거리를 **0 이라고 말해준 경우**만 버린다. 값이 없는 것(null)은 모른다는 뜻이지
+      // 0 이라는 뜻이 아니다 — 그걸 버리면 멀쩡한 걷기 구간이 사라진다.
+      if (isWalkLeg && leg.distanceM != null && leg.distanceM <= 0) continue
       const points = toLatLng(leg.routePoints)
       let segmentIndex: number | undefined
       if (points.length >= 2) {
-        const isWalk = (leg.mode ?? '').toUpperCase() === 'WALK'
+        const isWalk = isWalkLeg
         segmentIndex = segments.length
         /*
          * 노선색은 **지하철에만** 쓴다.
