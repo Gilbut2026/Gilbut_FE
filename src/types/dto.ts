@@ -685,6 +685,8 @@ export interface TransitLegDto {
   mode: string | null
   /** "3-1" 같은 노선 이름 */
   routeName: string | null
+  /** 노선 고유색(#없는 6자리). 2호선이면 초록 — 지도에 그대로 쓴다 */
+  routeColor: string | null
   startName: string | null
   endName: string | null
   distanceM: number | null
@@ -692,7 +694,18 @@ export interface TransitLegDto {
   /** 몇 정거장 가는지 */
   stationCount: number | null
   routePoints: RoutePointDto[] | null
+  /** 지나는 정류장 목록. 지도에 하나씩 찍는다 */
+  stops: TransitStopDto[] | null
   steps: { stepIndex: number; instruction: string | null; distanceM: number | null }[] | null
+}
+
+/** 대중교통 정류장 하나 */
+export interface TransitStopDto {
+  stopIndex: number
+  stationId: string | null
+  name: string | null
+  latitude: number
+  longitude: number
 }
 
 export interface TransitRouteItemDto {
@@ -725,6 +738,11 @@ export interface GuideStep {
   title: string
   /** 작게 덧붙일 설명 — "횡단보도 건너 직진" · "시청 정류장에서 타요" */
   detail?: string
+  /**
+   * 이 단계가 지도의 몇 번째 토막인지(segments 의 인덱스).
+   * 지도가 **지금 단계만 진하게** 그리는 데 쓴다. 좌표가 없는 단계면 없다.
+   */
+  segmentIndex?: number
 }
 
 /**
@@ -738,7 +756,17 @@ export interface RouteSegment {
   kind: 'walk' | 'ride'
   /** 타는 구간이면 무엇을 타는지 (BUS · SUBWAY …). 없으면 모른다는 뜻 */
   mode?: string
+  /**
+   * 이 노선의 실제 색(#포함). 2호선이면 초록, 경기 일반버스면 초록…
+   * 사람들이 이미 아는 신호라 지도에 그대로 쓴다. 모르면 없다.
+   */
+  color?: string
   points: LatLng[]
+  /**
+   * 지나는 정류장. 지도에 흰 동그라미로 찍는다.
+   * 몇 정거장 남았는지를 글자가 아니라 **눈으로** 셀 수 있게 하는 것이 목적이다.
+   */
+  stops?: { name: string | null; at: LatLng }[]
 }
 
 /** 한 경로의 안내 — 단계 목록과 지도에 그릴 좌표 */

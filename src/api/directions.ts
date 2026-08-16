@@ -137,29 +137,70 @@ export function buildDirections(
 ): RouteDirections | undefined {
   const walking = be.walkingRoute?.routes?.find((r) => r.routeId === routeId)
   if (walking) {
-    const steps = (walking.steps ?? []).map(walkStep).filter((s): s is GuideStep => s !== null)
+    /*
+     * 걷는 길은 **단계 하나가 곧 토막 하나**다.
+     * 전체를 한 줄로 그리면 "지금 이 구간"을 짚어줄 수가 없는데, 걷는 길은 마흔 단계가
+     * 넘어서 지금 어디를 걷고 있는지가 가장 알기 어렵다. TMAP 이 단계마다 좌표를 주므로
+     * 그대로 나눠 둔다.
+     */
+    const steps: GuideStep[] = []
+    const segments: RouteSegment[] = []
+    for (const raw of walking.steps ?? []) {
+      const step = walkStep(raw)
+      if (!step) continue
+      const points = toLatLng(raw.points)
+      if (points.length >= 2) {
+        step.segmentIndex = segments.length
+        segments.push({ kind: 'walk', points })
+      }
+      steps.push(step)
+    }
     const path = toLatLng(walking.routePoints)
     if (!steps.length && !path.length) return undefined
-    // 처음부터 끝까지 걷는 길이라 토막이 하나뿐이다
-    const segments: RouteSegment[] = path.length >= 2 ? [{ kind: 'walk', points: path }] : []
     return { steps, path, segments }
   }
 
   const transit = be.transitRoutes?.routes?.find((r) => r.routeId === routeId)
   if (transit) {
-    const steps = (transit.legs ?? []).flatMap(transitLeg)
-
     /*
-     * 구간(leg)별 좌표를 그대로 토막으로 쓴다 — 걷기와 타기의 경계가 곧 leg 경계다.
-     * BE 가 leg 좌표를 안 주면 전체 좌표 한 줄로 물러선다. 그때는 어디까지가 걷기인지
-     * 알 수 없으므로 색을 나누지 않는다 — 모르는 것을 아는 척 칠하지 않는다.
+     * 대중교통은 **구간(leg) 하나가 토막 하나**다 — 걷기와 타기의 경계가 곧 leg 경계다.
+     * 한 leg 에서 나온 안내(타기 + 내리기)는 같은 토막을 가리킨다.
+     *
+     * BE 가 leg 좌표를 안 주면 그 단계에는 토막을 달지 않는다. 그때는 어디까지가
+     * 걷기인지 알 수 없으므로 색도 나누지 않는다 — 모르는 것을 아는 척 칠하지 않는다.
      */
+    const steps: GuideStep[] = []
     const segments: RouteSegment[] = []
     for (const leg of transit.legs ?? []) {
       const points = toLatLng(leg.routePoints)
-      if (points.length < 2) continue
-      const isWalk = (leg.mode ?? '').toUpperCase() === 'WALK'
-      segments.push({ kind: isWalk ? 'walk' : 'ride', mode: leg.mode ?? undefined, points })
+      let segmentIndex: number | undefined
+      if (points.length >= 2) {
+        const isWalk = (leg.mode ?? '').toUpperCase() === 'WALK'
+        segmentIndex = segments.length
+        // 노선색은 BE 가 '53B332' 처럼 # 없이 준다. 값이 이상하면 쓰지 않는다.
+        const raw = (leg.routeColor ?? '').trim().replace(/^#/, '')
+        const color = /^[0-9a-fA-F]{6}$/.test(raw) ? `#${raw}` : undefined
+
+        segments.push({
+          kind: isWalk ? 'walk' : 'ride',
+          mode: leg.mode ?? undefined,
+          color: isWalk ? undefined : color,
+          points,
+          // 정류장은 타는 구간에만 있다. 좌표가 없는 것은 찍을 수 없으니 거른다.
+          stops: isWalk
+            ? undefined
+            : (leg.stops ?? [])
+                .filter((s) => s?.latitude != null && s?.longitude != null)
+                .map((s) => ({
+                  name: s.name ?? null,
+                  at: { latitude: s.latitude, longitude: s.longitude },
+                })),
+        })
+      }
+      for (const step of transitLeg(leg)) {
+        step.segmentIndex = segmentIndex
+        steps.push(step)
+      }
     }
 
     const fromLegs = segments.flatMap((s) => s.points)

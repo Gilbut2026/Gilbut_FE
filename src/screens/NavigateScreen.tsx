@@ -93,8 +93,9 @@ export function NavigateScreen({
           </span>
         </div>
 
-        {/* 실제 경로 좌표. 키가 없거나 못 불러오면 지도 자리에 그 사실을 적는다 */}
-        <RouteMap path={path} segments={segments} />
+        {/* 실제 경로 좌표. 키가 없거나 못 불러오면 지도 자리에 그 사실을 적는다.
+            지금 단계가 지도에서도 진하게 보이도록 그 토막을 함께 넘긴다 */}
+        <RouteMap path={path} segments={segments} activeSegment={step.segmentIndex} />
 
         <div className="nav-step">
           <span className="ico" aria-hidden="true">
