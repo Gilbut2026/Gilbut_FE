@@ -17,6 +17,7 @@ import { CallTaxiScreen } from './screens/CallTaxiScreen'
 import { NavigateScreen } from './screens/NavigateScreen'
 import { StairChoiceScreen } from './screens/StairChoiceScreen'
 import { useSettings, updateSettings } from './state/settings'
+import { clearJourney, loadJourney, saveJourney } from './state/journey'
 import { HAS_MOCK, mockBadgeLabel, useMock } from './api/mode'
 import { kakaoLogin, KAKAO_CALLBACK_PATH } from './api/auth'
 import { getMobilityProfile } from './api/user'
@@ -140,6 +141,44 @@ export default function App() {
    * 401 은 건드리지 않는다. 토큰 재발급까지 실패한 경우라 onSessionExpired 가 이미
    * 시작 화면으로 되돌려놨다. 여기서 또 화면을 정하면 그걸 덮어써버린다.
    */
+  /**
+   * 저장해둔 이동을 화면 상태로 되돌린다. 되살릴 것이 없으면 null.
+   *
+   * 휴대폰은 브라우저를 잠깐 벗어나기만 해도 탭을 다시 띄운다(다크모드를 바꾸러
+   * 설정에 다녀오는 것만으로도). 그때 여기서 되살리지 않으면 방금 한 대화가 통째로
+   * 날아가서, 목적지를 다시 말하고 시각을 다시 골라야 한다.
+   */
+  const resumeJourney = useCallback((): Screen | null => {
+    const j = loadJourney()
+    if (!j) return null
+    setDestination(j.destination)
+    setDestCoords(j.destCoords)
+    setDeparture(j.departure)
+    setOrigin(j.origin)
+    setGuideOption(j.guideOption)
+    setDrtInfo(j.drtInfo)
+    setStairChoice(j.stairChoice)
+    return j.screen
+  }, [])
+
+  /*
+   * 화면이 바뀔 때마다 지금 이동을 저장해둔다.
+   * 되살릴 수 없는 화면(홈·대화 중)에서는 saveJourney 가 알아서 지운다 —
+   * 홈에 돌아왔는데 예전 길이 남아 있으면 다음에 엉뚱하게 되살아난다.
+   */
+  useEffect(() => {
+    saveJourney({
+      screen,
+      destination,
+      destCoords,
+      departure,
+      origin,
+      guideOption,
+      drtInfo,
+      stairChoice,
+    })
+  }, [screen, destination, destCoords, departure, origin, guideOption, drtInfo, stairChoice])
+
   useEffect(() => {
     if (!booting) return
     // Mock 도 실서버와 같은 규칙을 따른다(mock/user.ts) — 여기 예외를 두지 않는다.
@@ -152,7 +191,8 @@ export default function App() {
       setBooting(false)
     }
     getMobilityProfile()
-      .then(() => settle('home'))
+      // 가다 만 길이 있으면 그 화면으로, 없으면 홈으로
+      .then(() => settle(resumeJourney() ?? 'home'))
       .catch((e) => {
         if (e instanceof ApiError && e.status === 401) return settle(null)
         settle(e instanceof ApiError && e.status === 404 ? 'onboarding' : 'home')
@@ -160,7 +200,7 @@ export default function App() {
     return () => {
       alive = false
     }
-  }, [booting])
+  }, [booting, resumeJourney])
 
   // 카카오 인가 코드(?code=…)를 받아 토큰으로 교환한다. 최초 1회만.
   useEffect(() => {
@@ -199,6 +239,8 @@ export default function App() {
   useEffect(
     () =>
       onSessionExpired(() => {
+        // 다른 사람이 로그인했을 때 앞사람의 이동이 되살아나면 안 된다
+        clearJourney()
         setScreen('signup')
         setDestination(null)
         setDestCoords(null)
