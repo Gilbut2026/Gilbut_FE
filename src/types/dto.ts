@@ -727,10 +727,27 @@ export interface GuideStep {
   detail?: string
 }
 
+/**
+ * 지도에 그릴 한 토막.
+ *
+ * 왜 좌표를 하나로 잇지 않고 토막으로 나누는가 — 걷는 구간과 타고 가는 구간을
+ * 한 가지 색 한 줄로 그리면, 어디까지 걷고 어디서부터 버스인지 지도에서 알 수 없다.
+ * 어르신이 지도에서 가장 알고 싶어 하는 것이 정확히 그 경계다.
+ */
+export interface RouteSegment {
+  kind: 'walk' | 'ride'
+  /** 타는 구간이면 무엇을 타는지 (BUS · SUBWAY …). 없으면 모른다는 뜻 */
+  mode?: string
+  points: LatLng[]
+}
+
 /** 한 경로의 안내 — 단계 목록과 지도에 그릴 좌표 */
 export interface RouteDirections {
   steps: GuideStep[]
+  /** 전체 좌표. 지도 범위를 맞추는 데 쓴다 */
   path: LatLng[]
+  /** 걷기/타기로 나뉜 토막. 지도는 이것을 색을 달리해 그린다 */
+  segments: RouteSegment[]
 }
 
 /* ============================================================

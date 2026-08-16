@@ -526,8 +526,16 @@ button { color: inherit; }
 .nav-head b { font-size: 21px; font-weight: 920; letter-spacing: -0.02em; }
 .nav-head span { color: var(--ink-3); font-size: 17px; font-weight: 850; flex: 0 0 auto; }
 
-.route-map { width: 100%; border-radius: 18px; overflow: hidden; border: 1px solid rgba(148, 163, 184, 0.22); background: rgba(255, 255, 255, 0.6); }
-.route-map.empty { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 5px; text-align: center; padding: 16px; }
+/* 지도는 크게 — 220px 로는 길 모양이 안 읽혔다(2026-08-16). 화면이 작으면 화면에 맞춰 줄인다 */
+.route-map { width: 100%; height: min(360px, 46vh); border-radius: 18px; overflow: hidden; border: 1px solid rgba(148, 163, 184, 0.22); background: rgba(255, 255, 255, 0.6); }
+.route-map.empty { height: auto; min-height: 132px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 5px; text-align: center; padding: 16px; }
+.route-map-wrap { display: flex; flex-direction: column; gap: 8px; }
+/* 범례 — 색만으로 구분하지 않도록 선 모양도 함께 보여준다 */
+.route-map-legend { display: flex; justify-content: center; gap: 18px; font-size: 16px; font-weight: 800; color: var(--ink-3); }
+.route-map-legend span { display: inline-flex; align-items: center; gap: 7px; }
+.route-map-legend i { width: 22px; height: 0; border-top-width: 4px; border-radius: 2px; }
+.route-map-legend i.ride { border-top-style: solid; border-top-color: #6755f5; }
+.route-map-legend i.walk { border-top-style: dashed; border-top-color: #6b7391; }
 .route-map.empty b { font-size: 18px; font-weight: 900; color: var(--ink-2); }
 .route-map.empty span { font-size: 16px; font-weight: 700; color: var(--ink-3); }
 

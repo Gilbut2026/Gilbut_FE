@@ -49,6 +49,12 @@ const MOCK_TRANSIT_DIRECTIONS: RouteDirections = {
     { kind: 'getoff', title: '아주대학교병원에서 내려요' },
     { kind: 'walk', title: '200m 걷기', detail: '아주대학교병원 정문까지' },
   ],
+  // 앞뒤로 걷고 가운데를 버스로 간다. 토막이 겹치는 점을 공유해야 선이 끊겨 보이지 않는다.
+  segments: [
+    { kind: 'walk', points: MOCK_PATH.slice(0, 2) },
+    { kind: 'ride', mode: 'BUS', points: MOCK_PATH.slice(1, 6) },
+    { kind: 'walk', points: MOCK_PATH.slice(5) },
+  ],
 }
 
 /** 걷는 경로 안내 — TMAP 턴바이턴을 흉내 낸 형태 */
@@ -60,6 +66,7 @@ const MOCK_WALK_DIRECTIONS: RouteDirections = {
     { kind: 'walk', title: '왼쪽으로 돌아 직진', detail: '260m' },
     { kind: 'walk', title: '아주대학교병원 정문 도착', detail: '80m' },
   ],
+  segments: [{ kind: 'walk', points: MOCK_PATH }],
 }
 
 const COMFORT: RouteOption = {

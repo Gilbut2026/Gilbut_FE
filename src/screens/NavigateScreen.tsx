@@ -40,6 +40,7 @@ export function NavigateScreen({
 }) {
   const steps = option.directions?.steps ?? []
   const path = option.directions?.path ?? []
+  const segments = option.directions?.segments ?? []
 
   const [index, setIndex] = useState(0)
   const [showAll, setShowAll] = useState(false)
@@ -93,7 +94,7 @@ export function NavigateScreen({
         </div>
 
         {/* 실제 경로 좌표. 키가 없거나 못 불러오면 지도 자리에 그 사실을 적는다 */}
-        <RouteMap path={path} />
+        <RouteMap path={path} segments={segments} />
 
         <div className="nav-step">
           <span className="ico" aria-hidden="true">

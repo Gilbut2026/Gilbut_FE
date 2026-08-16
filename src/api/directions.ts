@@ -19,6 +19,7 @@ import type {
   RoutePointDto,
   RouteDirections,
   RouteRecommendationResult,
+  RouteSegment,
   TransitLegDto,
   WalkingStepDto,
 } from '../types/dto'
@@ -43,6 +44,34 @@ function modeLabel(mode?: string | null): string {
     default:
       return ''
   }
+}
+
+/**
+ * 탈 것 이름 — TMAP 원문을 사람이 읽는 말로.
+ *
+ * TMAP 은 노선 이름을 `일반:81` 처럼 준다. 그대로 내보내면 화면에 「일반:81 버스」가
+ * 찍히는데(2026-08-16 스크린샷), 어르신이 정류장에서 이 글자를 보고 탈 버스를
+ * 알아보기 어렵다. 정류장 전광판에 뜨는 것은 **81** 이다.
+ *
+ * 그래서 번호를 크게 올리고, 일반/좌석 같은 종류는 아래 설명으로 내린다.
+ * 좌석버스는 요금이 다르므로 버리지는 않는다.
+ */
+function vehicleLabel(leg: TransitLegDto): { title: string; note: string } {
+  const raw = leg.routeName?.trim() ?? ''
+  const mode = (leg.mode ?? '').toUpperCase()
+  const [head, tail] = raw.includes(':') ? raw.split(':') : ['', raw]
+  const type = head.trim()
+  const name = tail.trim()
+
+  if (mode === 'BUS') {
+    return { title: name ? `${name}번 버스` : '버스', note: type ? `${type}버스` : '' }
+  }
+  if (mode === 'SUBWAY') {
+    // 「수도권1호선」처럼 이미 노선 이름이면 '지하철'을 덧붙이지 않는다
+    return { title: name || '지하철', note: name.includes('호선') ? '' : '지하철' }
+  }
+  const label = modeLabel(leg.mode)
+  return { title: [name, label].filter(Boolean).join(' ') || '차량 타기', note: '' }
 }
 
 function toLatLng(points?: RoutePointDto[] | null): LatLng[] {
@@ -81,14 +110,16 @@ function transitLeg(leg: TransitLegDto): GuideStep[] {
   }
 
   // 타는 구간 — 무엇을 어디서 타서 몇 정거장 뒤 어디서 내리는가
-  const vehicle = [leg.routeName?.trim(), modeLabel(leg.mode)].filter(Boolean).join(' ')
+  const vehicle = vehicleLabel(leg)
   const from = leg.startName?.trim()
   const stops = leg.stationCount && leg.stationCount > 0 ? `${leg.stationCount}정거장` : ''
   const steps: GuideStep[] = [
     {
       kind: 'ride',
-      title: vehicle || '차량 타기',
-      detail: [from ? `${from}에서 타요` : '', stops].filter(Boolean).join(' · ') || undefined,
+      title: vehicle.title,
+      detail:
+        [vehicle.note, from ? `${from}에서 타요` : '', stops].filter(Boolean).join(' · ') ||
+        undefined,
     },
   ]
   const to = leg.endName?.trim()
@@ -109,17 +140,32 @@ export function buildDirections(
     const steps = (walking.steps ?? []).map(walkStep).filter((s): s is GuideStep => s !== null)
     const path = toLatLng(walking.routePoints)
     if (!steps.length && !path.length) return undefined
-    return { steps, path }
+    // 처음부터 끝까지 걷는 길이라 토막이 하나뿐이다
+    const segments: RouteSegment[] = path.length >= 2 ? [{ kind: 'walk', points: path }] : []
+    return { steps, path, segments }
   }
 
   const transit = be.transitRoutes?.routes?.find((r) => r.routeId === routeId)
   if (transit) {
     const steps = (transit.legs ?? []).flatMap(transitLeg)
-    // 구간 좌표를 다 이으면 전체 경로가 된다. 구간별 좌표가 없으면 전체 좌표를 쓴다.
-    const fromLegs = (transit.legs ?? []).flatMap((l) => toLatLng(l.routePoints))
+
+    /*
+     * 구간(leg)별 좌표를 그대로 토막으로 쓴다 — 걷기와 타기의 경계가 곧 leg 경계다.
+     * BE 가 leg 좌표를 안 주면 전체 좌표 한 줄로 물러선다. 그때는 어디까지가 걷기인지
+     * 알 수 없으므로 색을 나누지 않는다 — 모르는 것을 아는 척 칠하지 않는다.
+     */
+    const segments: RouteSegment[] = []
+    for (const leg of transit.legs ?? []) {
+      const points = toLatLng(leg.routePoints)
+      if (points.length < 2) continue
+      const isWalk = (leg.mode ?? '').toUpperCase() === 'WALK'
+      segments.push({ kind: isWalk ? 'walk' : 'ride', mode: leg.mode ?? undefined, points })
+    }
+
+    const fromLegs = segments.flatMap((s) => s.points)
     const path = fromLegs.length ? fromLegs : toLatLng(transit.routePoints)
     if (!steps.length && !path.length) return undefined
-    return { steps, path }
+    return { steps, path, segments }
   }
 
   return undefined

@@ -160,15 +160,42 @@ export function DepartureSheet({
    */
   const hourListRef = useRef<HTMLDivElement>(null)
   const minuteListRef = useRef<HTMLDivElement>(null)
+
+  /** 고른 줄을 목록 한가운데로. onlyIfHidden 이면 이미 보이는 동안에는 건드리지 않는다 */
+  function centerPicked(list: HTMLDivElement | null, onlyIfHidden = false) {
+    const row = list?.querySelector<HTMLElement>('[data-on="y"]')
+    if (!list || !row) return
+    if (onlyIfHidden) {
+      const top = row.offsetTop - list.scrollTop
+      if (top >= 0 && top + row.offsetHeight <= list.clientHeight) return
+    }
+    list.scrollTop = row.offsetTop - (list.clientHeight - row.offsetHeight) / 2
+  }
+
+  // 시각판을 열 때 한 번 맞춘다
   useLayoutEffect(() => {
     if (view !== 'clock') return
-    for (const ref of [hourListRef, minuteListRef]) {
-      const list = ref.current
-      const row = list?.querySelector<HTMLElement>('[data-on="y"]')
-      if (!list || !row) continue
-      list.scrollTop = row.offsetTop - (list.clientHeight - row.offsetHeight) / 2
-    }
+    centerPicked(hourListRef.current)
+    centerPicked(minuteListRef.current)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [view])
+
+  /*
+   * 고른 값이 바뀌었는데 그 줄이 화면 밖이면 다시 데려온다.
+   *
+   * pickHour 는 오늘 이미 지난 시각을 누르면 시를 한 칸 올린다(setHour(h + 1)).
+   * 그러면 누른 줄이 아니라 그 아래 줄이 선택되는데, 그 줄이 목록 밖이면
+   * 화면에는 **아무것도 선택되지 않은 것처럼** 보인다. 어르신은 "안 눌렸나" 하고
+   * 같은 자리를 계속 누르게 된다.
+   *
+   * 보이는 동안에는 건드리지 않는다 — 훑어보는 중에 목록이 저 혼자 튀면 더 헷갈린다.
+   */
+  useLayoutEffect(() => {
+    if (view !== 'clock') return
+    centerPicked(hourListRef.current, true)
+    centerPicked(minuteListRef.current, true)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [view, hour, minute])
 
   const now = new Date()
   const todayISO = isoAfter(0)
