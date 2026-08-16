@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { TopBar } from '../components/TopBar'
 import { RouteMap } from '../components/RouteMap'
 import { speak } from '../state/tts'
@@ -93,6 +93,29 @@ export function NavigateScreen({
    */
   useKeepAwake(steps.length > 0)
 
+  /*
+   * 지도를 옮길 자리 — 타는 곳과 내리는 곳뿐이다.
+   *
+   * 단계를 넘길 때 지도는 그대로 두는 것이 기본이다(RouteMap.focusActive). 걷는 길은
+   * 눈앞이 이어지니 그게 맞다. 그런데 버스·지하철은 다르다 — 「○○에서 내려요」가
+   * 떴는데 화면이 탄 자리에 남아 있으면 정작 내릴 곳이 화면 밖이다.
+   *
+   *   타기   그 구간의 첫 좌표 = 타는 곳     (이전 단계로 돌아왔을 때)
+   *   내리기 그 구간의 끝 좌표 = 내리는 곳   (다음 단계로 넘어갈 때)
+   *   걷기   옮기지 않는다
+   *
+   * 앞뒤가 같은 규칙이라는 것이 중요하다. 다음에서 옮기고 이전에서 안 옮기면
+   * 같은 버튼을 눌렀는데 어떨 땐 튀고 어떨 땐 가만히 있어 규칙을 알 수 없다.
+   */
+  const panTo = useMemo(() => {
+    if (!step || step.segmentIndex == null) return null
+    const seg = segments[step.segmentIndex]
+    if (!seg || seg.points.length < 2) return null
+    if (step.kind === 'ride') return seg.points[0]
+    if (step.kind === 'getoff') return seg.points[seg.points.length - 1]
+    return null
+  }, [step, segments])
+
 
   /*
    * 켜져 있는 종류만 받아온다.
@@ -167,6 +190,8 @@ export function NavigateScreen({
           path={path}
           segments={segments}
           activeSegment={step.segmentIndex}
+          /* 타는 곳·내리는 곳으로만 옮긴다. 줌은 그대로 둔다 */
+          panTo={panTo}
           facilities={facilities}
           /* 마커를 누르면 이름과 여는 시간을 알려준다 — 지도에 글자를 얹으면 길이 묻힌다 */
           onFacilityTap={(f) =>

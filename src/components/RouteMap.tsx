@@ -368,6 +368,7 @@ export function RouteMap({
   path,
   segments = NO_SEGMENTS,
   activeSegment,
+  panTo,
   facilities = NO_FACILITIES,
   onFacilityTap,
   height,
@@ -377,6 +378,12 @@ export function RouteMap({
   segments?: RouteSegment[]
   /** 지금 단계가 가리키는 토막. 이것만 진하게 그리고 나머지는 옅게 둔다 */
   activeSegment?: number
+  /**
+   * 이 자리로 화면을 옮긴다. **줌은 건드리지 않는다.**
+   * 단계를 넘길 때 지도를 고정한다는 원칙의 예외이므로, 어디로 옮길지는
+   * 화면(NavigateScreen)이 정해서 넘긴다 — 지도가 스스로 판단하지 않는다.
+   */
+  panTo?: LatLng | null
   /** 가는 길 주변 쉼터·화장실. 빈 배열이면 아무것도 안 찍는다 */
   facilities?: FacilityItem[]
   /** 시설을 눌렀을 때 — 이름과 운영시간을 알려주는 몫은 화면이 한다 */
@@ -845,6 +852,35 @@ export function RouteMap({
     paintStops()
     focusActive()
   }, [activeSegment, paintActive, paintArrows, paintStops, focusActive])
+
+  /*
+   * 타는 곳·내리는 곳으로 화면을 옮긴다.
+   *
+   * 단계를 넘길 때 지도를 고정하는 것이 기본이지만(focusActive), 버스·지하철은
+   * 예외다. 「○○에서 내려요」가 떴는데 화면은 탄 자리에 남아 있으면, 정작 알아야 할
+   * **내릴 곳이 화면 밖**이다. 4km 를 타고 가는 경우 아예 다른 동네다.
+   *
+   * 줌은 그대로 둔다(panTo 는 배율을 안 바꾼다). 보고 있던 배율이 바뀌면 옮긴 것인지
+   * 확대된 것인지 구분이 안 되고, 어르신이 맞춰둔 배율을 우리가 뺏는 셈이 된다.
+   *
+   * activeSegment 로는 이 시점을 잡을 수 없다 — 타기와 내리기는 **같은 토막**을
+   * 가리켜서(api/directions) 단계를 넘겨도 값이 그대로다. 그래서 좌표로 판단한다.
+   *
+   * 처음 그릴 때는 옮기지 않는다. 그때는 전체 경로를 맞추는 것이 먼저다.
+   */
+  const panSeenRef = useRef(false)
+  const panKeyRef = useRef<string | null>(null)
+  useEffect(() => {
+    const key = panTo ? `${panTo.latitude},${panTo.longitude}` : null
+    const first = !panSeenRef.current
+    const same = panKeyRef.current === key
+    panSeenRef.current = true
+    panKeyRef.current = key
+    if (first || same || !key || !panTo) return
+    const map = mapRef.current
+    if (!map || !window.kakao?.maps) return
+    map.panTo(new window.kakao.maps.LatLng(panTo.latitude, panTo.longitude))
+  }, [panTo])
 
   /*
    * 나침반 — 지금 어느 쪽을 보고 있는지.
