@@ -270,9 +270,31 @@ export function mapRecommendationToRouteResult(
   }, null)
   if (shortItem) options.push(itemToOption(shortItem, 'short', be))
 
-  // 3. DRT/콜택시 (drtDecision.show 일 때만)
+  /*
+   * 3. 똑버스 / 콜택시
+   *
+   * drtDecision.show 만 보면 안 된다. 그건 "이 사람에게 권할 만한가"(보조기구를
+   * 쓰신다 등)이고, 실제로 **탈 수 있는가**는 drtGuide 가 따로 말해준다.
+   *
+   * 실제로 어긋난 응답이 있었다(2026-08-16 수원시청 → 아주대병원).
+   *   drtDecision.show = true              ← 권할 만하다
+   *   drtGuide.show    = false             ← 그런데 못 탄다
+   *   availability     = OUT_OF_SERVICE_AREA
+   *   message          = "출발지와 도착지가 같은 똑버스 운행 권역에 포함되지 않아요."
+   *
+   * 그대로 카드를 냈더니 「똑버스 이용 방법 보기」를 눌러도 "운행 구역 밖"만 나왔다.
+   * 못 타는 것을 후보로 내놓으면 고를 수 있는 것처럼 보여서 시간만 뺏는다.
+   * BE 가 안 된다고 말해주는데 무시할 이유가 없다.
+   *
+   * 콜택시(taxiGuide)는 권역 개념이 없어 이 판정에서 뺀다 — 전화로 부르는 것이다.
+   */
   const drt = be.drtDecision
-  const drtKey: 'drt' | 'calltaxi' | null = drt?.show ? (drt.taxiGuide ? 'calltaxi' : 'drt') : null
+  let drtKey: 'drt' | 'calltaxi' | null = drt?.show ? (drt.taxiGuide ? 'calltaxi' : 'drt') : null
+  if (drtKey === 'drt') {
+    const guide = be.drtGuide
+    const usable = guide == null || (guide.show !== false && guide.availability !== 'OUT_OF_SERVICE_AREA')
+    if (!usable) drtKey = null
+  }
   if (drtKey) options.push(drtOption(drtKey, be.drtGuide ?? null))
 
   // 4. 오늘 추천 — DRT 우선추천이면 그쪽, 아니면 가장 편한 길

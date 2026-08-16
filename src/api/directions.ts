@@ -177,9 +177,19 @@ export function buildDirections(
       if (points.length >= 2) {
         const isWalk = (leg.mode ?? '').toUpperCase() === 'WALK'
         segmentIndex = segments.length
-        // 노선색은 BE 가 '53B332' 처럼 # 없이 준다. 값이 이상하면 쓰지 않는다.
+        /*
+         * 노선색은 **지하철에만** 쓴다.
+         *
+         * 지하철은 「2호선 초록」처럼 색이 곧 노선 이름이라 사람들이 이미 안다.
+         * 버스는 다르다 — TMAP 이 주는 색은 노선이 아니라 등급(일반 초록·좌석 파랑)이고,
+         * 정류장에서 그 색으로 버스를 찾지는 않는다. 색이 매번 달라지면 오히려
+         * "이 색은 무슨 뜻이지"가 되므로 버스는 우리 청색으로 고정한다.
+         *
+         * BE 는 '53B332' 처럼 # 없이 준다. 값이 이상하면 쓰지 않는다.
+         */
         const raw = (leg.routeColor ?? '').trim().replace(/^#/, '')
-        const color = /^[0-9a-fA-F]{6}$/.test(raw) ? `#${raw}` : undefined
+        const isSubway = (leg.mode ?? '').toUpperCase() === 'SUBWAY'
+        const color = isSubway && /^[0-9a-fA-F]{6}$/.test(raw) ? `#${raw}` : undefined
 
         segments.push({
           kind: isWalk ? 'walk' : 'ride',

@@ -124,12 +124,12 @@ function RouteStrip({
 function RouteView({
   result,
   selected,
-  onNext,
+  onCompare,
   onGuide,
 }: {
   result: RouteResult
   selected: RouteOption
-  onNext: () => void
+  onCompare: () => void
   onGuide: (guide: RouteOption['guide'], result: RouteResult, option: RouteOption) => void
 }) {
   const isRec = selected.key === result.recommendedKey
@@ -229,7 +229,7 @@ function RouteView({
             "내가 잘못 눌렀나" 하는 불안을 준다(2026-08-16 확인).
           */}
           {result.options.length > 1 && (
-            <button className="text-btn" onClick={onNext}>
+            <button className="text-btn" onClick={onCompare}>
               다른 길도 볼게요
             </button>
           )}
@@ -252,6 +252,116 @@ const FILTER_TEXT: Record<RouteFilterCode, string> = {
     '계단이 있는 길이라 제외했어요. 계단 이용을 「조금 어려움」으로 바꾸면 함께 보여드려요.',
   WHEELCHAIR_WITH_EXTERNAL_STAIR:
     '휠체어로 지나기 어려운 계단이 있어 제외했어요. 콜택시 안내를 함께 보여드려요.',
+}
+
+/**
+ * "약 25분" · "1시간 10분" 같은 문구에서 분을 뽑는다.
+ *
+ * 길끼리 비교하려면 숫자가 있어야 하는데, 화면에 쓰는 값은 사람이 읽는 문구다.
+ * 못 읽어내면 null 을 주고, 그때는 「가장 빠름」 같은 표시를 아예 안 붙인다 —
+ * 잘못 읽은 값으로 "이게 제일 빨라요"라고 하면 그대로 믿고 따라가신다.
+ */
+function minutesOf(text: string): number | null {
+  const hour = text.match(/(\d+)\s*시간/)
+  const min = text.match(/(\d+)\s*분/)
+  if (!hour && !min) return null
+  return (hour ? Number(hour[1]) * 60 : 0) + (min ? Number(min[1]) : 0)
+}
+
+/**
+ * 길 고르기 시트 — 「다른 길도 볼게요」를 누르면 열린다.
+ *
+ * 왜 만들었나 — 예전에는 이 버튼이 카드 안의 값만 조용히 바꿨다. 화면은 그대로인데
+ * 숫자만 슬쩍 달라지니 **바뀐 줄도 모르고, 어느 쪽이 나은지 견줄 수도 없었다**
+ * (2026-08-16). 비교는 나란히 놓고 보는 것이지, 번갈아 보며 외우는 것이 아니다.
+ *
+ * 그래서 한 화면에 다 펼친다. 어르신이 실제로 견주는 것은 세 가지다 —
+ * 얼마나 걸리나, 얼마나 걷나, 갈아타나. 그것만 크게 적고 나머지는 뺐다.
+ */
+function RouteCompareSheet({
+  open,
+  result,
+  selectedKey,
+  onPick,
+  onClose,
+}: {
+  open: boolean
+  result: RouteResult
+  selectedKey: RouteKey
+  onPick: (key: RouteKey) => void
+  onClose: () => void
+}) {
+  // 「가장 빠름」·「가장 적게 걸음」은 읽어낸 값이 다 있을 때만 붙인다
+  const times = result.options.map((o) => minutesOf(o.time))
+  const walks = result.options.map((o) => minutesOf(o.walk))
+  const best = (list: (number | null)[]) => {
+    const usable = list.filter((n): n is number => n != null)
+    // 값이 하나뿐이거나 전부 같으면 "가장"이라고 할 것이 없다
+    if (usable.length < 2 || Math.min(...usable) === Math.max(...usable)) return null
+    return Math.min(...usable)
+  }
+  const fastest = best(times)
+  const shortestWalk = best(walks)
+
+  return (
+    <>
+      <div className={`scrim${open ? ' show' : ''}`} onClick={onClose} />
+      <div
+        className={`sheet${open ? ' show' : ''}`}
+        role="dialog"
+        aria-modal="true"
+        aria-label="길 고르기"
+      >
+        <div className="sheet-grip" />
+        <h3>어느 길로 가실래요?</h3>
+        <p>{result.destination}까지 갈 수 있는 길이에요.</p>
+
+        <div className="route-picks">
+          {result.options.map((o, i) => {
+            const on = o.key === selectedKey
+            return (
+              <button
+                key={o.key}
+                className={`route-pick${on ? ' on' : ''}`}
+                aria-pressed={on}
+                onClick={() => onPick(o.key)}
+              >
+                {/*
+                  이름표와 배지를 한 줄에 모은다. 배지를 따로 한 줄 내리면 카드가
+                  그만큼 길어지는데, 길이 서너 개면 시트가 화면을 다 잡아먹는다.
+                  무엇이 나은지는 값을 못 읽어냈으면 붙이지 않는다.
+                */}
+                <div className="head">
+                  <b>{o.title}</b>
+                  {o.key === result.recommendedKey && <em className="rec">오늘 추천</em>}
+                  {on && <em className="now">보는 중</em>}
+                  {times[i] != null && times[i] === fastest && <em className="fast">가장 빠름</em>}
+                  {walks[i] != null && walks[i] === shortestWalk && (
+                    <em className="walkless">가장 적게 걸음</em>
+                  )}
+                </div>
+                <div className="big">{o.time}</div>
+                <div className="facts">
+                  <span>
+                    걷기 <b>{o.walk}</b>
+                  </span>
+                  <span>
+                    환승 <b>{o.transfer}</b>
+                  </span>
+                </div>
+              </button>
+            )
+          })}
+        </div>
+
+        <div className="sheet-actions">
+          <button className="btn neutral" onClick={onClose}>
+            닫기
+          </button>
+        </div>
+      </div>
+    </>
+  )
 }
 
 /**
@@ -432,11 +542,19 @@ export function ResultsScreen({
 
   const selected = result && selectedKey ? options.find((o) => o.key === selectedKey) ?? options[0] : null
 
-  function nextRoute() {
-    if (!result || !selectedKey) return
-    const i = options.findIndex((o) => o.key === selectedKey)
-    setSelectedKey(options[(i + 1) % options.length].key)
-  }
+  /*
+   * 길 고르기 시트.
+   *
+   * 예전에는 「다른 길도 볼게요」가 카드 값만 조용히 바꿨다(순환). 화면은 그대로인데
+   * 숫자만 슬쩍 달라지니 바뀐 줄도 모르고, 어느 쪽이 나은지 견줄 수도 없었다.
+   * 이제 시트를 열어 나란히 놓고 고른다.
+   */
+  const [compareOpen, setCompareOpen] = useState(false)
+
+  const pickRoute = useCallback((key: RouteKey) => {
+    setSelectedKey(key)
+    setCompareOpen(false)
+  }, [])
 
   return (
     <section className="screen">
@@ -501,9 +619,24 @@ export function ResultsScreen({
         {destination && !error && !selected && <RouteSearching destination={destination} />}
 
         {destination && !error && result && selected && (
-          <RouteView result={result} selected={selected} onNext={nextRoute} onGuide={onGuide} />
+          <RouteView
+            result={result}
+            selected={selected}
+            onCompare={() => setCompareOpen(true)}
+            onGuide={onGuide}
+          />
         )}
       </div>
+
+      {result && selected && (
+        <RouteCompareSheet
+          open={compareOpen}
+          result={result}
+          selectedKey={selected.key}
+          onPick={pickRoute}
+          onClose={() => setCompareOpen(false)}
+        />
+      )}
     </section>
   )
 }
