@@ -18,6 +18,8 @@ import { listFavorites } from '../api/place'
 import { SPEECH_ERROR_TEXT, listenOnce, type SpeechSession } from '../state/speech'
 import type { FavoritePlaceResponse } from '../types/dto'
 import { QUICK_DESTINATIONS } from './quickDestinations'
+import { InstallSheet } from '../components/InstallSheet'
+import { dismiss, shouldOfferInstall } from '../state/install'
 
 /** 즐겨찾기 이름으로 어울리는 아이콘을 고른다 (서버는 아이콘을 주지 않는다) */
 function emojiFor(name: string): string {
@@ -107,6 +109,15 @@ export function HomeScreen({
 
   // 저장한 곳이 있으면 그것을, 없으면 카테고리를 보여준다.
   // 불러오는 중(null)에는 카테고리를 먼저 보여줘서 빈 화면을 만들지 않는다.
+  /*
+   * 「홈 화면에 추가」 권유.
+   *
+   * 한 번만 판단한다 — 렌더마다 다시 보면 안내를 닫는 순간 화면이 요동친다.
+   * 이미 앱으로 열었거나, 닫으신 적이 있거나, 데스크톱이면 아예 안 뜬다(state/install).
+   */
+  const [offerInstall, setOfferInstall] = useState(shouldOfferInstall)
+  const [installSheet, setInstallSheet] = useState(false)
+
   const items = hasFavorites
     ? favorites.slice(0, 6).map((f) => ({ emoji: emojiFor(f.name), name: f.name }))
     : QUICK_DESTINATIONS
@@ -146,7 +157,35 @@ export function HomeScreen({
             </button>
           ))}
         </div>
+
+        {/*
+          맨 아래에 둔다. 마이크가 이 화면의 본 일이라, 위에 띠를 얹으면 정작 할 일이
+          밀려 내려간다. 닫으면 다시 안 뜬다 — 닫았는데 또 뜨면 그건 닫은 것이 아니다.
+        */}
+        {offerInstall && (
+          <div className="install-card">
+            <div className="copy">
+              <b>앱처럼 쓰실 수 있어요</b>
+              <span>홈 화면에 두시면 바로 열려요</span>
+            </div>
+            <button className="go" onClick={() => setInstallSheet(true)}>
+              방법 보기
+            </button>
+            <button
+              className="close"
+              aria-label="이 안내 닫기"
+              onClick={() => {
+                dismiss()
+                setOfferInstall(false)
+              }}
+            >
+              ✕
+            </button>
+          </div>
+        )}
       </div>
+
+      <InstallSheet open={installSheet} onClose={() => setInstallSheet(false)} />
 
       {/*
         듣는 중 화면. 화면을 덮어 "지금 듣고 있다"를 분명히 한다 —

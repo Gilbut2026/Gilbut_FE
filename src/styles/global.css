@@ -663,3 +663,42 @@ button { color: inherit; }
 .result-note { margin: 10px 0 0; padding: 13px 15px; border-radius: 15px; background: rgba(255, 244, 214, 0.75); border: 1px solid rgba(214, 158, 46, 0.28); color: var(--ink-2); font-size: 16.5px; font-weight: 720; line-height: 1.5; word-break: keep-all; }
 .result-note b { font-weight: 900; }
 .result-note span { display: block; margin-top: 9px; padding-top: 9px; border-top: 1px solid rgba(214, 158, 46, 0.25); font-weight: 700; }
+
+/* ── 「홈 화면에 추가」 안내 ────────────────────────────────────────
+   홈에서는 맨 아래 띠 한 줄, 자세한 방법은 시트에서 본다.
+   본 일(마이크)을 가리지 않도록 색을 죽이고 크기도 줄였다. */
+.install-card {
+  display: flex; align-items: center; gap: 12px;
+  margin-top: 18px; padding: 13px 14px;
+  border-radius: 18px; border: 2px solid rgba(21, 33, 59, 0.1);
+  background: rgba(255, 255, 255, 0.72);
+}
+.install-card .copy { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.install-card .copy b { font-size: 17px; font-weight: 850; color: var(--ink-1); }
+.install-card .copy span { font-size: 15px; font-weight: 700; color: var(--ink-3); }
+.install-card .go {
+  flex: 0 0 auto; min-height: 44px; padding: 0 15px;
+  border: 0; border-radius: 999px; cursor: pointer;
+  background: var(--violet); color: #fff; font-size: 16px; font-weight: 850;
+}
+/* 닫기는 누르기 쉽되 눈에 먼저 들어오지는 않게 — 44px 는 지키고 색만 죽인다 */
+.install-card .close {
+  flex: 0 0 auto; width: 44px; height: 44px;
+  border: 0; background: none; cursor: pointer;
+  color: var(--ink-3); font-size: 19px; line-height: 1;
+}
+
+/* 옮겨 가야 하는 경우(카톡 안 · 아이폰인데 사파리가 아님)를 단계보다 먼저 알린다 */
+.install-before {
+  margin: 14px 0 0; padding: 12px 14px; border-radius: 14px;
+  background: rgba(238, 234, 254, 0.75); color: var(--violet-deep);
+  font-size: 16px; font-weight: 750; line-height: 1.5;
+}
+.install-steps { list-style: none; margin: 16px 0 0; padding: 0; display: flex; flex-direction: column; gap: 13px; }
+.install-steps li { display: flex; align-items: flex-start; gap: 12px; font-size: 17px; font-weight: 700; line-height: 1.5; color: var(--ink-1); }
+.install-steps .num {
+  flex: 0 0 auto; width: 30px; height: 30px; border-radius: 50%;
+  display: grid; place-items: center;
+  background: var(--violet); color: #fff; font-size: 16px; font-weight: 850;
+}
+.install-note { margin-top: 14px; font-size: 15px; font-weight: 700; color: var(--ink-3); }

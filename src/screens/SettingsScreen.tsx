@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react'
 import { TopBar } from '../components/TopBar'
+import { InstallSheet } from '../components/InstallSheet'
+import { isInstalled } from '../state/install'
 import { HomeAddressSheet } from '../components/HomeAddressSheet'
 import { getSettings, saveAccessibility } from '../api/user'
 import { FONT_SIZES, type Settings } from '../state/settings'
@@ -72,6 +74,9 @@ export function SettingsScreen({
   // 비상 연락처·즐겨찾기 등에 다녀와도 보던 자리로 돌아오게 한다 (내용이 그려진 뒤 복원)
   const scrollRef = useScrollMemory('settings', data !== null)
   const [homeSheet, setHomeSheet] = useState(false)
+  const [installSheet, setInstallSheet] = useState(false)
+  // 한 번만 본다 — 설정 화면을 보는 중에 설치 여부가 바뀔 일은 없다
+  const [installed] = useState(isInstalled)
 
   function reloadSettings() {
     getSettings().then(setData)
@@ -219,6 +224,18 @@ export function SettingsScreen({
           </span>
           <span className="chev">›</span>
         </button>
+        {/* 이미 앱으로 열고 계신 분에게는 안 보여준다 — 이미 한 일을 또 하라고 하면 안 된다.
+            홈 화면 카드는 닫을 수 있으니, 나중에 하시려는 분을 위해 여기에는 상시로 둔다 */}
+        {!installed && (
+          <button className="setting-link" onClick={() => setInstallSheet(true)}>
+            <span className="icon">📲</span>
+            <span className="copy">
+              <b>앱처럼 쓰기</b>
+              <span>홈 화면에 두면 주소창 없이 바로 열려요</span>
+            </span>
+            <span className="chev">›</span>
+          </button>
+        )}
         <button className="setting-link" onClick={onOpenHelp}>
           <span className="icon">💬</span>
           <span className="copy">
@@ -241,6 +258,8 @@ export function SettingsScreen({
       {/* 집 주소 시트는 공용 컴포넌트를 쓴다.
           예전에는 이 화면이 자체 시트를 따로 갖고 있어서, 한쪽을 고쳐도 다른 쪽이 그대로 남았다.
           실제로 '현재 위치로 등록하기'가 GPS 를 쓰지 않고 문자열만 박아 넣는 상태로 남아 있었다. */}
+      <InstallSheet open={installSheet} onClose={() => setInstallSheet(false)} />
+
       <HomeAddressSheet
         open={homeSheet}
         onClose={() => setHomeSheet(false)}
