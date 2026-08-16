@@ -5,6 +5,7 @@ import { ApiError } from '../api/client'
 import { speak } from '../state/tts'
 import { TopBar } from '../components/TopBar'
 import { applyStairChoice } from '../api/stairChoice'
+import { getMobilityProfile } from '../api/user'
 import type {
   LatLng,
   RouteErrorKind,
@@ -525,10 +526,32 @@ export function ResultsScreen({
     if (stairChoice && result?.stairComparison) setSelectedKey('comfort')
   }, [stairChoice, result])
 
-  // 계단이 '조금 어려움'인데 아직 안 고르셨으면, 결과 대신 두 경로 비교를 먼저 보여드린다
+  /*
+   * 계단이 **'조금 어려움'인 분에게만** 두 경로 비교를 먼저 보여드린다(7/31 회의).
+   *
+   *   이용 어려움·휠체어 — AI 하드필터가 계단 있는 길을 빼서 비교할 대상이 없다
+   *   조금 어려움        — 두 길을 나란히 놓고 직접 고르게 한다
+   *   이용 가능          — **우회할 이유가 없다.** 물어보면 없던 걱정을 만든다
+   *
+   * BE 는 계단이 실제로 있고 계단 없는 대안이 진짜로 있으면 두 벌을 준다. 다만
+   * **사용자 설정은 보지 않는다.** 그래서 「이용 가능」이라고 답한 분에게도 두 벌이
+   * 와서, 우리가 거르지 않으면 「계단을 피할까요?」를 묻게 된다(2026-08-16 확인).
+   *
+   * 설정을 못 읽으면 물어본다 — 묻는 쪽이 덜 나쁘다. 어느 쪽을 고르든 갈 수 있다.
+   */
   useEffect(() => {
-    if (result?.stairComparison && stairChoice === null) {
-      onNeedStairChoice(result.stairComparison)
+    if (!result?.stairComparison || stairChoice !== null) return
+    let alive = true
+    const comparison = result.stairComparison
+    getMobilityProfile()
+      .then((p) => {
+        if (alive && p.stairLevel === 'SLIGHTLY_DIFFICULT') onNeedStairChoice(comparison)
+      })
+      .catch(() => {
+        if (alive) onNeedStairChoice(comparison)
+      })
+    return () => {
+      alive = false
     }
   }, [result, stairChoice, onNeedStairChoice])
 
