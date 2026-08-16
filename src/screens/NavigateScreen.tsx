@@ -2,7 +2,8 @@ import { useEffect, useRef, useState } from 'react'
 import { TopBar } from '../components/TopBar'
 import { RouteMap } from '../components/RouteMap'
 import { speak } from '../state/tts'
-import type { RouteOption } from '../types/dto'
+import { getFacilitiesAlongRoute } from '../api/facility'
+import type { FacilityItem, FacilityType, RouteOption } from '../types/dto'
 
 /**
  * 길 안내 — 고른 경로를 한 단계씩 따라간다.
@@ -27,6 +28,15 @@ import type { RouteOption } from '../types/dto'
  * 오늘 이전에 저장된 여정을 되살리면 segments 가 없어서 실제로 이 경우가 된다.
  */
 const NO_POINTS: never[] = []
+
+/** 토글 칩에 넣는 작은 핀 — 지도 표시와 같은 모양이라 무엇을 켜는 버튼인지 바로 읽힌다 */
+function PinMark({ kind }: { kind: 'shelter' | 'toilet' }) {
+  return (
+    <svg className={`pin-mark ${kind}`} viewBox="0 0 28 36" aria-hidden="true">
+      <path d="M14 .9C6.8.9 1 6.6 1 13.6c0 9 13 21.5 13 21.5s13-12.5 13-21.5C27 6.6 21.2.9 14 .9z" />
+    </svg>
+  )
+}
 
 const KIND_ICON: Record<string, string> = {
   walk: '🚶',
@@ -56,11 +66,49 @@ export function NavigateScreen({
 
   const [index, setIndex] = useState(0)
   const [showAll, setShowAll] = useState(false)
+
+  /*
+   * 쉼터·화장실 — 7/31 회의: **점수에 넣지 않고 지도에 표시만** 한다.
+   *
+   * 쉼터는 기본으로 켜 둔다. 「쉬어 갈 곳이 있다」는 것은 길을 나서기 전에 알아야
+   * 하는 정보이고, 어르신이 토글을 찾아 누를 것이라고 기대하면 안 된다.
+   * 화장실은 꺼 둔다 — 둘 다 켜면 마커가 많아 정작 경로가 묻힌다. 필요한 분이 켠다.
+   */
+  const [showShelter, setShowShelter] = useState(true)
+  const [showToilet, setShowToilet] = useState(false)
+  const [facilities, setFacilities] = useState<FacilityItem[]>([])
+  /** 반경을 넓혀서 찾은 것인가 — 「가는 길에」와 「길에서 조금 떨어진 곳에」를 갈라 적는다 */
+  const [widened, setWidened] = useState(false)
   // 화면에 들어온 직후 한 번은 자동으로 읽어준다. 그 뒤에는 단계를 넘길 때마다.
   const spokenRef = useRef(-1)
 
   const step = steps[index]
   const isLast = index >= steps.length - 1
+
+
+  /*
+   * 켜져 있는 종류만 받아온다.
+   * BE 가 수원시 공공데이터를 들고 있어 외부 호출이 아니라, 토글마다 불러도 부담이 없다.
+   */
+  useEffect(() => {
+    const types: FacilityType[] = []
+    if (showShelter) types.push('SHELTER')
+    if (showToilet) types.push('TOILET')
+    if (!types.length || path.length < 2) {
+      setFacilities([])
+      setWidened(false)
+      return
+    }
+    let alive = true
+    getFacilitiesAlongRoute(path, types).then((found) => {
+      if (!alive) return
+      setFacilities(found.items)
+      setWidened(found.widened)
+    })
+    return () => {
+      alive = false
+    }
+  }, [showShelter, showToilet, path])
 
   /*
    * 지금 단계를 소리로 읽어준다.
@@ -107,7 +155,49 @@ export function NavigateScreen({
 
         {/* 실제 경로 좌표. 키가 없거나 못 불러오면 지도 자리에 그 사실을 적는다.
             지금 단계가 지도에서도 진하게 보이도록 그 토막을 함께 넘긴다 */}
-        <RouteMap path={path} segments={segments} activeSegment={step.segmentIndex} />
+        <RouteMap
+          path={path}
+          segments={segments}
+          activeSegment={step.segmentIndex}
+          facilities={facilities}
+          /* 마커를 누르면 이름과 여는 시간을 알려준다 — 지도에 글자를 얹으면 길이 묻힌다 */
+          onFacilityTap={(f) =>
+            onToast(
+              [f.name, f.operatingHours, f.distanceFromRouteM ? `길에서 ${f.distanceFromRouteM}m` : '']
+                .filter(Boolean)
+                .join(' · '),
+            )
+          }
+        />
+
+        {/* 쉼터·화장실 토글. 지도 바로 아래에 둬서 무엇이 켜졌는지 함께 보인다 */}
+        <div className="facility-toggles">
+          <button
+            className={`facility-toggle${showShelter ? ' on' : ''}`}
+            aria-pressed={showShelter}
+            onClick={() => setShowShelter((v) => !v)}
+          >
+            <PinMark kind="shelter" />
+            쉼터
+          </button>
+          <button
+            className={`facility-toggle${showToilet ? ' on' : ''}`}
+            aria-pressed={showToilet}
+            onClick={() => setShowToilet((v) => !v)}
+          >
+            <PinMark kind="toilet" />
+            화장실
+          </button>
+          {(showShelter || showToilet) && (
+            <span className="facility-count">
+              {facilities.length === 0
+                ? '가는 길 근처에는 없어요'
+                : widened
+                  ? `길에서 조금 떨어진 곳에 ${facilities.length}곳`
+                  : `가는 길에 ${facilities.length}곳`}
+            </span>
+          )}
+        </div>
 
         <div className="nav-step">
           <span className="ico" aria-hidden="true">

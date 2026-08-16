@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import type { LatLng, RouteSegment } from '../types/dto'
+import type { FacilityItem, LatLng, RouteSegment } from '../types/dto'
 
 /**
  * 경로 지도 — 카카오맵 위에 **TMAP 이 준 실제 경로 좌표**를 그린다.
@@ -322,11 +322,54 @@ type GeoState = 'idle' | 'ok' | 'denied' | 'unavailable'
 
 /** 기본값도 모듈에 하나만 — 매번 새 배열을 만들면 지도를 다시 그리게 된다 */
 const NO_SEGMENTS: RouteSegment[] = []
+const NO_FACILITIES: FacilityItem[] = []
+
+/**
+ * 쉼터·화장실 표시 — 지도에서 기대되는 **핀** 모양으로 그린다.
+ *
+ * 처음에는 이모지(🪑·🚻)를 얹었는데 지도 위에서 겉돌았다. 이모지는 기기마다
+ * 생김새가 달라 우리가 모양을 정할 수도 없다. 안쪽 그림은 직접 그린다.
+ *
+ * 경로선(청색)·정류장(흰 동그라미)·내 위치(초록 동그라미)와 갈리도록
+ * **색과 모양을 함께** 다르게 뒀다 — 지도 위 네 번째 표시라 색만으로는 부족하다.
+ *
+ * 핀 끝이 좌표를 가리켜야 하므로 `yAnchor: 1` 로 아래를 기준점에 맞춘다.
+ */
+const FACILITY_GLYPH: Record<'SHELTER' | 'TOILET', string> = {
+  // 벤치 — 등받이·앉는 자리·다리. 「쉬어 가는 곳」이 한눈에 읽힌다
+  SHELTER:
+    '<rect x="8" y="9.5" width="12" height="2.2" rx="1.1"/>' +
+    '<rect x="8" y="13.6" width="12" height="2.2" rx="1.1"/>' +
+    '<rect x="8.6" y="15.4" width="1.8" height="3.4" rx="0.9"/>' +
+    '<rect x="17.6" y="15.4" width="1.8" height="3.4" rx="0.9"/>',
+  // 남녀 표지 — 머리와 몸. 화장실 표지로 세계 어디서나 쓰는 모양이다
+  TOILET:
+    '<circle cx="10.6" cy="8.8" r="1.9"/>' +
+    '<path d="M8.4 12.1h4.4l1 5.2h-1.5v3.1H8.9v-3.1H7.4z"/>' +
+    '<circle cx="17.4" cy="8.8" r="1.9"/>' +
+    '<path d="M17.4 11.6c1.9 0 2.9 1.2 3.3 3.1l.5 2.6h-1.7v3.1h-4.2v-3.1h-1.7l.5-2.6c.4-1.9 1.4-3.1 3.3-3.1z"/>',
+}
+
+function facilityHtml(item: FacilityItem): HTMLElement {
+  const kind = item.type === 'SHELTER' ? 'SHELTER' : 'TOILET'
+  const el = document.createElement('div')
+  el.className = `route-facility ${kind === 'SHELTER' ? 'shelter' : 'toilet'}`
+  el.setAttribute('role', 'button')
+  el.setAttribute('aria-label', item.name)
+  el.innerHTML =
+    '<svg viewBox="0 0 28 36" aria-hidden="true">' +
+    '<path class="pin" d="M14 .9C6.8.9 1 6.6 1 13.6c0 9 13 21.5 13 21.5s13-12.5 13-21.5C27 6.6 21.2.9 14 .9z"/>' +
+    `<g class="glyph">${FACILITY_GLYPH[kind]}</g>` +
+    '</svg>'
+  return el
+}
 
 export function RouteMap({
   path,
   segments = NO_SEGMENTS,
   activeSegment,
+  facilities = NO_FACILITIES,
+  onFacilityTap,
   height,
 }: {
   path: LatLng[]
@@ -334,6 +377,10 @@ export function RouteMap({
   segments?: RouteSegment[]
   /** 지금 단계가 가리키는 토막. 이것만 진하게 그리고 나머지는 옅게 둔다 */
   activeSegment?: number
+  /** 가는 길 주변 쉼터·화장실. 빈 배열이면 아무것도 안 찍는다 */
+  facilities?: FacilityItem[]
+  /** 시설을 눌렀을 때 — 이름과 운영시간을 알려주는 몫은 화면이 한다 */
+  onFacilityTap?: (item: FacilityItem) => void
   /** 지도 높이. 안 주면 CSS 가 정한다(화면 크기에 따라 달라진다) */
   height?: number
 }) {
@@ -365,6 +412,13 @@ export function RouteMap({
   /** 지금 얹어둔 화살표·정류장. 단계가 바뀌면 걷어내고 다시 놓는다 */
   const arrowsRef = useRef<any[]>([])
   const stopsRef = useRef<any[]>([])
+  /** 지금 찍어둔 쉼터·화장실. 토글이 바뀌면 걷어내고 다시 찍는다 */
+  const facilityRef = useRef<any[]>([])
+  /* 지금 값을 ref 로도 들고 있는다 — 지도는 SDK 를 받은 뒤에야 그려진다 */
+  const facilitiesRef = useRef<FacilityItem[]>(facilities)
+  facilitiesRef.current = facilities
+  const facilityTapRef = useRef(onFacilityTap)
+  facilityTapRef.current = onFacilityTap
   /** 확대/이동이 멎을 때 다시 그리려고 걸어둔 리스너. 화면을 떠날 때 걷어낸다 */
   const idleRef = useRef<{ map: any; handler: () => void } | null>(null)
   /** 지금 배율에 맞는 굵기 배수. 확대·축소가 멎을 때마다 다시 잡는다 */
@@ -435,6 +489,38 @@ export function RouteMap({
             ? walkDotHtml(scaleRef.current)
             : arrowHtml(spot.deg, lineWeight, inkOn(activeColorRef.current)),
           zIndex: 6,
+        }),
+      )
+    }
+  }, [])
+
+  /**
+   * 가는 길 주변 쉼터·화장실을 찍는다.
+   *
+   * 지금 구간만이 아니라 **경로 전체**에 찍는다 — 「이 길에 쉴 곳이 있는가」는
+   * 지금 어디쯤인지와 상관없이 미리 알고 싶은 정보다.
+   */
+  const paintFacilities = useCallback(() => {
+    facilityRef.current.forEach((o) => o.setMap(null))
+    facilityRef.current = []
+
+    const kakao = kakaoRef.current
+    const map = mapRef.current
+    if (!kakao || !map) return
+
+    for (const item of facilitiesRef.current) {
+      const el = facilityHtml(item)
+      el.addEventListener('click', () => facilityTapRef.current?.(item))
+      facilityRef.current.push(
+        new kakao.maps.CustomOverlay({
+          map,
+          position: new kakao.maps.LatLng(item.latitude, item.longitude),
+          content: el,
+          clickable: true,
+          // 핀 끝이 좌표를 가리키게 — 가운데를 맞추면 실제보다 위쪽을 가리킨다
+          yAnchor: 1,
+          // 경로선·정류장보다 위 — 눌러야 하는 것이므로 가려지면 안 된다
+          zIndex: 7,
         }),
       )
     }
@@ -698,6 +784,7 @@ export function RouteMap({
         paintActive()
         paintArrows()
         paintStops()
+        paintFacilities()
         focusActive()
 
         /*
@@ -737,8 +824,14 @@ export function RouteMap({
       segColorsRef.current = []
       arrowsRef.current = []
       stopsRef.current = []
+      facilityRef.current = []
     }
-  }, [path, segments, paintMe, paintActive, paintArrows, paintStops, focusActive])
+  }, [path, segments, paintMe, paintActive, paintArrows, paintStops, paintFacilities, focusActive])
+
+  // 토글을 켜고 끄면 시설만 다시 찍는다 — 지도를 다시 그리지 않는다
+  useEffect(() => {
+    paintFacilities()
+  }, [facilities, paintFacilities])
 
   /*
    * 단계가 바뀌면 그 토막만 진하게.

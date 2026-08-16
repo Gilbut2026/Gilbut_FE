@@ -585,6 +585,27 @@ button { color: inherit; }
    간격은 화면 픽셀 기준이라 확대할수록 촘촘해진다(RouteMap 의 DOT_GAP_PX). */
 .route-walk-dot { width: 12px; height: 12px; border-radius: 50%; background: #2a5bd7; border: 3px solid #fff; box-shadow: 0 1px 3px rgba(21, 33, 59, 0.4); pointer-events: none; }
 
+/* 쉼터·화장실 — 지도에 이미 경로선(청색)·정류장(흰)·내 위치(초록)가 있어서
+   네 번째는 색만이 아니라 **모양으로도** 갈라야 한다. 동그라미가 아니라 둥근 네모다. */
+.route-facility { width: 28px; height: 36px; cursor: pointer; line-height: 0; }
+.route-facility svg { width: 28px; height: 36px; filter: drop-shadow(0 2px 4px rgba(21, 33, 59, 0.4)); }
+/* 핀 몸통은 종류별 색, 안쪽 그림은 흰색 — 작은 크기에서 가장 잘 읽히는 조합이다 */
+.route-facility .pin { fill: #A9691F; stroke: #fff; stroke-width: 1.6; }
+.route-facility.toilet .pin { fill: #2C6E96; }
+.route-facility .glyph { fill: #fff; }
+.route-facility:active svg { transform: scale(0.94); transform-origin: 50% 100%; }
+
+/* 토글 — 지도 바로 아래. 무엇이 켜졌는지 지도와 함께 보여야 한다 */
+.facility-toggles { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; margin-top: 9px; }
+.facility-toggle { display: inline-flex; align-items: center; gap: 7px; min-height: 44px; padding: 0 15px; border-radius: 999px; border: 2px solid rgba(21, 33, 59, 0.12); background: rgba(255, 255, 255, 0.9); color: var(--ink-3); font-family: inherit; font-size: 17px; font-weight: 850; cursor: pointer; }
+.facility-toggle.on { border-color: var(--violet); background: rgba(238, 234, 254, 0.8); color: var(--violet-deep); }
+.facility-toggle:active { transform: scale(0.97); }
+.facility-count { font-size: 16px; font-weight: 750; color: var(--ink-3); }
+/* 칩 안의 작은 핀 — 지도 표시와 같은 색. 꺼져 있으면 회색으로 죽인다 */
+.pin-mark { width: 13px; height: 17px; flex: 0 0 auto; fill: #B6BDCC; }
+.facility-toggle.on .pin-mark.shelter { fill: #A9691F; }
+.facility-toggle.on .pin-mark.toilet { fill: #2C6E96; }
+
 /* 내 위치 — 점 + (방향을 아는 경우에만) 바라보는 쪽 부채꼴.
    경로선이 청색이라 초록으로 갈랐다. 흰 테두리로 지도 위에서 떠 보이게 한다. */
 .me-mark { position: relative; width: 48px; height: 48px; display: grid; place-items: center; pointer-events: none; }

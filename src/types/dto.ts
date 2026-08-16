@@ -782,6 +782,43 @@ export interface RouteSegment {
   stops?: { name: string | null; at: LatLng }[]
 }
 
+/* ============================================================
+ *  6-2. ✅ 가는 길 주변 시설 (쉼터·화장실)
+ *     POST /api/facilities/along-route
+ *
+ *     7/31 회의: 쉼터는 **점수에 넣지 않고 지도에 표시만** 한다.
+ *     BE 가 수원시 공공데이터 CSV 를 들고 있어 외부 호출이 아니다(쿼터 걱정 없음).
+ * ============================================================ */
+
+export type FacilityType = 'SHELTER' | 'TOILET'
+
+export interface AlongRouteFacilityRequest {
+  routePoints: { latitude: number; longitude: number }[]
+  /** 경로에서 이만큼 안쪽만. 너무 넓으면 「가는 길에 있다」가 아니게 된다 */
+  radiusMeters: number
+  types: FacilityType[]
+}
+
+export interface FacilityItem {
+  type: FacilityType
+  facilityId: string | null
+  name: string
+  category: string | null
+  address: string | null
+  latitude: number
+  longitude: number
+  /** 경로에서 몇 m 떨어져 있는가 */
+  distanceFromRouteM: number | null
+  phone: string | null
+  operatingHours: string | null
+  status: string | null
+}
+
+export interface AlongRouteFacilityResponse {
+  /** BE 필드명은 `items` 다 (AlongRouteFacilityResponse.java) */
+  items: FacilityItem[]
+}
+
 /** 한 경로의 안내 — 단계 목록과 지도에 그릴 좌표 */
 export interface RouteDirections {
   steps: GuideStep[]
