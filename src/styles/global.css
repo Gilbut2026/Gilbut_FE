@@ -544,6 +544,17 @@ button { color: inherit; }
 .nav-head b { font-size: 21px; font-weight: 920; letter-spacing: -0.02em; }
 .nav-head span { color: var(--ink-3); font-size: 17px; font-weight: 850; flex: 0 0 auto; }
 
+/*
+ * 지도만 글자 크기 배율에서 빼낸다.
+ *
+ * 글자 크기는 `zoom` 으로 적용되는데(.screen-body > * 규칙), zoom 은
+ * getBoundingClientRect 와 offsetWidth 가 서로 다른 값을 내게 만든다.
+ * 지도 라이브러리가 좌표를 계산할 때 쓰는 두 값이라, 글자를 키우면 클릭 위치와
+ * 마커가 어긋난다. 지도 위 글자는 카카오가 그리는 것이라 어차피 우리 배율을 안 탄다.
+ * 범례·안내문은 우리 글자라 그대로 커진다 — 빼내는 것은 지도 그릇 하나뿐이다.
+ */
+.route-map { zoom: calc(1 / var(--ui-scale)); }
+
 /* 지도는 크게 — 220px 로는 길 모양이 안 읽혔다(2026-08-16). 화면이 작으면 화면에 맞춰 줄인다 */
 .route-map { width: 100%; height: min(360px, 46vh); border-radius: 18px; overflow: hidden; border: 1px solid rgba(148, 163, 184, 0.22); background: rgba(255, 255, 255, 0.6); }
 .route-map.empty { height: auto; min-height: 132px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 5px; text-align: center; padding: 16px; }
@@ -582,6 +593,9 @@ button { color: inherit; }
    나침반은 몇 도씩 틀리므로 뾰족한 화살표로 단정하지 않는다. */
 .me-cone { position: absolute; inset: 0; width: 48px; height: 48px; }
 .me-cone path { fill: #12b886; opacity: 0.28; }
+
+/* 목록이 비었거나 못 불러왔을 때의 한 줄 안내 — 빈 화면을 그냥 두지 않는다 */
+.list-note { margin: 14px 2px; padding: 16px 15px; border-radius: 16px; background: rgba(255, 255, 255, 0.72); color: var(--ink-3); font-size: 18px; font-weight: 720; line-height: 1.55; text-align: center; }
 
 /* 온보딩 저장 실패 안내 — 버튼 바로 아래에 둔다. 토스트는 사라져서 놓친다 */
 .onboarding-error { margin: 10px 2px 0; padding: 12px 14px; border-radius: 14px; background: rgba(254, 239, 225, 0.9); color: #8a4b06; font-size: 17px; font-weight: 800; line-height: 1.5; text-align: center; }

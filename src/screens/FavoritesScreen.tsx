@@ -24,15 +24,28 @@ export function FavoritesScreen({
   const [places, setPlaces] = useState<FavoritePlaceResponse[]>([])
   const scrollRef = useScrollMemory('favorites', places.length > 0)
 
+  // 불러오는 중 · 없음 · 못 불러옴을 가른다 — 셋이 다 빈 화면이면 원인을 알 수 없다
+  const [state, setState] = useState<'loading' | 'ready' | 'error'>('loading')
+
   function reload() {
-    listFavorites().then(setPlaces)
+    listFavorites()
+      .then((list) => {
+        setPlaces(list)
+        setState('ready')
+      })
+      .catch(() => setState('error'))
   }
   useEffect(reload, [])
 
   async function handleDelete(id: number) {
-    await deleteFavorite(id)
-    reload()
-    onToast('장소를 삭제했어요')
+    try {
+      await deleteFavorite(id)
+      reload()
+      onToast('장소를 삭제했어요')
+    } catch {
+      // 실패했는데 「삭제했어요」가 뜨면, 목록에 그대로 있는 것을 보고 더 혼란스럽다
+      onToast('삭제하지 못했어요. 잠시 뒤 다시 시도해 주세요')
+    }
   }
 
   return (
@@ -40,6 +53,13 @@ export function FavoritesScreen({
       <TopBar title="자주 가는 곳" onBack={onBack} backLabel="설정으로 돌아가기" onSos={onSos} />
 
       <div className="screen-body" ref={scrollRef}>
+        {state === 'loading' && <p className="list-note">불러오는 중이에요…</p>}
+        {state === 'error' && (
+          <p className="list-note">자주 가는 곳을 불러오지 못했어요. 잠시 뒤 다시 열어주세요.</p>
+        )}
+        {state === 'ready' && places.length === 0 && (
+          <p className="list-note">아직 저장한 곳이 없어요.</p>
+        )}
         <h2 className="screen-title" style={{ fontSize: 27 }}>
           자주 가는 곳
         </h2>
