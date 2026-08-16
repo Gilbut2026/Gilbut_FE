@@ -583,6 +583,9 @@ button { color: inherit; }
 .me-cone { position: absolute; inset: 0; width: 48px; height: 48px; }
 .me-cone path { fill: #12b886; opacity: 0.28; }
 
+/* 온보딩 저장 실패 안내 — 버튼 바로 아래에 둔다. 토스트는 사라져서 놓친다 */
+.onboarding-error { margin: 10px 2px 0; padding: 12px 14px; border-radius: 14px; background: rgba(254, 239, 225, 0.9); color: #8a4b06; font-size: 17px; font-weight: 800; line-height: 1.5; text-align: center; }
+
 .route-map-note { margin: 0; padding: 11px 13px; border-radius: 13px; background: rgba(238, 234, 254, 0.6); color: var(--violet-deep); font-size: 16px; font-weight: 750; line-height: 1.5; }
 
 /* 범례 — 색만으로 구분하지 않도록 선 모양도 함께 보여준다 */

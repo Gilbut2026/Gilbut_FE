@@ -42,6 +42,13 @@ function initialAuthPhase(): 'idle' | 'loading' {
  *
  * 로그인 전이면 물어볼 것도 없으니 곧바로 시작 화면을 보여준다(깜빡임 없음).
  */
+/** 'YYYY-MM-DDTHH:mm:ss' 가 아직 오지 않은 시각인가. 값이 없거나 이상하면 false */
+function isFuture(dateTime: string | null): boolean {
+  if (!dateTime) return false
+  const at = new Date(dateTime).getTime()
+  return Number.isFinite(at) && at > Date.now()
+}
+
 function needsBootCheck(): boolean {
   return initialAuthPhase() === 'idle' && isLoggedIn()
 }
@@ -153,7 +160,17 @@ export default function App() {
     if (!j) return null
     setDestination(j.destination)
     setDestCoords(j.destCoords)
-    setDeparture(j.departure)
+    /*
+     * 지나간 출발 시각은 버린다.
+     *
+     * 대중교통은 이 시각으로 **시간표를 조회**한다. 「지금 출발」로 길을 찾아둔 뒤
+     * 두어 시간 있다가 탭이 다시 뜨면, 그 옛 시각의 버스 시간표로 길을 찾게 된다.
+     * 밤에 되살리면 낮 시간표가 나오는 식이라 그냥 틀린 답이다.
+     *
+     * 「내일 오전 9시」처럼 아직 오지 않은 시각은 그대로 둔다 — 그건 사용자가
+     * 일부러 고른 것이고 여전히 유효하다.
+     */
+    setDeparture(isFuture(j.departure) ? j.departure : null)
     setOrigin(j.origin)
     setGuideOption(j.guideOption)
     setDrtInfo(j.drtInfo)

@@ -19,6 +19,15 @@ import type { RouteOption } from '../types/dto'
  * BE 가 상세를 안 주면 그렇다고 알린다 — 없는 길을 만들어내지 않는다.
  */
 
+/*
+ * 빈 배열은 **모듈에 하나만** 둔다.
+ *
+ * `?? []` 로 그때그때 만들면 렌더마다 다른 배열이 되어, 그것을 의존성으로 쓰는
+ * 지도가 매번 처음부터 다시 그려진다. 값은 똑같은데 참조만 달라서 생기는 낭비다.
+ * 오늘 이전에 저장된 여정을 되살리면 segments 가 없어서 실제로 이 경우가 된다.
+ */
+const NO_POINTS: never[] = []
+
 const KIND_ICON: Record<string, string> = {
   walk: '🚶',
   ride: '🚌',
@@ -41,9 +50,9 @@ export function NavigateScreen({
   onSos: () => void
   onToast: (msg: string) => void
 }) {
-  const steps = option.directions?.steps ?? []
-  const path = option.directions?.path ?? []
-  const segments = option.directions?.segments ?? []
+  const steps = option.directions?.steps ?? NO_POINTS
+  const path = option.directions?.path ?? NO_POINTS
+  const segments = option.directions?.segments ?? NO_POINTS
 
   const [index, setIndex] = useState(0)
   const [showAll, setShowAll] = useState(false)

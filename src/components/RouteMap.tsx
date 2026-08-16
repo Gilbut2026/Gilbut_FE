@@ -320,9 +320,12 @@ function headingFromOrientation(e: any): number | null {
 
 type GeoState = 'idle' | 'ok' | 'denied' | 'unavailable'
 
+/** 기본값도 모듈에 하나만 — 매번 새 배열을 만들면 지도를 다시 그리게 된다 */
+const NO_SEGMENTS: RouteSegment[] = []
+
 export function RouteMap({
   path,
-  segments = [],
+  segments = NO_SEGMENTS,
   activeSegment,
   height,
 }: {

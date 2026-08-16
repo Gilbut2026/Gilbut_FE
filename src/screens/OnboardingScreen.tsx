@@ -94,6 +94,13 @@ export function OnboardingScreen({
   const [index, setIndex] = useState(0)
   const [answers, setAnswers] = useState<Record<string, string>>({})
   const [saving, setSaving] = useState(false)
+  /*
+   * 저장이 안 됐을 때 그 사실을 화면에 적는다.
+   * 예전에는 조용히 멈췄다 — 「설정 저장하기」를 눌렀는데 아무 일도 안 일어나면
+   * 어르신은 다시 누르는 것 말고 할 수 있는 게 없다. 무엇이 잘못됐는지 알려야
+   * 다시 누를지 잠시 기다릴지 정할 수 있다.
+   */
+  const [saveError, setSaveError] = useState<string | null>(null)
 
   const q = QUESTIONS[index]
 
@@ -120,6 +127,7 @@ export function OnboardingScreen({
     }
     // 마지막 문항 — BE 계약으로 저장
     setSaving(true)
+    setSaveError(null)
     try {
       const profile: MobilityProfileSaveRequest = {
         walkingDuration: WALK_MAP[answers.walk],
@@ -154,6 +162,7 @@ export function OnboardingScreen({
       onComplete()
     } catch {
       setSaving(false)
+      setSaveError('설정을 저장하지 못했어요. 잠시 뒤 다시 눌러주세요.')
     }
   }
 
@@ -207,6 +216,11 @@ export function OnboardingScreen({
           <button className="btn primary" onClick={next} disabled={!answered || saving}>
             {saving ? '저장하는 중…' : isLast ? '설정 저장하기' : '다음'}
           </button>
+          {saveError && (
+            <p className="onboarding-error" role="alert">
+              {saveError}
+            </p>
+          )}
         </div>
       </div>
     </section>
