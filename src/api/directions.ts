@@ -172,6 +172,20 @@ export function buildDirections(
     const steps: GuideStep[] = []
     const segments: RouteSegment[] = []
     for (const leg of transit.legs ?? []) {
+      /*
+       * 0m 짜리 걷기는 버린다.
+       *
+       * 환승할 때 같은 정류장에서 갈아타면 TMAP 이 「0m 걷기」 구간을 하나 끼워 넣는다
+       * (실제 응답: legIndex 3, distanceM 0, 좌표 1개). 사람에게는 안내가 아니다 —
+       * 「걷기」라고 적힌 단계를 눌렀는데 갈 곳이 없다.
+       *
+       * 게다가 좌표가 하나뿐이라 지도에 그릴 토막도 없다. 그 단계에 머무는 동안
+       * 지도가 「강조할 구간이 없음」 상태가 되어 다른 구간들의 모양까지 달라졌다
+       * (2026-08-16 — 걷는 구간의 점 크기·모양이 앞뒤로 다르게 보이던 원인).
+       */
+      if ((leg.mode ?? '').toUpperCase() === 'WALK' && !(leg.distanceM && leg.distanceM > 0)) {
+        continue
+      }
       const points = toLatLng(leg.routePoints)
       let segmentIndex: number | undefined
       if (points.length >= 2) {

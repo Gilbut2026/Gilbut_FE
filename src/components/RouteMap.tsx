@@ -504,11 +504,17 @@ export function RouteMap({
   const paintActive = useCallback(() => {
     const lines = linesRef.current
     if (!lines.length) return
-    // 강조할 것이 없으면 전부 원래대로 — 전부 흐려버리면 길이 사라진 것처럼 보인다
+    /*
+     * 강조할 토막이 없으면 **전부 옅게** 둔다.
+     *
+     * 예전에는 전부 진하게 보여줬는데, 그러면 걷는 구간이 점(우리가 찍는 것)이 아니라
+     * 선무늬(shortdot)로 그려져서 앞뒤 단계와 크기·모양이 달라 보였다.
+     * 강조할 것이 없다는 사실을 「전부 진하게」로 나타내면 오히려 고장처럼 읽힌다.
+     */
     const noTarget = activeRef.current == null
     lines.forEach(({ line, casing, weight }, i) => {
       const k = scaleRef.current
-      const on = noTarget || i === activeRef.current
+      const on = !noTarget && i === activeRef.current
       if (!on) {
         line.setOptions({
           strokeColor: IDLE.color,
@@ -528,7 +534,7 @@ export function RouteMap({
        * 오류로 읽혔다(2026-08-16). 하나만 남기는 편이 낫다.
        * (강조할 단계가 아예 없을 때는 선을 그대로 보여준다 — 점을 안 찍기 때문이다)
        */
-      const dotted = !noTarget && segKindsRef.current[i] === 'walk'
+      const dotted = segKindsRef.current[i] === 'walk'
       const core = Math.max(3, Math.round((weight + ACTIVE.extraWeight) * k))
       /*
        * 타는 구간은 **그 노선의 실제 색**으로 그린다.

@@ -302,7 +302,8 @@ button { color: inherit; }
 
 /* 길 찾는 중 — 움직이는 고리 하나로 "멈춘 게 아니다"를 알린다.
    글자보다 움직임이 먼저 읽히기 때문에 이게 안내문보다 중요하다. */
-.route-loading { padding-top: 40px; }
+/* 화면 위쪽에 붙어 있으면 아래가 휑하다. 기다리는 동안 눈이 가는 자리는 가운데다. */
+.route-loading { margin-top: min(13vh, 104px); padding-top: 36px; }
 .route-loading-art { position: relative; width: 96px; height: 96px; margin: 0 auto 20px; border-radius: 50%; display: grid; place-items: center; background: rgba(238, 234, 254, 0.85); box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9); }
 .route-loading-art svg { width: 44px; height: 44px; color: var(--violet); }
 .route-loading-art .ring { position: absolute; inset: -7px; border-radius: 50%; border: 4px solid rgba(103, 85, 245, 0.16); border-top-color: var(--violet); animation: route-spin 1.15s linear infinite; }
