@@ -25,8 +25,8 @@ import {
 } from '../mock/place'
 
 import { useMock } from './mode'
-import { SERVICE_SEARCH_RADIUS_KM, SUWON_CENTER } from './geo'
-import { hasRelevantPlace } from './placeRank'
+import { SERVICE_RADIUS_KM, SERVICE_SEARCH_RADIUS_KM, SUWON_CENTER, distanceKm } from './geo'
+import { hasRelevantPlace, hasStrongMatch } from './placeRank'
 
 const USE_MOCK = () => useMock('place')
 
@@ -69,18 +69,58 @@ export function searchPlaces(req: PlaceSearchRequest): Promise<PlaceSearchRespon
  *   여기서 삼키고 다음 단계로 넘어간다.
  *   (백엔드가 빈 목록을 정상 응답으로 주도록 고치면 catch 는 없어도 된다)
  */
+/**
+ * 한 번에 받아올 후보 수.
+ *
+ * **안 보내면 백엔드 기본값이 10이다**(PlaceSearchService.DEFAULT_SIZE). 그런데 TMAP 이
+ * 주는 순서는 정확도순이 아니다 — 「아주대학교병원」을 검색했을 때 이름이 똑같은 본원이
+ * 41건 중 **17위**였다(2026-08-15 실측). 10건만 받으면 정작 찾던 곳이 목록에 아예
+ * 안 들어온다. 우리가 아무리 잘 정렬해도 **받지 못한 것은 못 올린다.**
+ *
+ * 그래서 넉넉히 받아서 우리가 고른다. 백엔드 상한은 50이다.
+ * 사용자에게는 여전히 위에서 3건만 보이고 나머지는 「더 보기」로 접힌다 —
+ * 많이 받는 것과 많이 보여주는 것은 다른 문제다.
+ */
+const SEARCH_SIZE = '30'
+
+/**
+ * 거리 기반 요청임이 분명한 말.
+ * 이런 말이 붙으면 사용자가 원하는 것은 이름이 맞는 곳이 아니라 **가까운 곳**이다.
+ */
+const NEARBY_WORDS = /(근처|주변|가까운|인근)/
+
+/**
+ * 검색이 빗나갈 때 덜어낼 말끝.
+ *
+ * 사람이 붙여 부르지만 지도 이름에는 다르게 적히는 것들이다.
+ * 덜어낸 뒤가 두 글자보다 짧으면 안 덜어낸다 — 「역」 하나만 남기면 아무거나 걸린다.
+ */
+const TRIM_SUFFIXES = ['역', '점', '지점', '캠퍼스', '본점']
+
+function trimPlaceSuffix(keyword: string): string | null {
+  const word = keyword.trim()
+  for (const suffix of TRIM_SUFFIXES) {
+    if (word.length > suffix.length + 1 && word.endsWith(suffix)) {
+      return word.slice(0, -suffix.length).trim()
+    }
+  }
+  return null
+}
+
 export async function searchPlacesNear(
   keyword: string,
   center: LatLng | null,
   radiusKm: string,
 ): Promise<PlaceSearchResponse> {
-  const attempt = async (at: LatLng, radius: string) => {
+  /** 좌표를 함께 보낸다 → 백엔드가 거리순(searchtypCd=R)으로 찾는다 */
+  const near = async (at: LatLng, radius: string) => {
     try {
       const res = await searchPlaces({
         keyword,
         lat: String(at.latitude),
         lon: String(at.longitude),
         radiusKm: radius,
+        size: SEARCH_SIZE,
       })
       return res.places?.length ? res : null
     } catch {
@@ -88,19 +128,74 @@ export async function searchPlacesNear(
     }
   }
 
-  // 1. 현재 위치 근처
-  const near = center ? await attempt(center, radiusKm) : null
-  if (near && hasRelevantPlace(near.places, keyword)) return near
+  /**
+   * 좌표를 **빼고** 보낸다 → 백엔드가 정확도순(searchtypCd=A)으로 찾는다.
+   *
+   * 대신 전국이 대상이 되므로, 받아서 **서비스 지역 안만 남긴다.**
+   * 이 앱은 수원 서비스라 수원 밖 결과는 고를 수 있는 것이 아니다.
+   */
+  const byAccuracy = async (word: string) => {
+    try {
+      const res = await searchPlaces({ keyword: word, size: SEARCH_SIZE })
+      const places = (res.places ?? []).filter(
+        (p) =>
+          distanceKm({ latitude: p.latitude, longitude: p.longitude }, SUWON_CENTER) <=
+          SERVICE_RADIUS_KM,
+      )
+      return places.length ? { ...res, places } : null
+    } catch {
+      return null
+    }
+  }
 
-  // 2. 서비스 지역(수원) 안 — 수원 밖에서 앱을 열어도 수원 장소를 찾을 수 있어야 한다
-  const inService = await attempt(SUWON_CENTER, SERVICE_SEARCH_RADIUS_KM)
-  if (inService && hasRelevantPlace(inService.places, keyword)) return inService
+  // 1. 현재 위치 근처 (거리순)
+  const found = center ? await near(center, radiusKm) : null
+  const foundOk = !!(found && hasRelevantPlace(found.places, keyword))
+  if (found && foundOk && hasStrongMatch(found.places, keyword)) return found
 
-  // 3. 어디서도 딱 맞는 게 없었다. 그래도 받아온 것이 있으면 보여준다 —
+  // 2. 서비스 지역(수원) 안 (거리순) — 근처에서 관계있는 것조차 못 찾았을 때만
+  let wide: PlaceSearchResponse | null = null
+  let wideOk = false
+  if (!foundOk) {
+    wide = await near(SUWON_CENTER, SERVICE_SEARCH_RADIUS_KM)
+    wideOk = !!(wide && hasRelevantPlace(wide.places, keyword))
+    if (wide && wideOk && hasStrongMatch(wide.places, keyword)) return wide
+  }
+
+  /*
+   * 3. 정확도순으로 다시.
+   *
+   * 여기까지 왔다는 것은 **찾던 그곳이 목록에 없다**는 뜻이다. 거리순으로는 그런 일이
+   * 흔하다 — 「광교중앙역」을 찾으면 반경 안의 「워시프렌즈 광교중앙역점」 같은 가게들이
+   * 앞을 다 채우고 정작 역은 20건 안에 들어오지도 않는다(2026-08-16 실측).
+   * 같은 검색어를 정확도순으로 부르면 역이 1위로 나온다.
+   *
+   * 두 글자 낱말(병원·약국·마트)은 건너뛴다. 그런 이름의 장소는 없어서 어차피
+   * 「찾던 그곳」이 나올 수 없고, 가까운 곳이 나오는 지금 방식이 맞다.
+   *
+   * 「근처」·「주변」이 붙은 말도 건너뛴다. 그건 **가까운 곳을 달라는 요청**이라
+   * 정확도순으로 바꾸면 되레 엉뚱해진다 — 「근처 지하철역」에 정확도순을 쓰면
+   * 이름이 그런 역을 찾게 된다.
+   */
+  if (keyword.replace(/\s+/g, '').length >= 3 && !NEARBY_WORDS.test(keyword)) {
+    const exact = await byAccuracy(keyword)
+    if (exact && hasStrongMatch(exact.places, keyword)) return exact
+
+    // 사람이 부르는 이름과 지도 이름이 다를 때 — 「광교중앙역」 → 「광교중앙」
+    const trimmed = trimPlaceSuffix(keyword)
+    if (trimmed) {
+      const retry = await byAccuracy(trimmed)
+      if (retry && hasRelevantPlace(retry.places, keyword)) return retry
+    }
+  }
+
+  // 4. 딱 맞는 것은 없었다. 관계있는 것이라도 보여준다 —
   //    우리 판단이 틀렸을 수도 있고, 화면에 「다시 말하기」가 있으니 막다른 길은 아니다.
+  if (found && foundOk) return found
+  if (wide && wideOk) return wide
   return (
-    near ??
-    inService ?? { places: [], pagination: { page: 1, size: 0, totalCount: 0, hasNext: false } }
+    found ??
+    wide ?? { places: [], pagination: { page: 1, size: 0, totalCount: 0, hasNext: false } }
   )
 }
 

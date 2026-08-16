@@ -90,6 +90,27 @@ export function hasRelevantPlace(places: { name: string }[], keyword: string): b
 }
 
 /**
+ * 「찾던 그곳」이 목록에 있는가 — 이름이 검색어와 같거나 검색어로 시작하는 것.
+ *
+ * 관계 판정(isRelevantPlace)만으로는 부족하다. 그건 아주 느슨해서
+ * 「워시프렌즈 광교중앙역점」도 「광교중앙역」과 관계있다고 본다. 실제로 그것 때문에
+ * 1단계 검색이 성공으로 처리돼서, 정작 역이 없는 목록을 그대로 내보냈다(2026-08-16).
+ *
+ *   「광교중앙역[신분당선]」  ← 검색어로 시작한다. 찾던 그곳이다
+ *   「워시프렌즈 광교중앙역점」 ← 관계는 있지만 찾던 그곳은 아니다
+ *
+ * 느슨한 판정은 "여기서 그만해도 되나"에, 이 판정은 "제대로 찾았나"에 쓴다.
+ */
+export function hasStrongMatch(places: { name: string }[], keyword: string): boolean {
+  const k = normalize(keyword)
+  if (!k) return false
+  return places.some((p) => {
+    const n = normalize(p.name)
+    return n === k || n.startsWith(k)
+  })
+}
+
+/**
  * 검색어와의 일치 정도. 낮을수록 먼저.
  * 0 완전히 같음 · 1 검색어로 시작 · 2 검색어를 품음 · 3 그 밖
  */
