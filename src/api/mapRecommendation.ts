@@ -44,6 +44,15 @@ export interface RouteDisplayContext {
 }
 
 /** 카드별 편집 문구 템플릿 — BE 가 안 주는 값이라 프론트가 유지 (mock/route.ts 와 같은 voice). */
+/**
+ * 「걷기 적은 길」이라고 부르려면 이만큼은 덜 걸어야 한다(초).
+ * 5분 ≈ 330m — 근거는 아래 secondLabel 주석 참고.
+ */
+const LESS_WALK_SEC = 300
+
+/** 「빠른 길」이라고 부르려면 이만큼은 일찍 닿아야 한다(초) */
+const FASTER_SEC = 300
+
 const CARD_TEXT: Record<RouteKey, { title: string; sub: string; notice: string }> = {
   comfort: {
     title: '가장 편한 길',
@@ -164,8 +173,18 @@ function buildStairComparison(items: RouteRecommendationItemDto[]): StairCompari
  * 어르신에게 「걷기 적은 길」은 몸이 덜 힘들다는 약속이다. 1분 덜 걷는 길에
  * 그렇게 적으면 지키지 못할 약속이 된다. 그래서 차이가 뚜렷할 때만 그 이름을 쓴다.
  *
- * 기준은 **걷는 시간 3분** 또는 **걷는 거리 200m**. 3분은 신호등 한 번 더 기다리는
- * 정도이고, 200m 는 버스 한 정거장 남짓이다 — 그쯤 되어야 사람이 체감한다.
+ * 기준은 **걷는 시간 5분**(약 330m)이다.
+ *
+ * 왜 시간 하나만 보는가 — 처음에는 「3분 또는 200m」로 두 조건을 걸었는데,
+ * 실제 응답을 재보니 TMAP 은 보행 속도를 약 1.1 m/s 로 잡는다(147m/133초,
+ * 3227m/2806초). 그러면 180초가 곧 198m 라, 두 조건이 같은 선이어서 OR 이
+ * 아무 일도 하지 않았다. 조건인 척하는 조건은 없느니만 못하다.
+ *
+ * 왜 5분인가 — 두 가지 실수 중 **거짓 라벨이 놓친 라벨보다 나쁘다.**
+ * 별 차이 없는데 「걷기 적은 길」이라고 하면 골라 보고 똑같이 힘들어서 다음부터
+ * 라벨을 안 믿는다. 반면 라벨을 안 붙여도 걷는 시간은 카드에 그대로 보이니
+ * 사용자가 직접 알아본다. 그래서 엄격한 쪽으로 기울인다.
+ * 330m 는 교통약자가 「한 번에 걷기 부담」으로 느끼기 시작하는 거리대다.
  */
 function secondLabel(
   first: RouteRecommendationItemDto | undefined,
@@ -175,13 +194,11 @@ function secondLabel(
   const a = first.candidate.metrics
   const b = second.candidate.metrics
 
-  const walkGap = a.totalWalkTimeSec - b.totalWalkTimeSec
-  const distGap = a.totalWalkDistanceM - b.totalWalkDistanceM
   // 기본 문구(걷기 적은 길)를 그대로 쓴다
-  if (walkGap >= 180 || distGap >= 200) return undefined
+  if (a.totalWalkTimeSec - b.totalWalkTimeSec >= LESS_WALK_SEC) return undefined
 
-  const timeGap = a.totalTimeSec - b.totalTimeSec
-  if (timeGap >= 180) {
+  // 걷는 양은 비슷하다. 그러면 더 일찍 닿는지를 본다.
+  if (a.totalTimeSec - b.totalTimeSec >= FASTER_SEC) {
     return { title: '빠른 길', sub: '걷는 양은 비슷하지만 더 일찍 도착하는 경로' }
   }
   return { title: '다른 길', sub: '걷는 양과 걸리는 시간이 비슷한 또 다른 경로' }
