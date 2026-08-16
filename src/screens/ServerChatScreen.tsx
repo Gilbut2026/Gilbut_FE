@@ -346,14 +346,38 @@ export function ServerChatScreen({
    * 장소 후보 — 화면 모양과 더 보기 동작은 PlaceCandidates 가 갖고 있다.
    * 스크립트 대화도 같은 것을 쓴다 — 엔진이 바뀌어도 화면은 같아야 한다.
    */
-  function placeCandidates(ranked: RankedPlaces, onPick: (p: PlaceItemResponse) => void) {
+  /**
+   * 장소 후보 카드.
+   * @param kind 무엇을 고르는 중인지 — 목적지와 출발지는 묻는 말도, 다시 묻는 방법도 다르다
+   */
+  function placeCandidates(
+    ranked: RankedPlaces,
+    onPick: (p: PlaceItemResponse) => void,
+    kind: 'destination' | 'origin' = 'destination',
+  ) {
+    const isOrigin = kind === 'origin'
     return (
       <PlaceCandidates
         ranked={ranked}
         onPick={onPick}
         disabled={busy}
-        // 화면만 되돌리면 서버는 그대로라 다음 발화가 409 가 된다 (restartDestination 주석 참고)
-        onRedo={() => void restartDestination('다시 말씀해 주세요. 어디로 가고 싶으세요?')}
+        title={isOrigin ? '어디서 출발하세요?' : '어디로 모실까요?'}
+        hint={isOrigin ? '출발하실 곳을 골라주세요.' : '가시려는 곳을 골라주세요.'}
+        /*
+         * 목적지는 서버 세션째 되돌린다 — 화면만 되돌리면 다음 발화가 409 다
+         * (restartDestination 주석 참고).
+         *
+         * 출발지는 되돌리지 않는다. 서버는 이미 출발지를 묻는 단계에 있어서 다시
+         * 물어보기만 하면 되고, 세션을 되돌리면 **애써 확정한 목적지까지 날아간다.**
+         */
+        onRedo={
+          isOrigin
+            ? () => {
+                botSay('출발지를 다시 알려주세요.')
+                askFor('ORIGIN_CONFIRMATION')
+              }
+            : () => void restartDestination('다시 말씀해 주세요. 어디로 가고 싶으세요?')
+        }
       />
     )
   }
@@ -562,7 +586,7 @@ export function ServerChatScreen({
         return
       }
       botSay('찾은 장소예요. 출발지가 맞는 것을 골라주세요.')
-      card(placeCandidates(rankPlaceCandidates(res.places, keyword), pickPlaceOrigin))
+      card(placeCandidates(rankPlaceCandidates(res.places, keyword), pickPlaceOrigin, 'origin'))
     } catch (e) {
       fail(e)
     } finally {

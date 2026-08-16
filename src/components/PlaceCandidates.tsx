@@ -36,12 +36,21 @@ export function PlaceCandidates({
   onPick,
   onRedo,
   disabled,
+  title = '어디로 모실까요?',
+  hint = '가시려는 곳을 골라주세요.',
 }: {
   ranked: RankedPlaces
   onPick: (place: PlaceItemResponse) => void
-  /** "찾는 곳이 없어요" — 목적지를 처음부터 다시 묻는다 */
+  /** "찾는 곳이 없어요" — 다시 묻는다 */
   onRedo: () => void
   disabled?: boolean
+  /*
+   * 이 카드는 목적지와 출발지에 **둘 다** 쓰인다.
+   * 문구를 하나로 박아두었더니 출발지를 고르는데 「가시려는 곳을 골라주세요」가 떴다
+   * (2026-08-16). 어디를 묻는 건지 사람이 알 수 없으면 고를 수가 없다.
+   */
+  title?: string
+  hint?: string
 }) {
   const [expanded, setExpanded] = useState(false)
   const endRef = useRef<HTMLDivElement>(null)
@@ -78,8 +87,8 @@ export function PlaceCandidates({
 
   return (
     <>
-      <h3>어디로 모실까요?</h3>
-      <p>가시려는 곳을 골라주세요.</p>
+      <h3>{title}</h3>
+      <p>{hint}</p>
 
       {/* key 에 순번을 섞는다 — BE 응답의 placeId 가 중복으로 온다
           (본원·정문·후문·지하주차장이 모두 "159346"). placeId 만 쓰면 React 가
