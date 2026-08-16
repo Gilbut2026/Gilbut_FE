@@ -8,7 +8,7 @@
  * '계단 1곳 12칸'·'횡단보도 2곳 확인')를 그대로 덮어썼다. 실제로 무엇을 골랐든
  * 화면에는 늘 같은 숫자가 나왔다(2026-08-16). 지어낸 숫자를 사실처럼 보여준 것이다.
  *
- * 지금은 BE 가 준 두 보행 경로(DEFAULT · AVOID_STAIRS)의 실제 값만 쓴다.
+ * 지금은 BE 가 준 두 보행 경로(SHORTEST · AVOID_STAIRS)의 실제 값만 쓴다.
  * 모르는 것은 쓰지 않는다 — 계단 개수는 BE 접근성 신호에 있을 때만 나온다.
  */
 import type { RouteFacility, RouteOption, StairComparison } from '../types/dto'
@@ -39,6 +39,17 @@ export function applyStairChoice(
 
   return {
     ...option,
+    /*
+     * 길 안내도 고른 쪽으로 바꾼다.
+     *
+     * 예전에는 숫자만 바꾸고 이건 그대로 뒀다. 「계단 없는 길」을 고르셨는데
+     * 지도와 단계는 계단 있는 길이었다 — 계단이 어렵다고 답하신 분을 계단으로
+     * 보내는 것이라 그냥 안 맞는 정도가 아니다.
+     *
+     * 고른 쪽 상세가 없으면 **원래 것을 쓰지 않고 비운다.** 안내 화면이
+     * 「길 안내를 준비하지 못했어요」로 알린다 — 틀린 길을 안내하느니 낫다.
+     */
+    directions: chosen.directions,
     time: min(chosen.minutes),
     walk: min(chosen.walkMinutes),
     sub:

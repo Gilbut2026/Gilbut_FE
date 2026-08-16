@@ -148,9 +148,23 @@ const CALL_TAXI: RouteOption = {
  * 계단 회피의 대가 — PoC 실측: 화성행궁→서장대 +1,123m(+13분), 화서역→서호노인복지관 +1,083m(+16분).
  * 계단을 '조금 어려움'으로 답한 분에게는 앱이 임의로 정하지 않고 두 경로를 나란히 보여준다.
  */
+/*
+ * 양쪽 다 같은 걷기 안내를 붙여둔다.
+ *
+ * 실서버는 SHORTEST · AVOID_STAIRS 두 경로의 서로 다른 상세를 준다. Mock 은 걷기
+ * 안내가 하나뿐이라 진짜로 다른 길을 흉내 낼 수 없다 — 대신 **비워두면 안 된다.**
+ * 비우면 계단을 고른 뒤 「길 안내를 준비하지 못했어요」가 떠서, 실서버 문제인지
+ * Mock 한계인지 구분이 안 된다.
+ */
 const STAIR_COMPARISON: StairComparison = {
-  withStairs: { minutes: 28, walkMinutes: 9, meters: 850, stairFact: '계단 1곳 · 12칸을 오르내려야 해요' },
-  noStairs: { minutes: 41, walkMinutes: 22, meters: 1973 },
+  withStairs: {
+    minutes: 28,
+    walkMinutes: 9,
+    meters: 850,
+    stairFact: '계단 1곳 · 12칸을 오르내려야 해요',
+    directions: MOCK_WALK_DIRECTIONS,
+  },
+  noStairs: { minutes: 41, walkMinutes: 22, meters: 1973, directions: MOCK_WALK_DIRECTIONS },
 }
 
 /** 미니맵 경로 곡선 (viewBox 300×120) */

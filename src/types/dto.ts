@@ -423,6 +423,15 @@ export interface StairRouteOption {
   walkMinutes: number
   /** 걷는 거리(m) */
   meters: number
+  /**
+   * 고른 쪽의 실제 길 안내.
+   *
+   * 이게 없으면 **고른 것과 다른 길을 안내하게 된다.** 예전에는 카드의 숫자만
+   * 바꾸고 지도·단계는 원래 것을 그대로 뒀다. 「계단 없는 길」을 고르셨는데
+   * 안내는 계단 있는 길로 나가는 셈이라, 계단이 어렵다고 답하신 분을 계단으로
+   * 보낼 수 있었다(2026-08-16 — 비교 화면이 안 떠서 드러나지 않았을 뿐이다).
+   */
+  directions?: RouteDirections
 }
 
 export interface StairComparison {
@@ -520,8 +529,24 @@ export interface RouteRecommendationRequest {
 /** 경로 이동 유형 */
 export type RouteType = 'WALKING' | 'TRANSIT'
 
-/** 보행 경로 탐색 조건 (TRANSIT 후보에서는 null) */
-export type WalkingRouteOption = 'DEFAULT' | 'AVOID_STAIRS'
+/**
+ * 보행 경로 탐색 조건 (TRANSIT 후보에서는 null).
+ *
+ * BE 가 프로필의 계단 난이도에 따라 정해서 부른다 (2026-08-16 반영):
+ *
+ *   AVAILABLE              DEFAULT(0)                     계단 상관 없음 → 추천 경로
+ *   SLIGHTLY_DIFFICULT     SHORTEST(10) + AVOID_STAIRS(30)  두 갈래를 다 뽑아 견주게 한다
+ *   DIFFICULT · WHEELCHAIR AVOID_STAIRS(30)               계단은 아예 뺀다
+ *
+ * 왜 SHORTEST 가 생겼나 — 예전에는 DEFAULT(추천) ↔ AVOID_STAIRS 로 견줬는데,
+ * TMAP 의 추천 경로는 애초에 계단을 잘 안 넣는다. 그래서 **양쪽 다 계단이 없어
+ * 비교가 성립하지 않았다.** 최단(SHORTEST)으로 바꾸면 계단이 있는 길이 실제로
+ * 나오므로, 그때만 두 갈래가 내려온다.
+ *
+ * SLIGHTLY_DIFFICULT 라도 최단 경로에 계단이 없으면 BE 가 AVOID_STAIRS 를 빼고
+ * 하나만 내려준다 — 그때는 고를 것이 없으니 비교 화면도 뜨지 않는다.
+ */
+export type WalkingRouteOption = 'DEFAULT' | 'SHORTEST' | 'AVOID_STAIRS'
 
 /** 경로 후보 지표 (초·미터 단위 원본) */
 export interface RouteMetricsDto {

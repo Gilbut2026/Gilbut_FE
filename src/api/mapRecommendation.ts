@@ -17,7 +17,7 @@
  *      어르신 대상이라 "정보가 없다"는 사실 자체가 판단에 필요하다.
  *   5. 문구(title·sub)·미니맵: BE 가 안 주는 편집 정보라 아래 CARD_TEXT 템플릿을 유지한다(mock 과 동일 voice).
  *      단 notice 는 BE recommendationReason 이 있으면 그것을 우선한다(사람이 읽는 추천 사유).
- *   6. stairComparison: BE WALKING DEFAULT ↔ AVOID_STAIRS 두 후보로 구성한다. 계단 신호가
+ *   6. stairComparison: BE WALKING SHORTEST ↔ AVOID_STAIRS 두 후보로 구성한다. 계단 신호가
  *      노출되면서 "계단 몇 곳" 을 실제로 채울 수 있게 됐다.
  *      계단을 '조금 어려움'으로 답한 분에게만 물어보는 화면이라(7/31 회의), 두 후보가
  *      모두 있을 때만 만든다. 하나뿐이면 비교할 것이 없어 null 이다.
@@ -133,22 +133,36 @@ function facilitiesFromMetrics(item: RouteRecommendationItemDto): RouteFacility[
 
 /**
  * 계단 있는 길 ↔ 없는 길 비교 구성.
- * BE 는 보행 경로를 DEFAULT(계단 허용)와 AVOID_STAIRS(계단 회피) 두 갈래로 뽑아준다.
- * 둘 다 있을 때만 비교가 성립한다 — 하나뿐이면 고를 것이 없다.
+ *
+ * 계단을 「조금 어려움」으로 답하신 분에게만 BE 가 두 갈래를 내려준다
+ * (SHORTEST = 최단, AVOID_STAIRS = 계단 회피). 둘 다 있을 때만 비교가 성립한다 —
+ * 하나뿐이면 고를 것이 없다.
+ *
+ * 예전에는 DEFAULT(추천) ↔ AVOID_STAIRS 로 견줬는데 **비교가 아예 안 됐다.**
+ * TMAP 추천 경로는 애초에 계단을 잘 안 넣어서 양쪽 다 계단이 없었고, 그래서
+ * 계단 화면을 띄울 만한 경로를 네 군데나 찾아봐도 하나도 안 나왔다(2026-08-16).
+ * BE 가 SHORTEST 로 바꿔주면서 풀렸다.
+ *
+ * DEFAULT 도 받아준다. 계단 있는 쪽은 「회피가 아닌 길」이라는 뜻이지 특정 옵션
+ * 이름이 아니고, 프로필이 바뀌거나 BE 가 되돌려도 화면이 조용히 죽지 않는다.
  */
-function buildStairComparison(items: RouteRecommendationItemDto[]): StairComparison | null {
-  const withStairs = items.find(
-    (i) => i.candidate.routeType === 'WALKING' && i.candidate.routeOption === 'DEFAULT',
-  )
-  const noStairs = items.find(
-    (i) => i.candidate.routeType === 'WALKING' && i.candidate.routeOption === 'AVOID_STAIRS',
-  )
+function buildStairComparison(
+  be: RouteRecommendationResult,
+  items: RouteRecommendationItemDto[],
+): StairComparison | null {
+  const walking = items.filter((i) => i.candidate.routeType === 'WALKING')
+  const withStairs =
+    walking.find((i) => i.candidate.routeOption === 'SHORTEST') ??
+    walking.find((i) => i.candidate.routeOption === 'DEFAULT')
+  const noStairs = walking.find((i) => i.candidate.routeOption === 'AVOID_STAIRS')
   if (!withStairs || !noStairs) return null
 
   const toOption = (i: RouteRecommendationItemDto) => ({
     minutes: toMinutes(i.candidate.metrics.totalTimeSec),
     walkMinutes: toMinutes(i.candidate.metrics.totalWalkTimeSec),
     meters: i.candidate.metrics.totalWalkDistanceM,
+    // 고른 쪽의 길 안내를 함께 들고 간다 — 숫자만 바꾸면 다른 길로 안내하게 된다
+    directions: buildDirections(be, i.routeId),
   })
 
   // 계단이 몇 곳인지 BE 접근성 신호에서 가져온다. 모르면 숫자를 지어내지 않는다.
@@ -374,7 +388,7 @@ export function mapRecommendationToRouteResult(
     filteredReasons: filterReasons(be.filteredResults),
     recommendedKey,
     // 계단 있는 길 ↔ 없는 길. 두 후보가 다 있을 때만 물어본다(위 주석 6).
-    stairComparison: buildStairComparison(ranked),
+    stairComparison: buildStairComparison(be, ranked),
     // 똑버스·콜택시 안내 화면이 자리표시자 대신 실제 값을 쓰도록 함께 넘긴다
     drtGuide: be.drtGuide ?? null,
     drtReasons: drt?.reasonCodes ?? [],

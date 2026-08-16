@@ -40,6 +40,9 @@ function formatDuration(totalSec: number): string {
 function toBadge(r: RouteHistoryResponse): { label: string; tone: 'default' | 'drt' | 'warn' } {
   if (r.drtRecommended) return { label: '똑버스', tone: 'drt' }
   if (r.recommendedRouteOption === 'AVOID_STAIRS') return { label: '계단 적은 길', tone: 'warn' }
+  // 계단을 「조금 어려움」으로 답하신 분에게 내려가는 최단 경로(2026-08-16 BE 반영).
+  // 「도보」로만 적으면 계단 있는 길을 고르셨다는 것이 이력에 남지 않는다.
+  if (r.recommendedRouteOption === 'SHORTEST') return { label: '짧은 길', tone: 'default' }
   if (r.recommendedRouteType === 'TRANSIT') return { label: '대중교통', tone: 'default' }
   return { label: '도보', tone: 'default' }
 }
@@ -48,6 +51,7 @@ function toBadge(r: RouteHistoryResponse): { label: string; tone: 'default' | 'd
 function toRouteKey(r: RouteHistoryResponse): RouteKey {
   if (r.drtRecommended) return 'drt'
   if (r.recommendedRouteOption === 'AVOID_STAIRS') return 'short'
+  if (r.recommendedRouteOption === 'SHORTEST') return 'short'
   return 'comfort'
 }
 
