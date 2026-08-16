@@ -3,6 +3,7 @@ import { getRoutes } from '../api/route'
 import type { ChatOutcome } from '../types/nav'
 import { ApiError } from '../api/client'
 import { speak } from '../state/tts'
+import { arrivalLabel } from '../api/time'
 import { TopBar } from '../components/TopBar'
 import { applyStairChoice } from '../api/stairChoice'
 import { getMobilityProfile } from '../api/user'
@@ -125,15 +126,21 @@ function RouteStrip({
 function RouteView({
   result,
   selected,
+  departureDateTime,
   onCompare,
   onGuide,
 }: {
   result: RouteResult
   selected: RouteOption
+  /** 대화에서 고른 출발 시각. 없으면 지금 나서는 것으로 본다 */
+  departureDateTime: string | null
   onCompare: () => void
   onGuide: (guide: RouteOption['guide'], result: RouteResult, option: RouteOption) => void
 }) {
   const isRec = selected.key === result.recommendedKey
+  // 소요시간을 못 읽어내면 도착 시각도 적지 않는다 — 틀린 시각은 없느니만 못하다
+  const selectedMin = minutesOf(selected.time)
+  const arriveAt = selectedMin == null ? null : arrivalLabel(departureDateTime, selectedMin)
   return (
     <div>
       <div className="result-intro">
@@ -164,6 +171,8 @@ function RouteView({
             <div className="metric">
               <span>예상 시간</span>
               <strong>{selected.time}</strong>
+              {/* 약속 시간과 견주려면 「몇 시 도착」이 있어야 한다. 암산은 우리가 한다 */}
+              {arriveAt && <em className="metric-when">{arriveAt} 도착</em>}
             </div>
             <div className="metric">
               <span>걷는 시간</span>
@@ -283,12 +292,14 @@ function RouteCompareSheet({
   open,
   result,
   selectedKey,
+  departureDateTime,
   onPick,
   onClose,
 }: {
   open: boolean
   result: RouteResult
   selectedKey: RouteKey
+  departureDateTime: string | null
   onPick: (key: RouteKey) => void
   onClose: () => void
 }) {
@@ -341,7 +352,13 @@ function RouteCompareSheet({
                     <em className="walkless">가장 적게 걸음</em>
                   )}
                 </div>
-                <div className="big">{o.time}</div>
+                <div className="big">
+                  {o.time}
+                  {/* 길마다 도착 시각이 다르다 — 견주는 화면이니 여기가 오히려 더 필요하다 */}
+                  {times[i] != null && arrivalLabel(departureDateTime, times[i]) && (
+                    <em className="when">{arrivalLabel(departureDateTime, times[i])} 도착</em>
+                  )}
+                </div>
                 <div className="facts">
                   <span>
                     걷기 <b>{o.walk}</b>
@@ -645,6 +662,7 @@ export function ResultsScreen({
           <RouteView
             result={result}
             selected={selected}
+            departureDateTime={departureDateTime}
             onCompare={() => setCompareOpen(true)}
             onGuide={onGuide}
           />
@@ -656,6 +674,7 @@ export function ResultsScreen({
           open={compareOpen}
           result={result}
           selectedKey={selected.key}
+          departureDateTime={departureDateTime}
           onPick={pickRoute}
           onClose={() => setCompareOpen(false)}
         />

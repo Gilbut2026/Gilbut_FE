@@ -596,6 +596,10 @@ button { color: inherit; }
 .route-facility:active svg { transform: scale(0.94); transform-origin: 50% 100%; }
 
 /* 토글 — 지도 바로 아래. 무엇이 켜졌는지 지도와 함께 보여야 한다 */
+/* 도착 예정 시각 — 소요시간 아래 한 줄. 추정치라 본 값보다 작고 흐리게 둔다 */
+.metric-when { display: block; margin-top: 3px; font-size: 15px; font-weight: 750; font-style: normal; color: var(--ink-3); }
+.route-pick .big .when { display: block; margin-top: 2px; font-size: 15px; font-weight: 750; font-style: normal; color: var(--ink-3); }
+
 .facility-toggles { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; margin-top: 9px; }
 .facility-toggle { display: inline-flex; align-items: center; gap: 7px; min-height: 44px; padding: 0 15px; border-radius: 999px; border: 2px solid rgba(21, 33, 59, 0.12); background: rgba(255, 255, 255, 0.9); color: var(--ink-3); font-family: inherit; font-size: 17px; font-weight: 850; cursor: pointer; }
 .facility-toggle.on { border-color: var(--violet); background: rgba(238, 234, 254, 0.8); color: var(--violet-deep); }

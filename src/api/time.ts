@@ -72,3 +72,41 @@ export function parseDepartureMinutes(text: string): number | null {
 
   return null
 }
+
+/**
+ * 「몇 시에 도착하는지」를 적어준다 — '오후 3시 12분쯤'.
+ *
+ * 왜 필요한가 — 화면에는 "약 25분"만 있었다. 그런데 어르신이 실제로 하는 계산은
+ * **약속 시간과의 비교**다. "2시 반 약속인데 지금 나가면 되나"를 알려면 25분을
+ * 지금 시각에 더해야 하는데, 그 암산을 사용자에게 시키고 있었다.
+ *
+ * 기준은 출발 시각이다. 대화에서 "3시에 출발"이라고 고르셨으면 3시 + 소요시간이지,
+ * 지금 + 소요시간이 아니다. 안 고르셨으면 지금 나서는 것으로 본다.
+ *
+ * 「쯤」을 붙이는 것은 일부러다. 소요시간 자체가 추정치라 도착 시각도 추정치인데,
+ * "3시 12분 도착"이라고 딱 적으면 약속처럼 읽힌다. 어르신은 화면에 적힌 것을
+ * 그대로 믿으신다 — 우리가 모르는 만큼은 문장에도 남겨야 한다.
+ *
+ * 값을 못 읽어내면 null. 그때는 이 줄을 아예 안 그린다.
+ */
+export function arrivalLabel(departureDateTime: string | null, minutes: number): string | null {
+  if (!Number.isFinite(minutes) || minutes < 0) return null
+
+  // 'YYYY-MM-DDTHH:mm:ss' 는 시간대 표기가 없어 로컬 시각으로 해석된다 — 우리가 보낸 그대로다
+  const base = departureDateTime ? new Date(departureDateTime) : new Date()
+  if (Number.isNaN(base.getTime())) return null
+
+  const at = new Date(base.getTime() + minutes * 60_000)
+
+  // 날이 넘어가면 반드시 말해준다 — '1시 20분'만 보고 오늘로 읽으면 하루를 헛나선다
+  const midnight = (d: Date) => new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime()
+  const dayGap = Math.round((midnight(at) - midnight(new Date())) / 86_400_000)
+  const day = dayGap === 1 ? '내일 ' : dayGap === 2 ? '모레 ' : dayGap > 2 ? `${dayGap}일 뒤 ` : ''
+
+  const h24 = at.getHours()
+  const half = h24 < 12 ? '오전' : '오후'
+  const h12 = h24 % 12 === 0 ? 12 : h24 % 12
+  const m = at.getMinutes()
+
+  return `${day}${half} ${h12}시${m ? ` ${m}분` : ''}쯤`
+}
