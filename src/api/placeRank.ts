@@ -32,6 +32,16 @@ const SUB_FACILITY = /(주차장|주차빌딩|주차타워|충전소|대피소|�
 const normalize = (s: string): string => s.replace(/\s+/g, '')
 
 /**
+ * 괄호 안 딸림말을 떼어낸 이름.
+ *
+ * 지도의 역 이름에는 노선이나 옛 이름이 괄호로 붙는다 — 「광교중앙(아주대)역」,
+ * 「광교중앙역[신분당선]」. 사람은 그렇게 부르지 않는다.
+ * 떼고 나면 사람이 말한 이름과 그대로 맞는다.
+ */
+const bare = (s: string): string =>
+  normalize(s.replace(/[[(（【][^\])）】]*[\])）】]/g, ''))
+
+/**
  * 주소에서 행정구역만 짧게 뽑는다.
  * "경기 수원시 영통구 월드컵로 164" → "수원시 영통구"
  *
@@ -104,10 +114,25 @@ export function hasRelevantPlace(places: { name: string }[], keyword: string): b
 export function hasStrongMatch(places: { name: string }[], keyword: string): boolean {
   const k = normalize(keyword)
   if (!k) return false
-  return places.some((p) => {
-    const n = normalize(p.name)
-    return n === k || n.startsWith(k)
-  })
+  /*
+   * **이름이 딱 맞을 때만** 찾은 것으로 본다. 괄호 딸림말은 떼고 비교한다.
+   *
+   * 처음엔 「검색어로 시작하면」으로 두었는데 너무 느슨했다 —
+   * 「광교중앙역SKVIEW오피스텔」도 「광교중앙역」으로 시작해서 찾은 것으로
+   * 오해했고, 그 바람에 정말 찾던 역을 더 찾지 않고 멈췄다(2026-08-16).
+   *
+   *   「광교중앙역\[신분당선\]」      → 괄호 떼면 「광교중앙역」. 찾던 그곳 ⭕
+   *   「광교중앙역SKVIEW오피스텔」  → 떼어낼 것이 없다. 다른 곳 ❌
+   */
+  return places.some((p) => bare(p.name) === k || normalize(p.name) === k)
+}
+
+/**
+ * 이 목록이 검색어에 얼마나 잘 맞는가 — 가장 잘 맞는 한 건의 점수.
+ * 낮을수록 좋다. 두 번 검색했을 때 어느 쪽이 나은지 고를 때 쓴다.
+ */
+export function bestMatchTier(places: { name: string }[], keyword: string): number {
+  return places.reduce((best, p) => Math.min(best, matchTier(p.name, keyword)), 9)
 }
 
 /**
@@ -118,7 +143,9 @@ function matchTier(name: string, keyword: string): number {
   const n = normalize(name)
   const k = normalize(keyword)
   if (!k) return 3
-  if (n === k) return 0
+  // 「광교중앙역[신분당선]」처럼 괄호 딸림말만 붙은 것은 같은 이름으로 친다 —
+  // 그래야 역 본체가 「광교중앙역 1번출구」보다 앞에 온다
+  if (n === k || bare(name) === k) return 0
   if (n.startsWith(k)) return 1
   if (n.includes(k)) return 2
   return 3

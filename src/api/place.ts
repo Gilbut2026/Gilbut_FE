@@ -26,7 +26,7 @@ import {
 
 import { useMock } from './mode'
 import { SERVICE_RADIUS_KM, SERVICE_SEARCH_RADIUS_KM, SUWON_CENTER, distanceKm } from './geo'
-import { hasRelevantPlace, hasStrongMatch } from './placeRank'
+import { bestMatchTier, hasRelevantPlace, hasStrongMatch } from './placeRank'
 
 const USE_MOCK = () => useMock('place')
 
@@ -179,7 +179,18 @@ export async function searchPlacesNear(
    */
   if (keyword.replace(/\s+/g, '').length >= 3 && !NEARBY_WORDS.test(keyword)) {
     const exact = await byAccuracy(keyword)
-    if (exact && hasStrongMatch(exact.places, keyword)) return exact
+    /*
+     * 정확도순 쪽이 **더 잘 맞으면** 그것을 쓴다.
+     *
+     * 「딱 맞는 것이 있을 때만」으로 두면, 사람이 줄여 말한 경우(「아주대병원」 →
+     * 지도에는 「아주대학교병원」)에 애써 받아온 더 나은 목록을 버리게 된다.
+     * 두 목록 중 검색어에 더 가까운 쪽을 고르는 편이 언제나 낫다.
+     */
+    const haveTier = bestMatchTier(
+      (foundOk && found ? found.places : wideOk && wide ? wide.places : []) ?? [],
+      keyword,
+    )
+    if (exact && bestMatchTier(exact.places, keyword) < haveTier) return exact
 
     // 사람이 부르는 이름과 지도 이름이 다를 때 — 「광교중앙역」 → 「광교중앙」
     const trimmed = trimPlaceSuffix(keyword)
