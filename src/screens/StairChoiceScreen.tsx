@@ -30,13 +30,39 @@ export function StairChoiceScreen({
 }) {
   const w = comparison.withStairs
   const n = comparison.noStairs
-  const gapMinutes = n.minutes - w.minutes
-  const gapMeters = n.meters - w.meters
+
+  /*
+   * **계단 없는 길이 항상 더 멀다고 볼 수 없다.**
+   *
+   * 예전에는 그렇게 가정하고 `n.meters - w.meters` 를 그대로 적었다. 그런데 BE 가
+   * 비교하는 두 길은 「추천 경로」와 「계단제외 최단 경로」라, 계단 없는 쪽이 더 짧을
+   * 수도 있다. 그러면 화면에 「계단을 피하면 -120m 더 걸어요」가 뜨고 음성도 그렇게
+   * 읽는다. 숫자가 음수로 보이는 순간 나머지 안내까지 못 믿게 된다.
+   *
+   * 세 경우를 갈라서 각각 사실대로 적는다.
+   */
+  const moreMeters = n.meters - w.meters
+  const moreMinutes = n.minutes - w.minutes
+  // 50m·2분 미만은 사람이 체감하지 못한다 — 「더 걷는다」고 할 것이 못 된다
+  const similar = Math.abs(moreMeters) < 50 && Math.abs(moreMinutes) < 2
+  const detour = !similar && (moreMeters > 0 || moreMinutes > 0)
+
+  const diffTitle = similar
+    ? '두 길의 걷는 양이 비슷해요'
+    : detour
+      ? `계단을 피하면 ${moreMeters.toLocaleString()}m 더 걸어요`
+      : `계단을 피해도 더 걷지 않아요`
+
+  const diffText = similar
+    ? '걷는 거리가 거의 같아서, 계단만 놓고 편한 쪽을 고르시면 돼요.'
+    : detour
+      ? `걷는 시간이 ${moreMinutes}분 늘어납니다. 오늘 오래 걷기 힘드시면 계단이 있는 길이 나을 수 있어요.`
+      : `계단 없는 길이 오히려 ${Math.abs(moreMeters).toLocaleString()}m 짧아요.`
 
   const summary =
     `계단을 피할까요? 계단이 있는 길은 ${w.minutes}분에 ${w.meters}미터, ` +
     `계단 없는 길은 ${n.minutes}분에 ${n.meters}미터예요. ` +
-    `계단을 피하면 ${gapMeters}미터, ${gapMinutes}분 더 걸어야 해요.`
+    `${diffTitle}. ${diffText}`
 
   function speak() {
     if (!playVoice(summary)) onToast('이 기기에서는 음성 안내를 쓸 수 없어요')
@@ -56,10 +82,8 @@ export function StairChoiceScreen({
         </p>
 
         <div className="stair-diff">
-          <b>계단을 피하면 {gapMeters.toLocaleString()}m 더 걸어요</b>
-          <span>
-            걷는 시간이 <b>{gapMinutes}분</b> 늘어납니다. 오늘 오래 걷기 힘드시면 계단이 있는 길이 나을 수 있어요.
-          </span>
+          <b>{diffTitle}</b>
+          <span>{diffText}</span>
         </div>
 
         <div className="stair-opt">
@@ -86,10 +110,13 @@ export function StairChoiceScreen({
               <i className="status-icon warn">!</i>
               <span>{w.stairFact}</span>
             </div>
-            <div>
-              <i className="status-icon ok">✓</i>
-              <span>걷는 거리가 가장 짧아요</span>
-            </div>
+            {/* 「가장 짧다」는 사실일 때만 적는다 — 예전에는 늘 붙어 있었다 */}
+            {moreMeters > 0 && (
+              <div>
+                <i className="status-icon ok">✓</i>
+                <span>걷는 거리가 더 짧아요</span>
+              </div>
+            )}
           </div>
           <button className="btn secondary" onClick={() => onPick('with')}>
             이 길로 갈게요
@@ -120,12 +147,22 @@ export function StairChoiceScreen({
               <i className="status-icon ok">✓</i>
               <span>계단·육교·지하보도가 없어요</span>
             </div>
-            <div>
-              <i className="status-icon warn">!</i>
-              <span>
-                대신 {gapMinutes}분 · {gapMeters.toLocaleString()}m 더 걸어야 해요
-              </span>
-            </div>
+            {/* 더 걸어야 할 때만 경고로 적는다. 비슷하거나 더 짧으면 그렇게 적는다 */}
+            {detour ? (
+              <div>
+                <i className="status-icon warn">!</i>
+                <span>
+                  대신 {moreMinutes}분 · {moreMeters.toLocaleString()}m 더 걸어야 해요
+                </span>
+              </div>
+            ) : (
+              <div>
+                <i className="status-icon ok">✓</i>
+                <span>
+                  {similar ? '걷는 양은 계단 있는 길과 비슷해요' : '걷는 거리도 더 짧아요'}
+                </span>
+              </div>
+            )}
           </div>
           <button className="btn secondary" onClick={() => onPick('none')}>
             이 길로 갈게요
