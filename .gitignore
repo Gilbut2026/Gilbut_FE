@@ -8,3 +8,12 @@ logs
 *.log
 npm-debug.log*
 .vite
+
+# 빌드가 자동으로 만드는 것들 — 사람이 고치는 파일이 아니다.
+# tsconfig.node.json 이 composite: true 라서 vite.config.ts 를 컴파일할 때
+# .js / .d.ts / .tsbuildinfo 가 옆에 함께 떨어진다. vite 는 .ts 를 직접 읽으므로
+# 이 결과물들은 아무도 쓰지 않는다.
+# 추적하고 있으면 빌드할 때마다 git status 에 「수정됨」으로 떠서 진짜 변경이 묻힌다.
+*.tsbuildinfo
+vite.config.js
+vite.config.d.ts
