@@ -702,3 +702,9 @@ button { color: inherit; }
   background: var(--violet); color: #fff; font-size: 16px; font-weight: 850;
 }
 .install-note { margin-top: 14px; font-size: 15px; font-weight: 700; color: var(--ink-3); }
+
+/* 길 고르기 시트의 계단 표시 — 계단이 어렵다고 답하신 분이 보는 화면이라
+   「있음」은 눈에 걸려야 하고 「확인 불가」는 「없음」처럼 보이면 안 된다 */
+.route-pick .facts .stair.warn { color: #A8410F; }
+.route-pick .facts .stair.warn b { color: #A8410F; }
+.route-pick .facts .stair.info { color: var(--ink-3); }

@@ -10,6 +10,7 @@ import { getMobilityProfile } from '../api/user'
 import type {
   LatLng,
   RouteErrorKind,
+  RouteFacility,
   RouteFilterCode,
   RouteKey,
   RouteOption,
@@ -288,9 +289,29 @@ function minutesOf(text: string): number | null {
  * 그래서 한 화면에 다 펼친다. 어르신이 실제로 견주는 것은 세 가지다 —
  * 얼마나 걸리나, 얼마나 걷나, 갈아타나. 그것만 크게 적고 나머지는 뺐다.
  */
+/**
+ * 시트에 적을 계단 한 마디.
+ *
+ * 카드의 계단 칸을 그대로 쓰면 안 된다 — 계단 있는 길을 고르신 뒤에는 그 값이
+ * 「계단 1곳 · 12칸을 오르내려야 해요」 같은 문장이라(api/stairChoice), 나란히
+ * 견주는 칸에 넣으면 줄이 밀린다. 개수만 뽑아 짧게 적는다.
+ *
+ * 「확인 불가」를 숨기지 않는 것이 중요하다. 계단이 어렵다고 답하신 분에게
+ * 「모른다」와 「없다」는 전혀 다른 말이다 — 없는 것처럼 보이면 그 길을 고르신다.
+ */
+function stairNote(option: RouteOption): { text: string; status: RouteFacility['status'] } | null {
+  const row = option.facilities.find((f) => f.label === '계단')
+  if (!row) return null
+  if (row.status === 'ok') return { text: '없음', status: 'ok' }
+  if (row.status === 'info') return { text: '확인 불가', status: 'info' }
+  const count = row.value.match(/(\d+)\s*곳/)
+  return { text: count ? `${count[1]}곳` : '있음', status: 'warn' }
+}
+
 function RouteCompareSheet({
   open,
   result,
+  options,
   selectedKey,
   departureDateTime,
   onPick,
@@ -298,14 +319,21 @@ function RouteCompareSheet({
 }: {
   open: boolean
   result: RouteResult
+  /**
+   * 계단 선택까지 반영된 목록.
+   *
+   * 예전에는 시트가 result.options(원본)를 봤다. 그래서 「계단 없는 길」을 고른 뒤
+   * 시트를 열면 **카드는 41분인데 시트는 28분**이었다 — 같은 길이 두 값을 갖는다.
+   */
+  options: RouteOption[]
   selectedKey: RouteKey
   departureDateTime: string | null
   onPick: (key: RouteKey) => void
   onClose: () => void
 }) {
   // 「가장 빠름」·「가장 적게 걸음」은 읽어낸 값이 다 있을 때만 붙인다
-  const times = result.options.map((o) => minutesOf(o.time))
-  const walks = result.options.map((o) => minutesOf(o.walk))
+  const times = options.map((o) => minutesOf(o.time))
+  const walks = options.map((o) => minutesOf(o.walk))
   const best = (list: (number | null)[]) => {
     const usable = list.filter((n): n is number => n != null)
     // 값이 하나뿐이거나 전부 같으면 "가장"이라고 할 것이 없다
@@ -314,6 +342,7 @@ function RouteCompareSheet({
   }
   const fastest = best(times)
   const shortestWalk = best(walks)
+  const stair = options.map(stairNote)
 
   return (
     <>
@@ -329,7 +358,7 @@ function RouteCompareSheet({
         <p>{result.destination}까지 갈 수 있는 길이에요.</p>
 
         <div className="route-picks">
-          {result.options.map((o, i) => {
+          {options.map((o, i) => {
             const on = o.key === selectedKey
             return (
               <button
@@ -366,6 +395,12 @@ function RouteCompareSheet({
                   <span>
                     환승 <b>{o.transfer}</b>
                   </span>
+                  {/* 계단이 어렵다고 답하신 분이 보는 화면이다. 여기 없으면 길을 고를 근거가 빠진다 */}
+                  {stair[i] && (
+                    <span className={`stair ${stair[i]!.status}`}>
+                      계단 <b>{stair[i]!.text}</b>
+                    </span>
+                  )}
                 </div>
               </button>
             )
@@ -673,6 +708,7 @@ export function ResultsScreen({
         <RouteCompareSheet
           open={compareOpen}
           result={result}
+          options={options}
           selectedKey={selected.key}
           departureDateTime={departureDateTime}
           onPick={pickRoute}
