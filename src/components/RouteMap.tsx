@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import type { LatLng, RouteSegment } from '../types/dto'
 
 /**
@@ -17,12 +17,16 @@ import type { LatLng, RouteSegment } from '../types/dto'
  *
  * 키 발급: 카카오 개발자 콘솔 → 내 애플리케이션 → 앱 키 → JavaScript 키.
  *   그리고 플랫폼 → Web → 사이트 도메인에 배포 주소와 http://localhost:5173 을 등록해야 한다.
- *   (등록하지 않은 도메인에서는 카카오가 지도를 내려주지 않는다)
+ *   ⚠️ 그리고 **제품 설정 → 카카오맵 → 활성화**까지 켜져 있어야 한다. 도메인만으로는 안 된다
+ *      (403 disabled OPEN_MAP_AND_LOCAL service). 무료 쿼터는 계정의 첫 활성화 앱에만 준다.
  */
 
 const KAKAO_JS_KEY = import.meta.env.VITE_KAKAO_JS_KEY as string | undefined
 
 const SDK_ID = 'kakao-maps-sdk'
+
+/** 「내 위치로」를 눌렀을 때 당겨 보는 배율. 작을수록 가깝다 */
+const ME_ZOOM_LEVEL = 3
 
 declare global {
   interface Window {
@@ -69,6 +73,11 @@ const SEGMENT_STYLE: Record<'walk' | 'ride', { color: string; style: string; wei
   ride: { color: '#6755F5', style: 'solid', weight: 8 },
 }
 
+/** 내 위치 점. 경로선(보라)과 헷갈리지 않게 파란색으로 둔다 */
+const ME_DOT_HTML = '<div class="me-dot" aria-hidden="true"></div>'
+
+type GeoState = 'idle' | 'ok' | 'denied' | 'unavailable'
+
 export function RouteMap({
   path,
   segments = [],
@@ -82,7 +91,55 @@ export function RouteMap({
 }) {
   const boxRef = useRef<HTMLDivElement>(null)
   const [failed, setFailed] = useState(false)
+  const [geo, setGeo] = useState<GeoState>('idle')
 
+  // 버튼 눌렀을 때 쓰려고 들고 있는 것들
+  const kakaoRef = useRef<any>(null)
+  const mapRef = useRef<any>(null)
+  const boundsRef = useRef<any>(null)
+  /** 내 위치 표시(점 + 정확도 원). 아직 안 만들었으면 null */
+  const meRef = useRef<{ dot: any; ring: any } | null>(null)
+  /** 마지막으로 받은 좌표. 지도가 늦게 뜨는 경우를 위해 들고 있는다 */
+  const lastFixRef = useRef<{ lat: number; lng: number; accuracy: number } | null>(null)
+
+  /**
+   * 내 위치를 지도에 찍는다(이미 있으면 옮긴다).
+   *
+   * 좌표와 지도는 서로 다른 속도로 준비된다 — GPS 가 먼저 올 때도, 지도가 먼저 뜰 때도 있다.
+   * 그래서 양쪽에서 이 함수를 부르고, 여기서 둘 다 준비됐는지 확인한다.
+   */
+  const paintMe = useCallback(() => {
+    const kakao = kakaoRef.current
+    const map = mapRef.current
+    const fix = lastFixRef.current
+    if (!kakao || !map || !fix) return
+
+    const at = new kakao.maps.LatLng(fix.lat, fix.lng)
+    if (meRef.current) {
+      meRef.current.dot.setPosition(at)
+      meRef.current.ring.setPosition(at)
+      meRef.current.ring.setRadius(fix.accuracy)
+      return
+    }
+    meRef.current = {
+      dot: new kakao.maps.CustomOverlay({ map, position: at, content: ME_DOT_HTML, zIndex: 5 }),
+      /*
+       * 정확도 원 — GPS 가 말해준 오차 반경을 그대로 그린다.
+       * 점 하나만 찍으면 "여기 정확히 서 있다"로 읽히는데, 건물 안이면 백 미터씩 틀린다.
+       * 얼마나 확실한지를 함께 보여주는 편이 정직하다.
+       */
+      ring: new kakao.maps.Circle({
+        map,
+        center: at,
+        radius: fix.accuracy,
+        strokeWeight: 0,
+        fillColor: '#2F7BF6',
+        fillOpacity: 0.12,
+      }),
+    }
+  }, [])
+
+  // ── 지도 그리기 ─────────────────────────────────
   useEffect(() => {
     if (!boxRef.current || path.length < 2) return
     let alive = true
@@ -99,9 +156,7 @@ export function RouteMap({
         })
 
         // 토막이 있으면 토막별로, 없으면 전체를 타는 구간처럼 한 줄로 그린다
-        const drawn = segments.length
-          ? segments
-          : [{ kind: 'ride' as const, points: path }]
+        const drawn = segments.length ? segments : [{ kind: 'ride' as const, points: path }]
         for (const seg of drawn) {
           if (seg.points.length < 2) continue
           const s = SEGMENT_STYLE[seg.kind]
@@ -127,6 +182,12 @@ export function RouteMap({
         const bounds = new kakao.maps.LatLngBounds()
         points.forEach((p: any) => bounds.extend(p))
         map.setBounds(bounds, 56, 28, 28, 28)
+
+        kakaoRef.current = kakao
+        mapRef.current = map
+        boundsRef.current = bounds
+        // GPS 가 지도보다 먼저 도착했을 수 있다
+        paintMe()
       })
       .catch(() => {
         if (alive) setFailed(true)
@@ -134,8 +195,57 @@ export function RouteMap({
 
     return () => {
       alive = false
+      meRef.current = null
+      mapRef.current = null
     }
-  }, [path, segments])
+  }, [path, segments, paintMe])
+
+  // ── 내 위치 따라가기 ────────────────────────────
+  /*
+   * watchPosition 을 쓰는 이유 — 길 안내는 걸어가면서 보는 화면이다.
+   * 한 번만 받아오면 출발할 때 자리에 점이 멈춰 있어서, 얼마나 왔는지 알 수 없다.
+   * 화면을 벗어나면 clearWatch 로 끈다(배터리).
+   */
+  useEffect(() => {
+    if (!('geolocation' in navigator)) {
+      setGeo('unavailable')
+      return
+    }
+    const id = navigator.geolocation.watchPosition(
+      (pos) => {
+        lastFixRef.current = {
+          lat: pos.coords.latitude,
+          lng: pos.coords.longitude,
+          accuracy: pos.coords.accuracy || 30,
+        }
+        setGeo('ok')
+        paintMe()
+      },
+      () => setGeo('denied'),
+      { enableHighAccuracy: true, maximumAge: 5_000, timeout: 10_000 },
+    )
+    return () => navigator.geolocation.clearWatch(id)
+  }, [paintMe])
+
+  /** 내 위치를 가운데로 당겨 본다 */
+  const goToMe = useCallback(() => {
+    const kakao = kakaoRef.current
+    const map = mapRef.current
+    const fix = lastFixRef.current
+    if (!kakao || !map || !fix) return
+    const at = new kakao.maps.LatLng(fix.lat, fix.lng)
+    // 배율을 먼저 당기고 나서 옮긴다 — 반대로 하면 옮긴 뒤 확대되면서 두 번 움직여 보인다
+    map.setLevel(ME_ZOOM_LEVEL, { animate: true })
+    map.panTo(at)
+  }, [])
+
+  /** 다시 경로 전체가 보이게 */
+  const goToRoute = useCallback(() => {
+    const map = mapRef.current
+    const bounds = boundsRef.current
+    if (!map || !bounds) return
+    map.setBounds(bounds, 56, 28, 28, 28)
+  }, [])
 
   // 좌표가 없으면 지도를 그릴 것도 없다
   if (path.length < 2) return null
@@ -157,7 +267,55 @@ export function RouteMap({
 
   return (
     <div className="route-map-wrap">
-      <div className="route-map" ref={boxRef} style={style} aria-label="경로 지도" />
+      <div className="route-map-box">
+        <div className="route-map" ref={boxRef} style={style} aria-label="경로 지도" />
+        <div className="route-map-tools">
+          <button
+            type="button"
+            className="map-btn"
+            onClick={goToMe}
+            // 아직 위치를 못 받았으면 눌러도 할 일이 없다 — 눌리는 척하지 않는다
+            disabled={geo !== 'ok'}
+          >
+            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <circle cx="12" cy="12" r="3.4" fill="currentColor" />
+              <circle cx="12" cy="12" r="7.2" stroke="currentColor" strokeWidth="1.9" />
+              <path
+                d="M12 1.8v3.2M12 19v3.2M22.2 12H19M5 12H1.8"
+                stroke="currentColor"
+                strokeWidth="1.9"
+                strokeLinecap="round"
+              />
+            </svg>
+            내 위치
+          </button>
+          <button type="button" className="map-btn" onClick={goToRoute}>
+            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path
+                d="M5 19c0-3 2-4.3 4.8-4.7C12.6 13.9 15 12.6 15 9.6S12.6 5.3 9.8 5"
+                stroke="currentColor"
+                strokeWidth="1.9"
+                strokeLinecap="round"
+              />
+              <circle cx="5" cy="19" r="2" fill="currentColor" />
+              <circle cx="17.5" cy="5" r="2.6" stroke="currentColor" strokeWidth="1.9" />
+            </svg>
+            전체 경로
+          </button>
+        </div>
+      </div>
+
+      {/* 왜 내 위치가 안 뜨는지 알려준다. 아무 말 없이 버튼만 꺼져 있으면 고장으로 보인다 */}
+      {geo === 'denied' && (
+        <p className="route-map-note">
+          위치 사용을 허용하면 지금 계신 곳을 지도에 보여드려요. 허용하지 않아도 길 안내는 그대로
+          보실 수 있어요.
+        </p>
+      )}
+      {geo === 'unavailable' && (
+        <p className="route-map-note">이 기기에서는 현재 위치를 확인할 수 없어요.</p>
+      )}
+
       {showLegend && (
         <div className="route-map-legend">
           <span>
@@ -167,6 +325,9 @@ export function RouteMap({
           <span>
             <i className="walk" aria-hidden="true" />
             걸어가요
+          </span>
+          <span>
+            <i className="me" aria-hidden="true" />내 위치
           </span>
         </div>
       )}

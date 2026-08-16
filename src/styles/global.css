@@ -530,12 +530,28 @@ button { color: inherit; }
 .route-map { width: 100%; height: min(360px, 46vh); border-radius: 18px; overflow: hidden; border: 1px solid rgba(148, 163, 184, 0.22); background: rgba(255, 255, 255, 0.6); }
 .route-map.empty { height: auto; min-height: 132px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 5px; text-align: center; padding: 16px; }
 .route-map-wrap { display: flex; flex-direction: column; gap: 8px; }
+.route-map-box { position: relative; }
+
+/* 지도 위 버튼 — 지도를 가리지 않게 오른쪽 아래 구석에 세로로 둔다.
+   어르신 손가락 기준이라 44px 아래로 내려가지 않게 한다. */
+.route-map-tools { position: absolute; right: 10px; bottom: 10px; z-index: 3; display: flex; flex-direction: column; gap: 8px; align-items: flex-end; }
+.map-btn { display: inline-flex; align-items: center; gap: 6px; min-height: 44px; padding: 0 14px; border: 1px solid rgba(148, 163, 184, 0.35); border-radius: 999px; background: rgba(255, 255, 255, 0.96); color: var(--ink-2); font-size: 16px; font-weight: 850; box-shadow: 0 6px 18px -8px rgba(21, 33, 59, 0.5); cursor: pointer; }
+.map-btn svg { width: 20px; height: 20px; color: var(--violet); }
+.map-btn:disabled { opacity: 0.5; cursor: default; }
+.map-btn:active:not(:disabled) { transform: scale(0.97); }
+
+/* 내 위치 점 — 경로선(보라)과 헷갈리지 않게 파랑. 흰 테두리로 지도 위에서 떠 보이게 한다 */
+.me-dot { width: 20px; height: 20px; border-radius: 50%; background: #2f7bf6; border: 3px solid #fff; box-shadow: 0 2px 8px rgba(21, 33, 59, 0.45); }
+
+.route-map-note { margin: 0; padding: 11px 13px; border-radius: 13px; background: rgba(238, 234, 254, 0.6); color: var(--violet-deep); font-size: 16px; font-weight: 750; line-height: 1.5; }
+
 /* 범례 — 색만으로 구분하지 않도록 선 모양도 함께 보여준다 */
-.route-map-legend { display: flex; justify-content: center; gap: 18px; font-size: 16px; font-weight: 800; color: var(--ink-3); }
+.route-map-legend { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px 18px; font-size: 16px; font-weight: 800; color: var(--ink-3); }
 .route-map-legend span { display: inline-flex; align-items: center; gap: 7px; }
 .route-map-legend i { width: 22px; height: 0; border-top-width: 4px; border-radius: 2px; }
 .route-map-legend i.ride { border-top-style: solid; border-top-color: #6755f5; }
 .route-map-legend i.walk { border-top-style: dashed; border-top-color: #6b7391; }
+.route-map-legend i.me { width: 14px; height: 14px; border: 3px solid #fff; border-radius: 50%; background: #2f7bf6; box-shadow: 0 0 0 1px rgba(21, 33, 59, 0.25); }
 .route-map.empty b { font-size: 18px; font-weight: 900; color: var(--ink-2); }
 .route-map.empty span { font-size: 16px; font-weight: 700; color: var(--ink-3); }
 
