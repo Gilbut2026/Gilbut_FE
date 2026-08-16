@@ -19,6 +19,7 @@ import type {
 } from '../types/dto'
 import { delay } from './_shared'
 import { mockGetMobilityProfile } from './user'
+import { mapRecommendationToRouteResult } from '../api/mapRecommendation'
 
 /**
  * Mock 길 안내 — 수원시청 → 아주대학교병원.
@@ -214,6 +215,25 @@ export function applyStairChoice(option: RouteOption, pick: 'with' | 'none'): Ro
 }
 
 export async function mockGetRoutes(destination: string): Promise<RouteResult> {
+  /*
+   * 실응답을 떠 둔 것이 있으면 그것을 쓴다 — **로컬에서 TMAP 을 안 부르려고** 둔 장치다.
+   * 실서버와 똑같은 어댑터를 통과시키므로, 화면이 보는 것도 실서버와 똑같다.
+   * 지도에 그려지는 좌표도 손으로 그린 선이 아니라 진짜 TMAP 경로가 된다.
+   *
+   * ⚠️ 정적 import 가 아니라 **동적 import** 인 이유 — 이 고정값은 70KB 짜리다.
+   *    위에서 그냥 import 하면 실서버로 도는 배포본에도 통째로 실린다(251KB → 322KB 확인).
+   *    동적 import 로 두면 별도 청크로 갈라져서, Mock 으로 돌 때만 받아온다.
+   */
+  const { REAL_ROUTE_LABEL, REAL_ROUTE_RESULT } = await import('./fixtures/routeRecommendation')
+  if (REAL_ROUTE_RESULT) {
+    return delay(
+      mapRecommendationToRouteResult(REAL_ROUTE_RESULT, {
+        destination: destination || REAL_ROUTE_LABEL.destination,
+        origin: REAL_ROUTE_LABEL.origin,
+      }),
+    )
+  }
+
   const profile = await mockGetMobilityProfile()
   const isWheelchair = profile.mobilityAid === 'WHEELCHAIR'
 

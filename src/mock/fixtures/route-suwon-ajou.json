@@ -1,0 +1,791 @@
+{
+  "requestId": "243795c2-9487-4bd9-abea-8f44e0fd8c59",
+  "scoringVersion": "accessibility-score-v2",
+  "recommendations": [
+    {
+      "routeId": "transit-ec0a2581-3260-4033-96ce-2c65af4d13af",
+      "candidate": {
+        "routeId": "transit-ec0a2581-3260-4033-96ce-2c65af4d13af",
+        "routeType": "TRANSIT",
+        "routeOption": null,
+        "providerRank": 1,
+        "metrics": { "totalTimeSec": 882, "totalWalkTimeSec": 201, "totalWalkDistanceM": 203, "transferCount": 0 }
+      },
+      "score": -0.75,
+      "rank": 1,
+      "recommendationReason": "환승 횟수가 적어 이 경로를 추천했어요.",
+      "accessibilitySummary": {
+        "stair": { "state": "ABSENT", "count": 0 },
+        "overpass": { "state": "ABSENT", "count": 0 },
+        "underpass": { "state": "ABSENT", "count": 0 },
+        "crosswalk": { "state": "PRESENT", "count": 2 }
+      },
+      "scoreBreakdown": { "walkTimePenalty": 0.0, "walkDistancePenalty": 0.0, "obstaclePenalty": 0.0, "transferPenalty": 0.0, "weatherPenalty": 0.0, "slopePenalty": 0.75 },
+      "slopeSummary": { "status": "SUCCESS", "sampleIntervalM": 50, "analyzedSegmentCount": 2, "totalEligibleSegmentCount": 2, "maxUphillGradePercent": 6.0, "maxDownhillGradePercent": 3.58, "totalAscentM": 3.0, "totalDescentM": 2.0 }
+    },
+    {
+      "routeId": "transit-1fde41ff-8156-4436-99e3-493fc052cad4",
+      "candidate": {
+        "routeId": "transit-1fde41ff-8156-4436-99e3-493fc052cad4",
+        "routeType": "TRANSIT",
+        "routeOption": null,
+        "providerRank": 2,
+        "metrics": { "totalTimeSec": 799, "totalWalkTimeSec": 185, "totalWalkDistanceM": 221, "transferCount": 1 }
+      },
+      "score": -2.0,
+      "rank": 2,
+      "recommendationReason": null,
+      "accessibilitySummary": {
+        "stair": { "state": "ABSENT", "count": 0 },
+        "overpass": { "state": "ABSENT", "count": 0 },
+        "underpass": { "state": "ABSENT", "count": 0 },
+        "crosswalk": { "state": "PRESENT", "count": 1 }
+      },
+      "scoreBreakdown": { "walkTimePenalty": 0.0, "walkDistancePenalty": 0.0, "obstaclePenalty": 0.0, "transferPenalty": 2.0, "weatherPenalty": 0.0, "slopePenalty": 0.0 },
+      "slopeSummary": { "status": "PARTIAL", "sampleIntervalM": 50, "analyzedSegmentCount": 2, "totalEligibleSegmentCount": 3, "maxUphillGradePercent": 6.0, "maxDownhillGradePercent": 2.73, "totalAscentM": 3.0, "totalDescentM": 2.0 }
+    },
+    {
+      "routeId": "transit-3b397283-c0d6-4383-813c-e31bc2f18dc2",
+      "candidate": {
+        "routeId": "transit-3b397283-c0d6-4383-813c-e31bc2f18dc2",
+        "routeType": "TRANSIT",
+        "routeOption": null,
+        "providerRank": 3,
+        "metrics": { "totalTimeSec": 836, "totalWalkTimeSec": 185, "totalWalkDistanceM": 221, "transferCount": 1 }
+      },
+      "score": -2.0,
+      "rank": 3,
+      "recommendationReason": null,
+      "accessibilitySummary": {
+        "stair": { "state": "ABSENT", "count": 0 },
+        "overpass": { "state": "ABSENT", "count": 0 },
+        "underpass": { "state": "ABSENT", "count": 0 },
+        "crosswalk": { "state": "PRESENT", "count": 1 }
+      },
+      "scoreBreakdown": { "walkTimePenalty": 0.0, "walkDistancePenalty": 0.0, "obstaclePenalty": 0.0, "transferPenalty": 2.0, "weatherPenalty": 0.0, "slopePenalty": 0.0 },
+      "slopeSummary": { "status": "PARTIAL", "sampleIntervalM": 50, "analyzedSegmentCount": 2, "totalEligibleSegmentCount": 3, "maxUphillGradePercent": 6.0, "maxDownhillGradePercent": 2.73, "totalAscentM": 3.0, "totalDescentM": 2.0 }
+    },
+    {
+      "routeId": "transit-0bb9a302-9080-4dad-8afe-2569ee8f06f7",
+      "candidate": {
+        "routeId": "transit-0bb9a302-9080-4dad-8afe-2569ee8f06f7",
+        "routeType": "TRANSIT",
+        "routeOption": null,
+        "providerRank": 5,
+        "metrics": { "totalTimeSec": 1084, "totalWalkTimeSec": 548, "totalWalkDistanceM": 562, "transferCount": 0 }
+      },
+      "score": -2.7,
+      "rank": 4,
+      "recommendationReason": null,
+      "accessibilitySummary": {
+        "stair": { "state": "ABSENT", "count": 0 },
+        "overpass": { "state": "ABSENT", "count": 0 },
+        "underpass": { "state": "ABSENT", "count": 0 },
+        "crosswalk": { "state": "PRESENT", "count": 5 }
+      },
+      "scoreBreakdown": { "walkTimePenalty": 0.0, "walkDistancePenalty": 0.45, "obstaclePenalty": 0.0, "transferPenalty": 0.0, "weatherPenalty": 0.0, "slopePenalty": 2.25 },
+      "slopeSummary": { "status": "SUCCESS", "sampleIntervalM": 50, "analyzedSegmentCount": 2, "totalEligibleSegmentCount": 2, "maxUphillGradePercent": 8.0, "maxDownhillGradePercent": 6.0, "totalAscentM": 8.0, "totalDescentM": 6.0 }
+    },
+    {
+      "routeId": "transit-ee7b0f14-b756-4c31-ad11-1959e9ad32de",
+      "candidate": {
+        "routeId": "transit-ee7b0f14-b756-4c31-ad11-1959e9ad32de",
+        "routeType": "TRANSIT",
+        "routeOption": null,
+        "providerRank": 4,
+        "metrics": { "totalTimeSec": 1153, "totalWalkTimeSec": 564, "totalWalkDistanceM": 544, "transferCount": 0 }
+      },
+      "score": -2.7,
+      "rank": 5,
+      "recommendationReason": null,
+      "accessibilitySummary": {
+        "stair": { "state": "ABSENT", "count": 0 },
+        "overpass": { "state": "ABSENT", "count": 0 },
+        "underpass": { "state": "ABSENT", "count": 0 },
+        "crosswalk": { "state": "PRESENT", "count": 6 }
+      },
+      "scoreBreakdown": { "walkTimePenalty": 0.0, "walkDistancePenalty": 0.45, "obstaclePenalty": 0.0, "transferPenalty": 0.0, "weatherPenalty": 0.0, "slopePenalty": 2.25 },
+      "slopeSummary": { "status": "SUCCESS", "sampleIntervalM": 50, "analyzedSegmentCount": 2, "totalEligibleSegmentCount": 2, "maxUphillGradePercent": 8.0, "maxDownhillGradePercent": 6.0, "totalAscentM": 8.0, "totalDescentM": 6.0 }
+    }
+  ],
+  "filteredResults": [
+    {
+      "routeId": "walking-d9da3284-6590-4348-abc1-540dfa307852",
+      "status": "FILTERED",
+      "score": null,
+      "rank": null,
+      "filterCodes": ["WALK_TIME_EXCEEDED"],
+      "scoreBreakdown": null,
+      "slopeSummary": { "status": "SUCCESS", "sampleIntervalM": 50, "analyzedSegmentCount": 1, "totalEligibleSegmentCount": 1, "maxUphillGradePercent": 22.0, "maxDownhillGradePercent": 20.0, "totalAscentM": 64.0, "totalDescentM": 57.0 }
+    }
+  ],
+  "drtDecision": {
+    "show": true,
+    "priority": false,
+    "taxiGuide": false,
+    "reasonCodes": ["ASSISTIVE_DEVICE"],
+    "basedOnRouteId": "transit-ec0a2581-3260-4033-96ce-2c65af4d13af"
+  },
+  "drtGuide": {
+    "show": false,
+    "serviceName": "수원 똑버스",
+    "serviceArea": null,
+    "serviceAreaName": null,
+    "contactNumber": null,
+    "availability": "OUT_OF_SERVICE_AREA",
+    "message": "출발지와 도착지가 같은 똑버스 운행 권역에 포함되지 않아요."
+  },
+  "walkingRoute": {
+    "routes": [
+      {
+        "routeId": "walking-d9da3284-6590-4348-abc1-540dfa307852",
+        "routeOption": "DEFAULT",
+        "summary": { "totalDistanceM": 3227, "totalTimeSec": 2806 },
+        "routePoints": [
+{"latitude":37.26280749589526,"longitude":127.02846668898499},{"latitude":37.262732504136785,"longitude":127.02844169334912},
+{"latitude":37.2626214135339,"longitude":127.0288694354208},{"latitude":37.26258531047413,"longitude":127.02908608343905},
+{"latitude":37.2625380980863,"longitude":127.02933050702548},{"latitude":37.262435339355676,"longitude":127.02973047360707},
+{"latitude":37.262182608366274,"longitude":127.03071094726513},{"latitude":37.26214928122522,"longitude":127.03084149190757},
+{"latitude":37.262135394788324,"longitude":127.03088871023368},{"latitude":37.26203818804373,"longitude":127.0311248026407},
+{"latitude":37.26201319262596,"longitude":127.03121923921536},{"latitude":37.26193820667025,"longitude":127.03151921409399},
+{"latitude":37.26198820345759,"longitude":127.03166364403631},{"latitude":37.2620243122705,"longitude":127.03176918900611},
+{"latitude":37.26241038153281,"longitude":127.03193027470891},{"latitude":37.263215849529125,"longitude":127.03225244518181},
+{"latitude":37.263343613398305,"longitude":127.03230243707397},{"latitude":37.263474154673865,"longitude":127.03234965136268},
+{"latitude":37.26381022774347,"longitude":127.03239963743144},{"latitude":37.264376832885496,"longitude":127.0326301562296},
+{"latitude":37.26446293456725,"longitude":127.03266070660585},{"latitude":37.2645407040298,"longitude":127.03269958979232},
+{"latitude":37.26527951273326,"longitude":127.03300231944479},{"latitude":37.26607664821063,"longitude":127.03331615756825},
+{"latitude":37.2666015912635,"longitude":127.03353278989965},{"latitude":37.2666932467657,"longitude":127.03350223455362},
+{"latitude":37.26670435654007,"longitude":127.03349945671724},{"latitude":37.267045985959115,"longitude":127.03362999087533},
+{"latitude":37.267107092024965,"longitude":127.03374386772258},{"latitude":37.26713486752749,"longitude":127.03379663993522},
+{"latitude":37.267348733127335,"longitude":127.03387995972771},{"latitude":37.26795977805956,"longitude":127.03413825253617},
+{"latitude":37.26922075200919,"longitude":127.03463817190861},{"latitude":37.26962070854894,"longitude":127.03479925721678},
+{"latitude":37.26980402198362,"longitude":127.03487424528528},{"latitude":37.26988179129698,"longitude":127.03490479589352},
+{"latitude":37.27000400015418,"longitude":127.03494923288766},{"latitude":37.27011509913781,"longitude":127.03499089266671},
+{"latitude":37.27023730799498,"longitude":127.03503532966077},{"latitude":37.270565050033795,"longitude":127.03516030915306},
+{"latitude":37.270845574923875,"longitude":127.03526306975975},{"latitude":37.271178871973696,"longitude":127.03539360414771},
+{"latitude":37.27184268826973,"longitude":127.03563523032041},{"latitude":37.271906570104576,"longitude":127.03565467121379},
+{"latitude":37.27208432862692,"longitude":127.03572965943674},{"latitude":37.27273703519771,"longitude":127.03597684097036},
+{"latitude":37.273020336997355,"longitude":127.03604904871493},{"latitude":37.27384802468327,"longitude":127.03637399607291},
+{"latitude":37.273856357100804,"longitude":127.03637677336556},{"latitude":37.27387302198551,"longitude":127.03638510547657},
+{"latitude":37.2740368930788,"longitude":127.03645176151004},{"latitude":37.27428686605152,"longitude":127.03656007802076},
+{"latitude":37.27440074263954,"longitude":127.03661007029827},{"latitude":37.2749423508213,"longitude":127.03684892235947},
+{"latitude":37.27499234542574,"longitude":127.03687114116667},{"latitude":37.2753950795186,"longitude":127.03703778144342},
+{"latitude":37.275622832545544,"longitude":127.03712943342065},{"latitude":37.276050563741876,"longitude":127.03729607299744},
+{"latitude":37.27615888526891,"longitude":127.03733773285273},{"latitude":37.27617277264799,"longitude":127.03734328751563},
+{"latitude":37.27635608603195,"longitude":127.03741549805572},{"latitude":37.27642552297696,"longitude":127.03744604889597},
+{"latitude":37.27646996232201,"longitude":127.03744882517834},{"latitude":37.27653662081849,"longitude":127.03742382558174},
+{"latitude":37.27660328130007,"longitude":127.0375099270142},{"latitude":37.276611613916096,"longitude":127.0375238144097},
+{"latitude":37.276633833464544,"longitude":127.03751825873655},{"latitude":37.276853254123345,"longitude":127.03760991094629},
+{"latitude":37.276897693964656,"longitude":127.03764046248587},{"latitude":37.2768838071315,"longitude":127.03766546060595},
+{"latitude":37.27678382387821,"longitude":127.03795432607912},{"latitude":37.276772714550646,"longitude":127.03798210164723},
+{"latitude":37.27678660207861,"longitude":127.03799598888732},{"latitude":37.276814378226376,"longitude":127.03808486893342},
+{"latitude":37.2768782591676,"longitude":127.03805431436301},{"latitude":37.27691992095742,"longitude":127.03805153567157},
+{"latitude":37.27710323429168,"longitude":127.03812096868558},{"latitude":37.277225442999196,"longitude":127.03815707310054},
+{"latitude":37.27730598956949,"longitude":127.03817651352684},{"latitude":37.27737264871108,"longitude":127.03818762176456},
+{"latitude":37.27735320805789,"longitude":127.03827372560605},{"latitude":37.2774115369657,"longitude":127.03840426768308},
+{"latitude":37.277442090222046,"longitude":127.03847370497131},{"latitude":37.2774920859679,"longitude":127.03855980686987},
+{"latitude":37.277525417821735,"longitude":127.03869312717207},{"latitude":37.27754763910726,"longitude":127.03878478489925},
+{"latitude":37.2775587512638,"longitude":127.03891532829746},{"latitude":37.27755597678575,"longitude":127.03908197991873},
+{"latitude":37.277622636721475,"longitude":127.03913752856795},{"latitude":37.27763096998274,"longitude":127.03918752379786},
+{"latitude":37.277672632417755,"longitude":127.03922085294076},{"latitude":37.27773651464935,"longitude":127.03926251403907},
+{"latitude":37.27786983323033,"longitude":127.03930139566859},{"latitude":37.27812258494889,"longitude":127.03948192776794},
+{"latitude":37.27827256891082,"longitude":127.0395569167654},{"latitude":37.27844199695056,"longitude":127.03973745119627},
+{"latitude":37.278683639986845,"longitude":127.03998186669777},{"latitude":37.27872252491625,"longitude":127.04001241839255},
+{"latitude":37.27881695946117,"longitude":127.04007074379},{"latitude":37.27887250942413,"longitude":127.04011796017272},
+{"latitude":37.27891972696959,"longitude":127.04016239926293},{"latitude":37.27895027968003,"longitude":127.04020128376803},
+{"latitude":37.27901971806442,"longitude":127.04031238285371},{"latitude":37.27903916124885,"longitude":127.04036793282408},
+{"latitude":37.27908638058124,"longitude":127.04051236284027},{"latitude":37.27906972031285,"longitude":127.04076234062177},
+{"latitude":37.27901417347701,"longitude":127.0408901083597},{"latitude":37.27901695152862,"longitude":127.04092343859067},
+{"latitude":37.279019729977335,"longitude":127.04097898902742},{"latitude":37.27902250807859,"longitude":127.04101509678411},
+{"latitude":37.27903084188596,"longitude":127.04109564479691},{"latitude":37.27906140750258,"longitude":127.04185668599055},
+{"latitude":37.27909474640576,"longitude":127.0423844149457},{"latitude":37.27912253233328,"longitude":127.04302046755983},
+{"latitude":37.27913086787829,"longitude":127.0431982289732},{"latitude":37.27915031706969,"longitude":127.0435898595567},
+{"latitude":37.279636371266925,"longitude":127.04355651564312},{"latitude":37.27966692293496,"longitude":127.04353707210787},
+{"latitude":37.27985579450743,"longitude":127.04379259918814},{"latitude":37.279778027776025,"longitude":127.0439064799198},
+{"latitude":37.27975580897232,"longitude":127.04395369847911},{"latitude":37.27899203628561,"longitude":127.04550357921649},
+{"latitude":37.2789309344389,"longitude":127.04562579205916},{"latitude":37.27885039109551,"longitude":127.04578689080635},
+{"latitude":37.278053290724685,"longitude":127.04743676340756},{"latitude":37.27800607576063,"longitude":127.04753675565593},
+{"latitude":37.27798663421431,"longitude":127.04757286403479}
+        ],
+        "steps": [
+{"stepIndex":1,"instruction":"보행자도로를 따라 9m 이동","distanceM":9,"durationSec":6,"turnType":200,"pointType":"SP","points":[{"latitude":37.26280749589526,"longitude":127.02846668898499},{"latitude":37.262732504136785,"longitude":127.02844169334912}]},
+{"stepIndex":2,"instruction":"좌회전 후 효원로를 따라 59m 이동","distanceM":59,"durationSec":73,"turnType":12,"pointType":"GP","points":[{"latitude":37.262732504136785,"longitude":127.02844169334912},{"latitude":37.2626214135339,"longitude":127.0288694354208},{"latitude":37.26258531047413,"longitude":127.02908608343905}]},
+{"stepIndex":3,"instruction":"횡단보도 후 보행자도로를 따라 22m 이동","distanceM":22,"durationSec":15,"turnType":211,"pointType":"GP","points":[{"latitude":37.26258531047413,"longitude":127.02908608343905},{"latitude":37.2625380980863,"longitude":127.02933050702548}]},
+{"stepIndex":4,"instruction":"직진 후 효원로를 따라 128m 이동","distanceM":128,"durationSec":121,"turnType":11,"pointType":"GP","points":[{"latitude":37.2625380980863,"longitude":127.02933050702548},{"latitude":37.262435339355676,"longitude":127.02973047360707},{"latitude":37.262182608366274,"longitude":127.03071094726513}]},
+{"stepIndex":5,"instruction":"횡단보도 후 보행자도로를 따라 12m 이동","distanceM":12,"durationSec":9,"turnType":211,"pointType":"GP","points":[{"latitude":37.262182608366274,"longitude":127.03071094726513},{"latitude":37.26214928122522,"longitude":127.03084149190757}]},
+{"stepIndex":6,"instruction":"직진 후 65m 이동","distanceM":65,"durationSec":46,"turnType":11,"pointType":"GP","points":[{"latitude":37.26214928122522,"longitude":127.03084149190757},{"latitude":37.262135394788324,"longitude":127.03088871023368},{"latitude":37.26203818804373,"longitude":127.0311248026407},{"latitude":37.26201319262596,"longitude":127.03121923921536},{"latitude":37.26193820667025,"longitude":127.03151921409399}]},
+{"stepIndex":7,"instruction":"우리은행 수원시청역지점에서 좌회전 후 효원로를 따라 14m 이동","distanceM":14,"durationSec":10,"turnType":12,"pointType":"GP","points":[{"latitude":37.26193820667025,"longitude":127.03151921409399},{"latitude":37.26198820345759,"longitude":127.03166364403631}]},
+{"stepIndex":8,"instruction":"우리은행 수원시청역지점에서 좌회전 후 효원로를 따라 14m 이동","distanceM":149,"durationSec":136,"turnType":12,"pointType":"GP","points":[{"latitude":37.26198820345759,"longitude":127.03166364403631},{"latitude":37.2620243122705,"longitude":127.03176918900611},{"latitude":37.26241038153281,"longitude":127.03193027470891},{"latitude":37.263215849529125,"longitude":127.03225244518181}]},
+{"stepIndex":9,"instruction":"횡단보도 후 보행자도로를 따라 15m 이동","distanceM":15,"durationSec":10,"turnType":211,"pointType":"GP","points":[{"latitude":37.263215849529125,"longitude":127.03225244518181},{"latitude":37.263343613398305,"longitude":127.03230243707397}]},
+{"stepIndex":10,"instruction":"직진 후 권광로를 따라 119m 이동","distanceM":119,"durationSec":115,"turnType":11,"pointType":"GP","points":[{"latitude":37.263343613398305,"longitude":127.03230243707397},{"latitude":37.263474154673865,"longitude":127.03234965136268},{"latitude":37.26381022774347,"longitude":127.03239963743144},{"latitude":37.264376832885496,"longitude":127.0326301562296}]},
+{"stepIndex":11,"instruction":"횡단보도 후 보행자도로를 따라 10m 이동","distanceM":10,"durationSec":7,"turnType":211,"pointType":"GP","points":[{"latitude":37.264376832885496,"longitude":127.0326301562296},{"latitude":37.26446293456725,"longitude":127.03266070660585}]},
+{"stepIndex":12,"instruction":"직진 후 권광로를 따라 261m 이동","distanceM":261,"durationSec":216,"turnType":11,"pointType":"GP","points":[{"latitude":37.26446293456725,"longitude":127.03266070660585},{"latitude":37.2645407040298,"longitude":127.03269958979232},{"latitude":37.26527951273326,"longitude":127.03300231944479},{"latitude":37.26607664821063,"longitude":127.03331615756825},{"latitude":37.2666015912635,"longitude":127.03353278989965},{"latitude":37.2666932467657,"longitude":127.03350223455362},{"latitude":37.26670435654007,"longitude":127.03349945671724}]},
+{"stepIndex":13,"instruction":"IBK기업은행 동수원기업금융센터에서 우측 횡단보도 후 보행자도로를 따라 40m 이동","distanceM":40,"durationSec":27,"turnType":213,"pointType":"GP","points":[{"latitude":37.26670435654007,"longitude":127.03349945671724},{"latitude":37.267045985959115,"longitude":127.03362999087533}]},
+{"stepIndex":14,"instruction":"우회전 후 권광로를 따라 329m 이동","distanceM":329,"durationSec":265,"turnType":13,"pointType":"GP","points":[{"latitude":37.267045985959115,"longitude":127.03362999087533},{"latitude":37.267107092024965,"longitude":127.03374386772258},{"latitude":37.26713486752749,"longitude":127.03379663993522},{"latitude":37.267348733127335,"longitude":127.03387995972771},{"latitude":37.26795977805956,"longitude":127.03413825253617},{"latitude":37.26922075200919,"longitude":127.03463817190861},{"latitude":37.26962070854894,"longitude":127.03479925721678},{"latitude":37.26980402198362,"longitude":127.03487424528528}]},
+{"stepIndex":15,"instruction":"횡단보도 후 보행자도로를 따라 9m 이동","distanceM":9,"durationSec":6,"turnType":211,"pointType":"GP","points":[{"latitude":37.26980402198362,"longitude":127.03487424528528},{"latitude":37.26988179129698,"longitude":127.03490479589352}]},
+{"stepIndex":16,"instruction":"직진 후 권광로를 따라 14m 이동","distanceM":14,"durationSec":40,"turnType":11,"pointType":"GP","points":[{"latitude":37.26988179129698,"longitude":127.03490479589352},{"latitude":37.27000400015418,"longitude":127.03494923288766}]},
+{"stepIndex":17,"instruction":"횡단보도 후 보행자도로를 따라 13m 이동","distanceM":13,"durationSec":9,"turnType":211,"pointType":"GP","points":[{"latitude":37.27000400015418,"longitude":127.03494923288766},{"latitude":37.27011509913781,"longitude":127.03499089266671}]},
+{"stepIndex":18,"instruction":"직진 후 권광로를 따라 200m 이동","distanceM":200,"durationSec":173,"turnType":11,"pointType":"GP","points":[{"latitude":37.27011509913781,"longitude":127.03499089266671},{"latitude":37.27023730799498,"longitude":127.03503532966077},{"latitude":37.270565050033795,"longitude":127.03516030915306},{"latitude":37.270845574923875,"longitude":127.03526306975975},{"latitude":37.271178871973696,"longitude":127.03539360414771},{"latitude":37.27184268826973,"longitude":127.03563523032041}]},
+{"stepIndex":19,"instruction":"횡단보도 후 보행자도로를 따라 7m 이동","distanceM":7,"durationSec":5,"turnType":211,"pointType":"GP","points":[{"latitude":37.27184268826973,"longitude":127.03563523032041},{"latitude":37.271906570104576,"longitude":127.03565467121379}]},
+{"stepIndex":20,"instruction":"직진 후 권광로를 따라 276m 이동","distanceM":276,"durationSec":227,"turnType":11,"pointType":"GP","points":[{"latitude":37.271906570104576,"longitude":127.03565467121379},{"latitude":37.27208432862692,"longitude":127.03572965943674},{"latitude":37.27273703519771,"longitude":127.03597684097036},{"latitude":37.273020336997355,"longitude":127.03604904871493},{"latitude":37.27384802468327,"longitude":127.03637399607291},{"latitude":37.273856357100804,"longitude":127.03637677336556},{"latitude":37.27387302198551,"longitude":127.03638510547657},{"latitude":37.2740368930788,"longitude":127.03645176151004},{"latitude":37.27428686605152,"longitude":127.03656007802076}]},
+{"stepIndex":21,"instruction":"횡단보도 후 보행자도로를 따라 14m 이동","distanceM":14,"durationSec":9,"turnType":211,"pointType":"GP","points":[{"latitude":37.27428686605152,"longitude":127.03656007802076},{"latitude":37.27440074263954,"longitude":127.03661007029827}]},
+{"stepIndex":22,"instruction":"직진 후 권광로를 따라 116m 이동","distanceM":116,"durationSec":113,"turnType":11,"pointType":"GP","points":[{"latitude":37.27440074263954,"longitude":127.03661007029827},{"latitude":37.2749423508213,"longitude":127.03684892235947},{"latitude":37.27499234542574,"longitude":127.03687114116667},{"latitude":37.2753950795186,"longitude":127.03703778144342}]},
+{"stepIndex":23,"instruction":"횡단보도 후 보행자도로를 따라 27m 이동","distanceM":27,"durationSec":18,"turnType":211,"pointType":"GP","points":[{"latitude":37.2753950795186,"longitude":127.03703778144342},{"latitude":37.275622832545544,"longitude":127.03712943342065}]},
+{"stepIndex":24,"instruction":"직진 후 권광로를 따라 106m 이동","distanceM":106,"durationSec":106,"turnType":11,"pointType":"GP","points":[{"latitude":37.275622832545544,"longitude":127.03712943342065},{"latitude":37.276050563741876,"longitude":127.03729607299744},{"latitude":37.27615888526891,"longitude":127.03733773285273},{"latitude":37.27617277264799,"longitude":127.03734328751563},{"latitude":37.27635608603195,"longitude":127.03741549805572},{"latitude":37.27642552297696,"longitude":127.03744604889597},{"latitude":37.27646996232201,"longitude":127.03744882517834},{"latitude":37.27653662081849,"longitude":127.03742382558174}]},
+{"stepIndex":25,"instruction":"반석빌딩에서 횡단보도 후 10m 이동","distanceM":10,"durationSec":7,"turnType":211,"pointType":"GP","points":[{"latitude":37.27653662081849,"longitude":127.03742382558174},{"latitude":37.27660328130007,"longitude":127.0375099270142}]},
+{"stepIndex":26,"instruction":"직진 후 4m 이동","distanceM":4,"durationSec":33,"turnType":11,"pointType":"GP","points":[{"latitude":37.27660328130007,"longitude":127.0375099270142},{"latitude":37.276611613916096,"longitude":127.0375238144097},{"latitude":37.276633833464544,"longitude":127.03751825873655}]},
+{"stepIndex":27,"instruction":"횡단보도 후 26m 이동","distanceM":26,"durationSec":17,"turnType":211,"pointType":"GP","points":[{"latitude":37.276633833464544,"longitude":127.03751825873655},{"latitude":37.276853254123345,"longitude":127.03760991094629}]},
+{"stepIndex":28,"instruction":"직진 후 8m 이동","distanceM":8,"durationSec":36,"turnType":11,"pointType":"GP","points":[{"latitude":37.276853254123345,"longitude":127.03760991094629},{"latitude":37.276897693964656,"longitude":127.03764046248587},{"latitude":37.2768838071315,"longitude":127.03766546060595}]},
+{"stepIndex":29,"instruction":"횡단보도 후 28m 이동","distanceM":28,"durationSec":18,"turnType":211,"pointType":"GP","points":[{"latitude":37.2768838071315,"longitude":127.03766546060595},{"latitude":37.27678382387821,"longitude":127.03795432607912}]},
+{"stepIndex":30,"instruction":"직진 후 5m 이동","distanceM":5,"durationSec":34,"turnType":11,"pointType":"GP","points":[{"latitude":37.27678382387821,"longitude":127.03795432607912},{"latitude":37.276772714550646,"longitude":127.03798210164723},{"latitude":37.27678660207861,"longitude":127.03799598888732}]},
+{"stepIndex":31,"instruction":"횡단보도 후 보행자도로를 따라 8m 이동","distanceM":8,"durationSec":5,"turnType":211,"pointType":"GP","points":[{"latitude":37.27678660207861,"longitude":127.03799598888732},{"latitude":37.276814378226376,"longitude":127.03808486893342}]},
+{"stepIndex":32,"instruction":"좌회전 후 권광로를 따라 57m 이동","distanceM":57,"durationSec":71,"turnType":12,"pointType":"GP","points":[{"latitude":37.276814378226376,"longitude":127.03808486893342},{"latitude":37.2768782591676,"longitude":127.03805431436301},{"latitude":37.27691992095742,"longitude":127.03805153567157},{"latitude":37.27710323429168,"longitude":127.03812096868558},{"latitude":37.277225442999196,"longitude":127.03815707310054},{"latitude":37.27730598956949,"longitude":127.03817651352684}]},
+{"stepIndex":33,"instruction":"횡단보도 후 보행자도로를 따라 7m 이동","distanceM":7,"durationSec":5,"turnType":211,"pointType":"GP","points":[{"latitude":37.27730598956949,"longitude":127.03817651352684},{"latitude":37.27737264871108,"longitude":127.03818762176456}]},
+{"stepIndex":34,"instruction":"우회전 후 권광로를 따라 8m 이동","distanceM":8,"durationSec":5,"turnType":13,"pointType":"GP","points":[{"latitude":37.27737264871108,"longitude":127.03818762176456},{"latitude":37.27735320805789,"longitude":127.03827372560605}]},
+{"stepIndex":35,"instruction":"우회전 후 권광로를 따라 8m 이동","distanceM":91,"durationSec":70,"turnType":13,"pointType":"GP","points":[{"latitude":37.27735320805789,"longitude":127.03827372560605},{"latitude":37.2774115369657,"longitude":127.03840426768308},{"latitude":37.277442090222046,"longitude":127.03847370497131},{"latitude":37.2774920859679,"longitude":127.03855980686987},{"latitude":37.277525417821735,"longitude":127.03869312717207},{"latitude":37.27754763910726,"longitude":127.03878478489925},{"latitude":37.2775587512638,"longitude":127.03891532829746},{"latitude":37.27755597678575,"longitude":127.03908197991873},{"latitude":37.277622636721475,"longitude":127.03913752856795},{"latitude":37.27763096998274,"longitude":127.03918752379786}]},
+{"stepIndex":36,"instruction":"현성하이츠빌라에서 10시 방향 좌회전 후 479m 이동","distanceM":479,"durationSec":370,"turnType":17,"pointType":"GP","points":[{"latitude":37.27763096998274,"longitude":127.03918752379786},{"latitude":37.277672632417755,"longitude":127.03922085294076},{"latitude":37.27773651464935,"longitude":127.03926251403907},{"latitude":37.27786983323033,"longitude":127.03930139566859},{"latitude":37.27812258494889,"longitude":127.03948192776794},{"latitude":37.27827256891082,"longitude":127.0395569167654},{"latitude":37.27844199695056,"longitude":127.03973745119627},{"latitude":37.278683639986845,"longitude":127.03998186669777},{"latitude":37.27872252491625,"longitude":127.04001241839255},{"latitude":37.27881695946117,"longitude":127.04007074379},{"latitude":37.27887250942413,"longitude":127.04011796017272},{"latitude":37.27891972696959,"longitude":127.04016239926293},{"latitude":37.27895027968003,"longitude":127.04020128376803},{"latitude":37.27901971806442,"longitude":127.04031238285371},{"latitude":37.27903916124885,"longitude":127.04036793282408},{"latitude":37.27908638058124,"longitude":127.04051236284027},{"latitude":37.27906972031285,"longitude":127.04076234062177},{"latitude":37.27901417347701,"longitude":127.0408901083597},{"latitude":37.27901695152862,"longitude":127.04092343859067},{"latitude":37.279019729977335,"longitude":127.04097898902742},{"latitude":37.27902250807859,"longitude":127.04101509678411},{"latitude":37.27903084188596,"longitude":127.04109564479691},{"latitude":37.27906140750258,"longitude":127.04185668599055},{"latitude":37.27909474640576,"longitude":127.0423844149457},{"latitude":37.27912253233328,"longitude":127.04302046755983},{"latitude":37.27913086787829,"longitude":127.0431982289732},{"latitude":37.27915031706969,"longitude":127.0435898595567}]},
+{"stepIndex":37,"instruction":"컴포즈커피 수원아주대점에서 좌회전 후 아주로를 따라 54m 이동","distanceM":54,"durationSec":38,"turnType":12,"pointType":"GP","points":[{"latitude":37.27915031706969,"longitude":127.0435898595567},{"latitude":37.279636371266925,"longitude":127.04355651564312}]},
+{"stepIndex":38,"instruction":"컴포즈커피 수원아주대점에서 좌회전 후 아주로를 따라 54m 이동","distanceM":4,"durationSec":33,"turnType":12,"pointType":"GP","points":[{"latitude":37.279636371266925,"longitude":127.04355651564312},{"latitude":37.27966692293496,"longitude":127.04353707210787}]},
+{"stepIndex":39,"instruction":"텐퍼센트커피 수원아주대점에서 우측 횡단보도 후 보행자도로를 따라 30m 이동","distanceM":30,"durationSec":21,"turnType":213,"pointType":"GP","points":[{"latitude":37.27966692293496,"longitude":127.04353707210787},{"latitude":37.27985579450743,"longitude":127.04379259918814}]},
+{"stepIndex":40,"instruction":"우회전 후 월드컵로를 따라 394m 이동","distanceM":394,"durationSec":281,"turnType":13,"pointType":"GP","points":[{"latitude":37.27985579450743,"longitude":127.04379259918814},{"latitude":37.279778027776025,"longitude":127.0439064799198},{"latitude":37.27975580897232,"longitude":127.04395369847911},{"latitude":37.27899203628561,"longitude":127.04550357921649},{"latitude":37.2789309344389,"longitude":127.04562579205916},{"latitude":37.27885039109551,"longitude":127.04578689080635},{"latitude":37.278053290724685,"longitude":127.04743676340756},{"latitude":37.27800607576063,"longitude":127.04753675565593},{"latitude":37.27798663421431,"longitude":127.04757286403479}]}
+        ]
+      }
+    ]
+  },
+  "transitRoutes": {
+    "routes": [
+      {
+        "routeId": "transit-ec0a2581-3260-4033-96ce-2c65af4d13af",
+        "providerRank": 1,
+        "summary": { "totalTimeSec": 882, "totalWalkTimeSec": 201, "totalWalkDistanceM": 203, "totalDistanceM": 4120, "transferCount": 0, "fareKrw": 1650, "pathType": 2 },
+        "routePoints": [
+{"latitude":37.262806,"longitude":127.028465},{"latitude":37.262733,"longitude":127.02844},{"latitude":37.262623,"longitude":127.02887},
+{"latitude":37.262585,"longitude":127.02908},{"latitude":37.262215,"longitude":127.02885},{"latitude":37.26228,"longitude":127.02857},
+{"latitude":37.262302,"longitude":127.02849},{"latitude":37.262381,"longitude":127.028528},{"latitude":37.261569,"longitude":127.031703},
+{"latitude":37.261528,"longitude":127.031875},{"latitude":37.261431,"longitude":127.03225},{"latitude":37.261236,"longitude":127.033011},
+{"latitude":37.260669,"longitude":127.035211},{"latitude":37.260011,"longitude":127.037803},{"latitude":37.259958,"longitude":127.038006},
+{"latitude":37.26,"longitude":127.038117},{"latitude":37.260092,"longitude":127.038267},{"latitude":37.261428,"longitude":127.038825},
+{"latitude":37.261453,"longitude":127.038833},{"latitude":37.264006,"longitude":127.039928},{"latitude":37.265225,"longitude":127.040453},
+{"latitude":37.265336,"longitude":127.040489},{"latitude":37.266125,"longitude":127.040847},{"latitude":37.269728,"longitude":127.042483},
+{"latitude":37.270458,"longitude":127.042814},{"latitude":37.270556,"longitude":127.042861},{"latitude":37.270897,"longitude":127.043031},
+{"latitude":37.271244,"longitude":127.0433},{"latitude":37.271422,"longitude":127.043519},{"latitude":37.271689,"longitude":127.044044},
+{"latitude":37.272525,"longitude":127.046025},{"latitude":37.273419,"longitude":127.048142},{"latitude":37.273544,"longitude":127.04805},
+{"latitude":37.273642,"longitude":127.047981},{"latitude":37.273858,"longitude":127.047181},{"latitude":37.274708,"longitude":127.044092},
+{"latitude":37.275022,"longitude":127.044139},{"latitude":37.275917,"longitude":127.044058},{"latitude":37.278717,"longitude":127.043811},
+{"latitude":37.279678,"longitude":127.043725},{"latitude":37.278717,"longitude":127.045622},{"latitude":37.278264,"longitude":127.046511},
+{"latitude":37.277978,"longitude":127.04715},{"latitude":37.277943,"longitude":127.04712},{"latitude":37.277863,"longitude":127.04729},
+{"latitude":37.278053,"longitude":127.04744},{"latitude":37.278008,"longitude":127.04754},{"latitude":37.27799,"longitude":127.04757}
+        ],
+        "legs": [
+          {
+            "legIndex": 1, "mode": "WALK", "routeName": null, "routeColor": null, "providerRouteId": null, "vehicleType": null, "serviceAvailable": null,
+            "startName": "출발지", "startLatitude": 37.26279588, "startLongitude": 127.02852502,
+            "endName": "수원시청.수원일자리센터", "endLatitude": 37.26231388888889, "endLongitude": 127.0285,
+            "distanceM": 147, "durationSec": 133, "stationCount": null,
+            "routePoints": [
+{"latitude":37.262806,"longitude":127.028465},{"latitude":37.262733,"longitude":127.02844},{"latitude":37.262623,"longitude":127.02887},
+{"latitude":37.262585,"longitude":127.02908},{"latitude":37.262215,"longitude":127.02885},{"latitude":37.26228,"longitude":127.02857},
+{"latitude":37.262302,"longitude":127.02849}
+            ],
+            "stops": [],
+            "steps": [
+{"stepIndex":1,"instruction":"보행자도로를 따라 9m 이동","streetName":"보행자도로","distanceM":9,"points":[{"latitude":37.262806,"longitude":127.028465},{"latitude":37.262733,"longitude":127.02844}]},
+{"stepIndex":2,"instruction":"좌회전 후 효원로를 따라 59m 이동","streetName":"효원로","distanceM":59,"points":[{"latitude":37.262733,"longitude":127.02844},{"latitude":37.262623,"longitude":127.02887},{"latitude":37.262585,"longitude":127.02908}]},
+{"stepIndex":3,"instruction":"우측 횡단보도 후 보행자도로를 따라 46m 이동","streetName":"보행자도로","distanceM":46,"points":[{"latitude":37.262585,"longitude":127.02908},{"latitude":37.262215,"longitude":127.02885}]},
+{"stepIndex":4,"instruction":"우회전 후 효원로를 따라 33m 이동","streetName":"효원로","distanceM":33,"points":[{"latitude":37.262215,"longitude":127.02885},{"latitude":37.26228,"longitude":127.02857},{"latitude":37.262302,"longitude":127.02849}]}
+            ]
+          },
+          {
+            "legIndex": 2, "mode": "BUS", "routeName": "일반:81", "routeColor": "53B332", "providerRouteId": "1017900001", "vehicleType": 1, "serviceAvailable": true,
+            "startName": "수원시청.수원일자리센터", "startLatitude": 37.26231388888889, "startLongitude": 127.0285,
+            "endName": "아주대병원", "endLatitude": 37.277947222222224, "endLongitude": 127.04712777777777,
+            "distanceM": 4025, "durationSec": 681, "stationCount": 11,
+            "routePoints": [
+{"latitude":37.262381,"longitude":127.028528},{"latitude":37.261569,"longitude":127.031703},{"latitude":37.261528,"longitude":127.031875},
+{"latitude":37.261431,"longitude":127.03225},{"latitude":37.261236,"longitude":127.033011},{"latitude":37.260669,"longitude":127.035211},
+{"latitude":37.260011,"longitude":127.037803},{"latitude":37.259958,"longitude":127.038006},{"latitude":37.26,"longitude":127.038117},
+{"latitude":37.260092,"longitude":127.038267},{"latitude":37.261428,"longitude":127.038825},{"latitude":37.261453,"longitude":127.038833},
+{"latitude":37.264006,"longitude":127.039928},{"latitude":37.265225,"longitude":127.040453},{"latitude":37.265336,"longitude":127.040489},
+{"latitude":37.266125,"longitude":127.040847},{"latitude":37.269728,"longitude":127.042483},{"latitude":37.270458,"longitude":127.042814},
+{"latitude":37.270556,"longitude":127.042861},{"latitude":37.270897,"longitude":127.043031},{"latitude":37.271244,"longitude":127.0433},
+{"latitude":37.271422,"longitude":127.043519},{"latitude":37.271689,"longitude":127.044044},{"latitude":37.272525,"longitude":127.046025},
+{"latitude":37.273419,"longitude":127.048142},{"latitude":37.273544,"longitude":127.04805},{"latitude":37.273642,"longitude":127.047981},
+{"latitude":37.273858,"longitude":127.047181},{"latitude":37.274708,"longitude":127.044092},{"latitude":37.275022,"longitude":127.044139},
+{"latitude":37.275917,"longitude":127.044058},{"latitude":37.278717,"longitude":127.043811},{"latitude":37.279678,"longitude":127.043725},
+{"latitude":37.278717,"longitude":127.045622},{"latitude":37.278264,"longitude":127.046511},{"latitude":37.277978,"longitude":127.04715}
+            ],
+            "stops": [
+{"stopIndex":0,"stationId":"720476","name":"수원시청.수원일자리센터","latitude":37.262314,"longitude":127.0285},
+{"stopIndex":1,"stationId":"720433","name":"수원시청역1번출구.국민연금공단.경인일보","latitude":37.261142,"longitude":127.032975},
+{"stopIndex":2,"stationId":"720443","name":"매탄위브하늘채.경기아트센터","latitude":37.261406,"longitude":127.038908},
+{"stopIndex":3,"stationId":"720527","name":"자유총연맹","latitude":37.263981,"longitude":127.040014},
+{"stopIndex":4,"stationId":"720596","name":"삼성1차아파트","latitude":37.266089,"longitude":127.040969},
+{"stopIndex":5,"stationId":"720745","name":"삼성2차아파트","latitude":37.269706,"longitude":127.042564},
+{"stopIndex":6,"stationId":"720863","name":"매탄2동행정복지센터","latitude":37.272492,"longitude":127.046044},
+{"stopIndex":7,"stationId":"720905","name":"구법원사거리","latitude":37.273925,"longitude":127.047208},
+{"stopIndex":8,"stationId":"720995","name":"아주대학교입구","latitude":37.275919,"longitude":127.044103},
+{"stopIndex":9,"stationId":"721128","name":"아주대.아주대학교병원","latitude":37.278717,"longitude":127.04385},
+{"stopIndex":10,"stationId":"721093","name":"아주대병원","latitude":37.277947,"longitude":127.047128}
+            ],
+            "steps": []
+          },
+          {
+            "legIndex": 3, "mode": "WALK", "routeName": null, "routeColor": null, "providerRouteId": null, "vehicleType": null, "serviceAvailable": null,
+            "startName": "아주대병원", "startLatitude": 37.277947222222224, "startLongitude": 127.04712777777777,
+            "endName": "도착지", "endLatitude": 37.27798891, "endLongitude": 127.04757842,
+            "distanceM": 56, "durationSec": 68, "stationCount": null,
+            "routePoints": [
+{"latitude":37.277943,"longitude":127.04712},{"latitude":37.277863,"longitude":127.04729},{"latitude":37.278053,"longitude":127.04744},
+{"latitude":37.278008,"longitude":127.04754},{"latitude":37.27799,"longitude":127.04757}
+            ],
+            "stops": [],
+            "steps": [
+{"stepIndex":1,"instruction":"월드컵로를 따라 17m 이동","streetName":"월드컵로","distanceM":17,"points":[{"latitude":37.277943,"longitude":127.04712},{"latitude":37.277863,"longitude":127.04729}]},
+{"stepIndex":2,"instruction":"좌측 횡단보도 후 보행자도로를 따라 25m 이동","streetName":"보행자도로","distanceM":25,"points":[{"latitude":37.277863,"longitude":127.04729},{"latitude":37.278053,"longitude":127.04744}]},
+{"stepIndex":3,"instruction":"우회전 후 월드컵로를 따라 14m 이동","streetName":"월드컵로","distanceM":14,"points":[{"latitude":37.278053,"longitude":127.04744},{"latitude":37.278008,"longitude":127.04754},{"latitude":37.27799,"longitude":127.04757}]}
+            ]
+          }
+        ]
+      },
+      {
+        "routeId": "transit-1fde41ff-8156-4436-99e3-493fc052cad4",
+        "providerRank": 2,
+        "summary": { "totalTimeSec": 799, "totalWalkTimeSec": 185, "totalWalkDistanceM": 221, "totalDistanceM": 3709, "transferCount": 1, "fareKrw": 1650, "pathType": 2 },
+        "routePoints": [
+{"latitude":37.262806,"longitude":127.028465},{"latitude":37.262733,"longitude":127.02844},{"latitude":37.262623,"longitude":127.02887},
+{"latitude":37.262585,"longitude":127.02908},{"latitude":37.262215,"longitude":127.02885},{"latitude":37.26228,"longitude":127.02857},
+{"latitude":37.262302,"longitude":127.02849},{"latitude":37.262381,"longitude":127.028528},{"latitude":37.261569,"longitude":127.031703},
+{"latitude":37.261528,"longitude":127.031875},{"latitude":37.261431,"longitude":127.03225},{"latitude":37.261236,"longitude":127.033011},
+{"latitude":37.260669,"longitude":127.035211},{"latitude":37.260011,"longitude":127.037803},{"latitude":37.259958,"longitude":127.038006},
+{"latitude":37.26,"longitude":127.038117},{"latitude":37.260092,"longitude":127.038267},{"latitude":37.261428,"longitude":127.038825},
+{"latitude":37.261453,"longitude":127.038833},{"latitude":37.264006,"longitude":127.039928},{"latitude":37.265225,"longitude":127.040453},
+{"latitude":37.265336,"longitude":127.040489},{"latitude":37.266125,"longitude":127.040847},{"latitude":37.269728,"longitude":127.042483},
+{"latitude":37.269705555555554,"longitude":127.04256388888889},{"latitude":37.269728,"longitude":127.042483},{"latitude":37.270458,"longitude":127.042814},
+{"latitude":37.270556,"longitude":127.042861},{"latitude":37.270897,"longitude":127.043031},{"latitude":37.271244,"longitude":127.0433},
+{"latitude":37.271422,"longitude":127.043519},{"latitude":37.271689,"longitude":127.044044},{"latitude":37.272525,"longitude":127.046025},
+{"latitude":37.273419,"longitude":127.048142},{"latitude":37.273475,"longitude":127.048294},{"latitude":37.273533,"longitude":127.048461},
+{"latitude":37.274522,"longitude":127.050011},{"latitude":37.275225,"longitude":127.051111},{"latitude":37.275328,"longitude":127.051108},
+{"latitude":37.275433,"longitude":127.051106},{"latitude":37.275678,"longitude":127.050878},{"latitude":37.276319,"longitude":127.050278},
+{"latitude":37.276911,"longitude":127.049728},{"latitude":37.277278,"longitude":127.048983},{"latitude":37.277344,"longitude":127.04885},
+{"latitude":37.277706,"longitude":127.048119},{"latitude":37.277942,"longitude":127.047594},{"latitude":37.277983,"longitude":127.047503},
+{"latitude":37.278011,"longitude":127.047442},{"latitude":37.278289,"longitude":127.046828},{"latitude":37.27833,"longitude":127.04686},
+{"latitude":37.278053,"longitude":127.04744},{"latitude":37.278008,"longitude":127.04754},{"latitude":37.27799,"longitude":127.04757}
+        ],
+        "legs": [
+          {
+            "legIndex": 1, "mode": "WALK", "routeName": null, "routeColor": null, "providerRouteId": null, "vehicleType": null, "serviceAvailable": null,
+            "startName": "출발지", "startLatitude": 37.26279588, "startLongitude": 127.02852502,
+            "endName": "수원시청.수원일자리센터", "endLatitude": 37.26231388888889, "endLongitude": 127.0285,
+            "distanceM": 147, "durationSec": 133, "stationCount": null,
+            "routePoints": [
+{"latitude":37.262806,"longitude":127.028465},{"latitude":37.262733,"longitude":127.02844},{"latitude":37.262623,"longitude":127.02887},
+{"latitude":37.262585,"longitude":127.02908},{"latitude":37.262215,"longitude":127.02885},{"latitude":37.26228,"longitude":127.02857},
+{"latitude":37.262302,"longitude":127.02849}
+            ],
+            "stops": [],
+            "steps": [
+{"stepIndex":1,"instruction":"보행자도로를 따라 9m 이동","streetName":"보행자도로","distanceM":9,"points":[{"latitude":37.262806,"longitude":127.028465},{"latitude":37.262733,"longitude":127.02844}]},
+{"stepIndex":2,"instruction":"좌회전 후 효원로를 따라 59m 이동","streetName":"효원로","distanceM":59,"points":[{"latitude":37.262733,"longitude":127.02844},{"latitude":37.262623,"longitude":127.02887},{"latitude":37.262585,"longitude":127.02908}]},
+{"stepIndex":3,"instruction":"우측 횡단보도 후 보행자도로를 따라 46m 이동","streetName":"보행자도로","distanceM":46,"points":[{"latitude":37.262585,"longitude":127.02908},{"latitude":37.262215,"longitude":127.02885}]},
+{"stepIndex":4,"instruction":"우회전 후 효원로를 따라 33m 이동","streetName":"효원로","distanceM":33,"points":[{"latitude":37.262215,"longitude":127.02885},{"latitude":37.26228,"longitude":127.02857},{"latitude":37.262302,"longitude":127.02849}]}
+            ]
+          },
+          {
+            "legIndex": 2, "mode": "BUS", "routeName": "일반:82-1", "routeColor": "53B332", "providerRouteId": "1017863001", "vehicleType": 1, "serviceAvailable": true,
+            "startName": "수원시청.수원일자리센터", "startLatitude": 37.26231388888889, "startLongitude": 127.0285,
+            "endName": "삼성2차아파트", "endLatitude": 37.269705555555554, "endLongitude": 127.04256388888889,
+            "distanceM": 2044, "durationSec": 357, "stationCount": 6,
+            "routePoints": [
+{"latitude":37.262381,"longitude":127.028528},{"latitude":37.261569,"longitude":127.031703},{"latitude":37.261528,"longitude":127.031875},
+{"latitude":37.261431,"longitude":127.03225},{"latitude":37.261236,"longitude":127.033011},{"latitude":37.260669,"longitude":127.035211},
+{"latitude":37.260011,"longitude":127.037803},{"latitude":37.259958,"longitude":127.038006},{"latitude":37.26,"longitude":127.038117},
+{"latitude":37.260092,"longitude":127.038267},{"latitude":37.261428,"longitude":127.038825},{"latitude":37.261453,"longitude":127.038833},
+{"latitude":37.264006,"longitude":127.039928},{"latitude":37.265225,"longitude":127.040453},{"latitude":37.265336,"longitude":127.040489},
+{"latitude":37.266125,"longitude":127.040847},{"latitude":37.269728,"longitude":127.042483}
+            ],
+            "stops": [
+{"stopIndex":0,"stationId":"720476","name":"수원시청.수원일자리센터","latitude":37.262314,"longitude":127.0285},
+{"stopIndex":1,"stationId":"720433","name":"수원시청역1번출구.국민연금공단.경인일보","latitude":37.261142,"longitude":127.032975},
+{"stopIndex":2,"stationId":"720443","name":"매탄위브하늘채.경기아트센터","latitude":37.261406,"longitude":127.038908},
+{"stopIndex":3,"stationId":"720527","name":"자유총연맹","latitude":37.263981,"longitude":127.040014},
+{"stopIndex":4,"stationId":"720596","name":"삼성1차아파트","latitude":37.266089,"longitude":127.040969},
+{"stopIndex":5,"stationId":"720745","name":"삼성2차아파트","latitude":37.269706,"longitude":127.042564}
+            ],
+            "steps": []
+          },
+          {
+            "legIndex": 3, "mode": "WALK", "routeName": null, "routeColor": null, "providerRouteId": null, "vehicleType": null, "serviceAvailable": null,
+            "startName": "삼성2차아파트", "startLatitude": 37.269705555555554, "startLongitude": 127.04256388888889,
+            "endName": "삼성2차아파트", "endLatitude": 37.269705555555554, "endLongitude": 127.04256388888889,
+            "distanceM": 0, "durationSec": 0, "stationCount": null,
+            "routePoints": [{"latitude":37.269705555555554,"longitude":127.04256388888889}],
+            "stops": [],
+            "steps": []
+          },
+          {
+            "legIndex": 4, "mode": "BUS", "routeName": "일반:11-1", "routeColor": "53B332", "providerRouteId": "1017865001", "vehicleType": 1, "serviceAvailable": true,
+            "startName": "삼성2차아파트", "startLatitude": 37.269705555555554, "startLongitude": 127.04256388888889,
+            "endName": "아주대병원", "endLatitude": 37.27831666666667, "endLongitude": 127.04685,
+            "distanceM": 1536, "durationSec": 257, "stationCount": 5,
+            "routePoints": [
+{"latitude":37.269728,"longitude":127.042483},{"latitude":37.270458,"longitude":127.042814},{"latitude":37.270556,"longitude":127.042861},
+{"latitude":37.270897,"longitude":127.043031},{"latitude":37.271244,"longitude":127.0433},{"latitude":37.271422,"longitude":127.043519},
+{"latitude":37.271689,"longitude":127.044044},{"latitude":37.272525,"longitude":127.046025},{"latitude":37.273419,"longitude":127.048142},
+{"latitude":37.273475,"longitude":127.048294},{"latitude":37.273533,"longitude":127.048461},{"latitude":37.274522,"longitude":127.050011},
+{"latitude":37.275225,"longitude":127.051111},{"latitude":37.275328,"longitude":127.051108},{"latitude":37.275433,"longitude":127.051106},
+{"latitude":37.275678,"longitude":127.050878},{"latitude":37.276319,"longitude":127.050278},{"latitude":37.276911,"longitude":127.049728},
+{"latitude":37.277278,"longitude":127.048983},{"latitude":37.277344,"longitude":127.04885},{"latitude":37.277706,"longitude":127.048119},
+{"latitude":37.277942,"longitude":127.047594},{"latitude":37.277983,"longitude":127.047503},{"latitude":37.278011,"longitude":127.047442},
+{"latitude":37.278289,"longitude":127.046828}
+            ],
+            "stops": [
+{"stopIndex":0,"stationId":"720745","name":"삼성2차아파트","latitude":37.269706,"longitude":127.042564},
+{"stopIndex":1,"stationId":"720863","name":"매탄2동행정복지센터","latitude":37.272492,"longitude":127.046044},
+{"stopIndex":2,"stationId":"720935","name":"수원나누리병원","latitude":37.274497,"longitude":127.050039},
+{"stopIndex":3,"stationId":"721015","name":"수원정보과학고.원천중학교","latitude":37.276339,"longitude":127.050314},
+{"stopIndex":4,"stationId":"721110","name":"아주대병원","latitude":37.278317,"longitude":127.04685}
+            ],
+            "steps": []
+          },
+          {
+            "legIndex": 5, "mode": "WALK", "routeName": null, "routeColor": null, "providerRouteId": null, "vehicleType": null, "serviceAvailable": null,
+            "startName": "아주대병원", "startLatitude": 37.27831666666667, "startLongitude": 127.04685,
+            "endName": "도착지", "endLatitude": 37.27798891, "endLongitude": 127.04757842,
+            "distanceM": 74, "durationSec": 52, "stationCount": null,
+            "routePoints": [
+{"latitude":37.27833,"longitude":127.04686},{"latitude":37.278053,"longitude":127.04744},{"latitude":37.278008,"longitude":127.04754},
+{"latitude":37.27799,"longitude":127.04757}
+            ],
+            "stops": [],
+            "steps": [
+{"stepIndex":1,"instruction":"월드컵로를 따라 74m 이동","streetName":"월드컵로","distanceM":74,"points":[{"latitude":37.27833,"longitude":127.04686},{"latitude":37.278053,"longitude":127.04744},{"latitude":37.278008,"longitude":127.04754},{"latitude":37.27799,"longitude":127.04757}]}
+            ]
+          }
+        ]
+      },
+      {
+        "routeId": "transit-3b397283-c0d6-4383-813c-e31bc2f18dc2",
+        "providerRank": 3,
+        "summary": { "totalTimeSec": 836, "totalWalkTimeSec": 185, "totalWalkDistanceM": 221, "totalDistanceM": 3704, "transferCount": 1, "fareKrw": 1650, "pathType": 2 },
+        "routePoints": [
+{"latitude":37.262806,"longitude":127.028465},{"latitude":37.262733,"longitude":127.02844},{"latitude":37.262623,"longitude":127.02887},
+{"latitude":37.262585,"longitude":127.02908},{"latitude":37.262215,"longitude":127.02885},{"latitude":37.26228,"longitude":127.02857},
+{"latitude":37.262302,"longitude":127.02849},{"latitude":37.262381,"longitude":127.028528},{"latitude":37.261569,"longitude":127.031703},
+{"latitude":37.261619,"longitude":127.031833},{"latitude":37.261725,"longitude":127.031944},{"latitude":37.262042,"longitude":127.032064},
+{"latitude":37.262972,"longitude":127.032414},{"latitude":37.265694,"longitude":127.033442},{"latitude":37.26566388888889,"longitude":127.03356944444444},
+{"latitude":37.265694,"longitude":127.033442},{"latitude":37.266733,"longitude":127.033833},{"latitude":37.266022,"longitude":127.036917},
+{"latitude":37.265253,"longitude":127.040258},{"latitude":37.265292,"longitude":127.040367},{"latitude":37.265303,"longitude":127.0404},
+{"latitude":37.265336,"longitude":127.040489},{"latitude":37.266125,"longitude":127.040847},{"latitude":37.269728,"longitude":127.042483},
+{"latitude":37.270458,"longitude":127.042814},{"latitude":37.270556,"longitude":127.042861},{"latitude":37.270897,"longitude":127.043031},
+{"latitude":37.271244,"longitude":127.0433},{"latitude":37.271422,"longitude":127.043519},{"latitude":37.271689,"longitude":127.044044},
+{"latitude":37.272525,"longitude":127.046025},{"latitude":37.273419,"longitude":127.048142},{"latitude":37.273475,"longitude":127.048294},
+{"latitude":37.273533,"longitude":127.048461},{"latitude":37.274522,"longitude":127.050011},{"latitude":37.275225,"longitude":127.051111},
+{"latitude":37.275328,"longitude":127.051108},{"latitude":37.275433,"longitude":127.051106},{"latitude":37.275678,"longitude":127.050878},
+{"latitude":37.276319,"longitude":127.050278},{"latitude":37.276911,"longitude":127.049728},{"latitude":37.277278,"longitude":127.048983},
+{"latitude":37.277344,"longitude":127.04885},{"latitude":37.277706,"longitude":127.048119},{"latitude":37.277942,"longitude":127.047594},
+{"latitude":37.277983,"longitude":127.047503},{"latitude":37.278011,"longitude":127.047442},{"latitude":37.278289,"longitude":127.046828},
+{"latitude":37.27833,"longitude":127.04686},{"latitude":37.278053,"longitude":127.04744},{"latitude":37.278008,"longitude":127.04754},
+{"latitude":37.27799,"longitude":127.04757}
+        ],
+        "legs": [
+          {
+            "legIndex": 1, "mode": "WALK", "routeName": null, "routeColor": null, "providerRouteId": null, "vehicleType": null, "serviceAvailable": null,
+            "startName": "출발지", "startLatitude": 37.26279588, "startLongitude": 127.02852502,
+            "endName": "수원시청.수원일자리센터", "endLatitude": 37.26231388888889, "endLongitude": 127.0285,
+            "distanceM": 147, "durationSec": 133, "stationCount": null,
+            "routePoints": [
+{"latitude":37.262806,"longitude":127.028465},{"latitude":37.262733,"longitude":127.02844},{"latitude":37.262623,"longitude":127.02887},
+{"latitude":37.262585,"longitude":127.02908},{"latitude":37.262215,"longitude":127.02885},{"latitude":37.26228,"longitude":127.02857},
+{"latitude":37.262302,"longitude":127.02849}
+            ],
+            "stops": [],
+            "steps": [
+{"stepIndex":1,"instruction":"보행자도로를 따라 9m 이동","streetName":"보행자도로","distanceM":9,"points":[{"latitude":37.262806,"longitude":127.028465},{"latitude":37.262733,"longitude":127.02844}]},
+{"stepIndex":2,"instruction":"좌회전 후 효원로를 따라 59m 이동","streetName":"효원로","distanceM":59,"points":[{"latitude":37.262733,"longitude":127.02844},{"latitude":37.262623,"longitude":127.02887},{"latitude":37.262585,"longitude":127.02908}]},
+{"stepIndex":3,"instruction":"우측 횡단보도 후 보행자도로를 따라 46m 이동","streetName":"보행자도로","distanceM":46,"points":[{"latitude":37.262585,"longitude":127.02908},{"latitude":37.262215,"longitude":127.02885}]},
+{"stepIndex":4,"instruction":"우회전 후 효원로를 따라 33m 이동","streetName":"효원로","distanceM":33,"points":[{"latitude":37.262215,"longitude":127.02885},{"latitude":37.26228,"longitude":127.02857},{"latitude":37.262302,"longitude":127.02849}]}
+            ]
+          },
+          {
+            "legIndex": 2, "mode": "BUS", "routeName": "일반:92-1", "routeColor": "53B332", "providerRouteId": "1017852001", "vehicleType": 1, "serviceAvailable": true,
+            "startName": "수원시청.수원일자리센터", "startLatitude": 37.26231388888889, "startLongitude": 127.0285,
+            "endName": "뉴코아아울렛", "endLatitude": 37.26566388888889, "endLongitude": 127.03356944444444,
+            "distanceM": 784, "durationSec": 192, "stationCount": 3,
+            "routePoints": [
+{"latitude":37.262381,"longitude":127.028528},{"latitude":37.261569,"longitude":127.031703},{"latitude":37.261619,"longitude":127.031833},
+{"latitude":37.261725,"longitude":127.031944},{"latitude":37.262042,"longitude":127.032064},{"latitude":37.262972,"longitude":127.032414},
+{"latitude":37.265694,"longitude":127.033442}
+            ],
+            "stops": [
+{"stopIndex":0,"stationId":"720476","name":"수원시청.수원일자리센터","latitude":37.262314,"longitude":127.0285},
+{"stopIndex":1,"stationId":"720501","name":"수원시청역9번출구.국민연금공단","latitude":37.262953,"longitude":127.0325},
+{"stopIndex":2,"stationId":"720586","name":"뉴코아아울렛","latitude":37.265664,"longitude":127.033569}
+            ],
+            "steps": []
+          },
+          {
+            "legIndex": 3, "mode": "WALK", "routeName": null, "routeColor": null, "providerRouteId": null, "vehicleType": null, "serviceAvailable": null,
+            "startName": "뉴코아아울렛", "startLatitude": 37.26566388888889, "startLongitude": 127.03356944444444,
+            "endName": "뉴코아아울렛", "endLatitude": 37.26566388888889, "endLongitude": 127.03356944444444,
+            "distanceM": 0, "durationSec": 0, "stationCount": null,
+            "routePoints": [{"latitude":37.26566388888889,"longitude":127.03356944444444}],
+            "stops": [],
+            "steps": []
+          },
+          {
+            "legIndex": 4, "mode": "BUS", "routeName": "일반:11-1", "routeColor": "53B332", "providerRouteId": "1017865001", "vehicleType": 1, "serviceAvailable": true,
+            "startName": "뉴코아아울렛", "startLatitude": 37.26566388888889, "startLongitude": 127.03356944444444,
+            "endName": "아주대병원", "endLatitude": 37.27831666666667, "endLongitude": 127.04685,
+            "distanceM": 2791, "durationSec": 459, "stationCount": 8,
+            "routePoints": [
+{"latitude":37.265694,"longitude":127.033442},{"latitude":37.266733,"longitude":127.033833},{"latitude":37.266022,"longitude":127.036917},
+{"latitude":37.265253,"longitude":127.040258},{"latitude":37.265292,"longitude":127.040367},{"latitude":37.265303,"longitude":127.0404},
+{"latitude":37.265336,"longitude":127.040489},{"latitude":37.266125,"longitude":127.040847},{"latitude":37.269728,"longitude":127.042483},
+{"latitude":37.270458,"longitude":127.042814},{"latitude":37.270556,"longitude":127.042861},{"latitude":37.270897,"longitude":127.043031},
+{"latitude":37.271244,"longitude":127.0433},{"latitude":37.271422,"longitude":127.043519},{"latitude":37.271689,"longitude":127.044044},
+{"latitude":37.272525,"longitude":127.046025},{"latitude":37.273419,"longitude":127.048142},{"latitude":37.273475,"longitude":127.048294},
+{"latitude":37.273533,"longitude":127.048461},{"latitude":37.274522,"longitude":127.050011},{"latitude":37.275225,"longitude":127.051111},
+{"latitude":37.275328,"longitude":127.051108},{"latitude":37.275433,"longitude":127.051106},{"latitude":37.275678,"longitude":127.050878},
+{"latitude":37.276319,"longitude":127.050278},{"latitude":37.276911,"longitude":127.049728},{"latitude":37.277278,"longitude":127.048983},
+{"latitude":37.277344,"longitude":127.04885},{"latitude":37.277706,"longitude":127.048119},{"latitude":37.277942,"longitude":127.047594},
+{"latitude":37.277983,"longitude":127.047503},{"latitude":37.278011,"longitude":127.047442},{"latitude":37.278289,"longitude":127.046828}
+            ],
+            "stops": [
+{"stopIndex":0,"stationId":"720586","name":"뉴코아아울렛","latitude":37.265664,"longitude":127.033569},
+{"stopIndex":1,"stationId":"720595","name":"경기문화재단.매탄주공4.5단지","latitude":37.265989,"longitude":127.036906},
+{"stopIndex":2,"stationId":"720596","name":"삼성1차아파트","latitude":37.266089,"longitude":127.040969},
+{"stopIndex":3,"stationId":"720745","name":"삼성2차아파트","latitude":37.269706,"longitude":127.042564},
+{"stopIndex":4,"stationId":"720863","name":"매탄2동행정복지센터","latitude":37.272492,"longitude":127.046044},
+{"stopIndex":5,"stationId":"720935","name":"수원나누리병원","latitude":37.274497,"longitude":127.050039},
+{"stopIndex":6,"stationId":"721015","name":"수원정보과학고.원천중학교","latitude":37.276339,"longitude":127.050314},
+{"stopIndex":7,"stationId":"721110","name":"아주대병원","latitude":37.278317,"longitude":127.04685}
+            ],
+            "steps": []
+          },
+          {
+            "legIndex": 5, "mode": "WALK", "routeName": null, "routeColor": null, "providerRouteId": null, "vehicleType": null, "serviceAvailable": null,
+            "startName": "아주대병원", "startLatitude": 37.27831666666667, "startLongitude": 127.04685,
+            "endName": "도착지", "endLatitude": 37.27798891, "endLongitude": 127.04757842,
+            "distanceM": 74, "durationSec": 52, "stationCount": null,
+            "routePoints": [
+{"latitude":37.27833,"longitude":127.04686},{"latitude":37.278053,"longitude":127.04744},{"latitude":37.278008,"longitude":127.04754},
+{"latitude":37.27799,"longitude":127.04757}
+            ],
+            "stops": [],
+            "steps": [
+{"stepIndex":1,"instruction":"월드컵로를 따라 74m 이동","streetName":"월드컵로","distanceM":74,"points":[{"latitude":37.27833,"longitude":127.04686},{"latitude":37.278053,"longitude":127.04744},{"latitude":37.278008,"longitude":127.04754},{"latitude":37.27799,"longitude":127.04757}]}
+            ]
+          }
+        ]
+      },
+      {
+        "routeId": "transit-ee7b0f14-b756-4c31-ad11-1959e9ad32de",
+        "providerRank": 4,
+        "summary": { "totalTimeSec": 1153, "totalWalkTimeSec": 564, "totalWalkDistanceM": 544, "totalDistanceM": 3486, "transferCount": 0, "fareKrw": 1650, "pathType": 2 },
+        "routePoints": [
+{"latitude":37.262806,"longitude":127.028465},{"latitude":37.262733,"longitude":127.02844},{"latitude":37.262623,"longitude":127.02887},
+{"latitude":37.262585,"longitude":127.02908},{"latitude":37.26254,"longitude":127.02933},{"latitude":37.262436,"longitude":127.02973},
+{"latitude":37.262184,"longitude":127.03071},{"latitude":37.26215,"longitude":127.03084},{"latitude":37.262135,"longitude":127.03089},
+{"latitude":37.26204,"longitude":127.03113},{"latitude":37.262012,"longitude":127.03122},{"latitude":37.26194,"longitude":127.03152},
+{"latitude":37.26199,"longitude":127.03166},{"latitude":37.261944,"longitude":127.031685},{"latitude":37.261925,"longitude":127.0317},
+{"latitude":37.26191,"longitude":127.031746},{"latitude":37.26184,"longitude":127.032036},{"latitude":37.26183,"longitude":127.03208},
+{"latitude":37.26184,"longitude":127.032104},{"latitude":37.26188,"longitude":127.03219},{"latitude":37.26196,"longitude":127.03213},
+{"latitude":37.2623,"longitude":127.032265},{"latitude":37.262356,"longitude":127.03229},{"latitude":37.262947,"longitude":127.032524},
+{"latitude":37.262972,"longitude":127.032414},{"latitude":37.265694,"longitude":127.033442},{"latitude":37.266733,"longitude":127.033833},
+{"latitude":37.266872,"longitude":127.033903},{"latitude":37.267975,"longitude":127.034297},{"latitude":37.268828,"longitude":127.034642},
+{"latitude":37.268956,"longitude":127.034694},{"latitude":37.270942,"longitude":127.035519},{"latitude":37.275064,"longitude":127.037239},
+{"latitude":37.276542,"longitude":127.037853},{"latitude":37.276447,"longitude":127.038156},{"latitude":37.276167,"longitude":127.03905},
+{"latitude":37.275825,"longitude":127.040144},{"latitude":37.274594,"longitude":127.043961},{"latitude":37.274708,"longitude":127.044092},
+{"latitude":37.275022,"longitude":127.044139},{"latitude":37.275917,"longitude":127.044058},{"latitude":37.278717,"longitude":127.043811},
+{"latitude":37.279678,"longitude":127.043725},{"latitude":37.278717,"longitude":127.045622},{"latitude":37.278264,"longitude":127.046511},
+{"latitude":37.277978,"longitude":127.04715},{"latitude":37.277943,"longitude":127.04712},{"latitude":37.277863,"longitude":127.04729},
+{"latitude":37.278053,"longitude":127.04744},{"latitude":37.278008,"longitude":127.04754},{"latitude":37.27799,"longitude":127.04757}
+        ],
+        "legs": [
+          {
+            "legIndex": 1, "mode": "WALK", "routeName": null, "routeColor": null, "providerRouteId": null, "vehicleType": null, "serviceAvailable": null,
+            "startName": "출발지", "startLatitude": 37.26279588, "startLongitude": 127.02852502,
+            "endName": "수원시청역9번출구.국민연금공단", "endLatitude": 37.26295277777778, "endLongitude": 127.0325,
+            "distanceM": 488, "durationSec": 496, "stationCount": null,
+            "routePoints": [
+{"latitude":37.262806,"longitude":127.028465},{"latitude":37.262733,"longitude":127.02844},{"latitude":37.262623,"longitude":127.02887},
+{"latitude":37.262585,"longitude":127.02908},{"latitude":37.26254,"longitude":127.02933},{"latitude":37.262436,"longitude":127.02973},
+{"latitude":37.262184,"longitude":127.03071},{"latitude":37.26215,"longitude":127.03084},{"latitude":37.262135,"longitude":127.03089},
+{"latitude":37.26204,"longitude":127.03113},{"latitude":37.262012,"longitude":127.03122},{"latitude":37.26194,"longitude":127.03152},
+{"latitude":37.26199,"longitude":127.03166},{"latitude":37.261944,"longitude":127.031685},{"latitude":37.261925,"longitude":127.0317},
+{"latitude":37.26191,"longitude":127.031746},{"latitude":37.26184,"longitude":127.032036},{"latitude":37.26183,"longitude":127.03208},
+{"latitude":37.26184,"longitude":127.032104},{"latitude":37.26188,"longitude":127.03219},{"latitude":37.26196,"longitude":127.03213},
+{"latitude":37.2623,"longitude":127.032265},{"latitude":37.262356,"longitude":127.03229},{"latitude":37.262947,"longitude":127.032524}
+            ],
+            "stops": [],
+            "steps": [
+{"stepIndex":1,"instruction":"보행자도로를 따라 9m 이동","streetName":"보행자도로","distanceM":9,"points":[{"latitude":37.262806,"longitude":127.028465},{"latitude":37.262733,"longitude":127.02844}]},
+{"stepIndex":2,"instruction":"좌회전 후 효원로를 따라 59m 이동","streetName":"효원로","distanceM":59,"points":[{"latitude":37.262733,"longitude":127.02844},{"latitude":37.262623,"longitude":127.02887},{"latitude":37.262585,"longitude":127.02908}]},
+{"stepIndex":3,"instruction":"횡단보도 후 보행자도로를 따라 22m 이동","streetName":"보행자도로","distanceM":22,"points":[{"latitude":37.262585,"longitude":127.02908},{"latitude":37.26254,"longitude":127.02933}]},
+{"stepIndex":4,"instruction":"직진 후 효원로를 따라 128m 이동","streetName":"효원로","distanceM":128,"points":[{"latitude":37.26254,"longitude":127.02933},{"latitude":37.262436,"longitude":127.02973},{"latitude":37.262184,"longitude":127.03071}]},
+{"stepIndex":5,"instruction":"횡단보도 후 보행자도로를 따라 12m 이동","streetName":"보행자도로","distanceM":12,"points":[{"latitude":37.262184,"longitude":127.03071},{"latitude":37.26215,"longitude":127.03084}]},
+{"stepIndex":6,"instruction":"직진 후 효원로를 따라 79m 이동","streetName":"효원로","distanceM":79,"points":[{"latitude":37.26215,"longitude":127.03084},{"latitude":37.262135,"longitude":127.03089},{"latitude":37.26204,"longitude":127.03113},{"latitude":37.262012,"longitude":127.03122},{"latitude":37.26194,"longitude":127.03152},{"latitude":37.26199,"longitude":127.03166}]},
+{"stepIndex":7,"instruction":"우리은행 수원시청역지점에서 우측 횡단보도 후 5m 이동","streetName":null,"distanceM":5,"points":[{"latitude":37.26199,"longitude":127.03166},{"latitude":37.261944,"longitude":127.031685}]},
+{"stepIndex":8,"instruction":"직진 후 7m 이동","streetName":null,"distanceM":7,"points":[{"latitude":37.261944,"longitude":127.031685},{"latitude":37.261925,"longitude":127.0317},{"latitude":37.26191,"longitude":127.031746}]},
+{"stepIndex":9,"instruction":"횡단보도 후 27m 이동","streetName":null,"distanceM":27,"points":[{"latitude":37.26191,"longitude":127.031746},{"latitude":37.26184,"longitude":127.032036}]},
+{"stepIndex":10,"instruction":"직진 후 7m 이동","streetName":null,"distanceM":7,"points":[{"latitude":37.26184,"longitude":127.032036},{"latitude":37.26183,"longitude":127.03208},{"latitude":37.26184,"longitude":127.032104}]},
+{"stepIndex":11,"instruction":"횡단보도 후 보행자도로를 따라 8m 이동","streetName":"보행자도로","distanceM":8,"points":[{"latitude":37.26184,"longitude":127.032104},{"latitude":37.26188,"longitude":127.03219}]},
+{"stepIndex":12,"instruction":"좌회전 후 권광로를 따라 125m 이동","streetName":"권광로","distanceM":125,"points":[{"latitude":37.26188,"longitude":127.03219},{"latitude":37.26196,"longitude":127.03213},{"latitude":37.2623,"longitude":127.032265},{"latitude":37.262356,"longitude":127.03229},{"latitude":37.262947,"longitude":127.032524}]}
+            ]
+          },
+          {
+            "legIndex": 2, "mode": "BUS", "routeName": "일반:202", "routeColor": "53B332", "providerRouteId": "1018508001", "vehicleType": 1, "serviceAvailable": true,
+            "startName": "수원시청역9번출구.국민연금공단", "startLatitude": 37.26295277777778, "startLongitude": 127.0325,
+            "endName": "아주대병원", "endLatitude": 37.277947222222224, "endLongitude": 127.04712777777777,
+            "distanceM": 3092, "durationSec": 589, "stationCount": 9,
+            "routePoints": [
+{"latitude":37.262972,"longitude":127.032414},{"latitude":37.265694,"longitude":127.033442},{"latitude":37.266733,"longitude":127.033833},
+{"latitude":37.266872,"longitude":127.033903},{"latitude":37.267975,"longitude":127.034297},{"latitude":37.268828,"longitude":127.034642},
+{"latitude":37.268956,"longitude":127.034694},{"latitude":37.270942,"longitude":127.035519},{"latitude":37.275064,"longitude":127.037239},
+{"latitude":37.276542,"longitude":127.037853},{"latitude":37.276447,"longitude":127.038156},{"latitude":37.276167,"longitude":127.03905},
+{"latitude":37.275825,"longitude":127.040144},{"latitude":37.274594,"longitude":127.043961},{"latitude":37.274708,"longitude":127.044092},
+{"latitude":37.275022,"longitude":127.044139},{"latitude":37.275917,"longitude":127.044058},{"latitude":37.278717,"longitude":127.043811},
+{"latitude":37.279678,"longitude":127.043725},{"latitude":37.278717,"longitude":127.045622},{"latitude":37.278264,"longitude":127.046511},
+{"latitude":37.277978,"longitude":127.04715}
+            ],
+            "stops": [
+{"stopIndex":0,"stationId":"720501","name":"수원시청역9번출구.국민연금공단","latitude":37.262953,"longitude":127.0325},
+{"stopIndex":1,"stationId":"720586","name":"뉴코아아울렛","latitude":37.265664,"longitude":127.033569},
+{"stopIndex":2,"stationId":"720721","name":"인계래미안노블클래스","latitude":37.268783,"longitude":127.034814},
+{"stopIndex":3,"stationId":"720795","name":"현대힐스테이트.인계삼성아파트","latitude":37.270908,"longitude":127.035642},
+{"stopIndex":4,"stationId":"720952","name":"청소년문화센터","latitude":37.275056,"longitude":127.037278},
+{"stopIndex":5,"stationId":"721004","name":"인계동동문굿모닝힐아파트","latitude":37.276133,"longitude":127.039033},
+{"stopIndex":6,"stationId":"720995","name":"아주대학교입구","latitude":37.275919,"longitude":127.044103},
+{"stopIndex":7,"stationId":"721128","name":"아주대.아주대학교병원","latitude":37.278717,"longitude":127.04385},
+{"stopIndex":8,"stationId":"721093","name":"아주대병원","latitude":37.277947,"longitude":127.047128}
+            ],
+            "steps": []
+          },
+          {
+            "legIndex": 3, "mode": "WALK", "routeName": null, "routeColor": null, "providerRouteId": null, "vehicleType": null, "serviceAvailable": null,
+            "startName": "아주대병원", "startLatitude": 37.277947222222224, "startLongitude": 127.04712777777777,
+            "endName": "도착지", "endLatitude": 37.27798891, "endLongitude": 127.04757842,
+            "distanceM": 56, "durationSec": 68, "stationCount": null,
+            "routePoints": [
+{"latitude":37.277943,"longitude":127.04712},{"latitude":37.277863,"longitude":127.04729},{"latitude":37.278053,"longitude":127.04744},
+{"latitude":37.278008,"longitude":127.04754},{"latitude":37.27799,"longitude":127.04757}
+            ],
+            "stops": [],
+            "steps": [
+{"stepIndex":1,"instruction":"월드컵로를 따라 17m 이동","streetName":"월드컵로","distanceM":17,"points":[{"latitude":37.277943,"longitude":127.04712},{"latitude":37.277863,"longitude":127.04729}]},
+{"stepIndex":2,"instruction":"좌측 횡단보도 후 보행자도로를 따라 25m 이동","streetName":"보행자도로","distanceM":25,"points":[{"latitude":37.277863,"longitude":127.04729},{"latitude":37.278053,"longitude":127.04744}]},
+{"stepIndex":3,"instruction":"우회전 후 월드컵로를 따라 14m 이동","streetName":"월드컵로","distanceM":14,"points":[{"latitude":37.278053,"longitude":127.04744},{"latitude":37.278008,"longitude":127.04754},{"latitude":37.27799,"longitude":127.04757}]}
+            ]
+          }
+        ]
+      },
+      {
+        "routeId": "transit-0bb9a302-9080-4dad-8afe-2569ee8f06f7",
+        "providerRank": 5,
+        "summary": { "totalTimeSec": 1084, "totalWalkTimeSec": 548, "totalWalkDistanceM": 562, "totalDistanceM": 3534, "transferCount": 0, "fareKrw": 1650, "pathType": 2 },
+        "routePoints": [
+{"latitude":37.262806,"longitude":127.028465},{"latitude":37.262733,"longitude":127.02844},{"latitude":37.262623,"longitude":127.02887},
+{"latitude":37.262585,"longitude":127.02908},{"latitude":37.26254,"longitude":127.02933},{"latitude":37.262436,"longitude":127.02973},
+{"latitude":37.262184,"longitude":127.03071},{"latitude":37.26215,"longitude":127.03084},{"latitude":37.262135,"longitude":127.03089},
+{"latitude":37.26204,"longitude":127.03113},{"latitude":37.262012,"longitude":127.03122},{"latitude":37.26194,"longitude":127.03152},
+{"latitude":37.26199,"longitude":127.03166},{"latitude":37.261944,"longitude":127.031685},{"latitude":37.261925,"longitude":127.0317},
+{"latitude":37.26191,"longitude":127.031746},{"latitude":37.26184,"longitude":127.032036},{"latitude":37.26183,"longitude":127.03208},
+{"latitude":37.26184,"longitude":127.032104},{"latitude":37.26188,"longitude":127.03219},{"latitude":37.26196,"longitude":127.03213},
+{"latitude":37.2623,"longitude":127.032265},{"latitude":37.262356,"longitude":127.03229},{"latitude":37.262947,"longitude":127.032524},
+{"latitude":37.262972,"longitude":127.032414},{"latitude":37.265694,"longitude":127.033442},{"latitude":37.266733,"longitude":127.033833},
+{"latitude":37.266022,"longitude":127.036917},{"latitude":37.265253,"longitude":127.040258},{"latitude":37.265292,"longitude":127.040367},
+{"latitude":37.265303,"longitude":127.0404},{"latitude":37.265336,"longitude":127.040489},{"latitude":37.266125,"longitude":127.040847},
+{"latitude":37.269728,"longitude":127.042483},{"latitude":37.270458,"longitude":127.042814},{"latitude":37.270556,"longitude":127.042861},
+{"latitude":37.270897,"longitude":127.043031},{"latitude":37.271244,"longitude":127.0433},{"latitude":37.271422,"longitude":127.043519},
+{"latitude":37.271689,"longitude":127.044044},{"latitude":37.272525,"longitude":127.046025},{"latitude":37.273419,"longitude":127.048142},
+{"latitude":37.273475,"longitude":127.048294},{"latitude":37.273533,"longitude":127.048461},{"latitude":37.274522,"longitude":127.050011},
+{"latitude":37.275225,"longitude":127.051111},{"latitude":37.275328,"longitude":127.051108},{"latitude":37.275433,"longitude":127.051106},
+{"latitude":37.275678,"longitude":127.050878},{"latitude":37.276319,"longitude":127.050278},{"latitude":37.276911,"longitude":127.049728},
+{"latitude":37.277278,"longitude":127.048983},{"latitude":37.277344,"longitude":127.04885},{"latitude":37.277706,"longitude":127.048119},
+{"latitude":37.277942,"longitude":127.047594},{"latitude":37.277983,"longitude":127.047503},{"latitude":37.278011,"longitude":127.047442},
+{"latitude":37.278289,"longitude":127.046828},{"latitude":37.27833,"longitude":127.04686},{"latitude":37.278053,"longitude":127.04744},
+{"latitude":37.278008,"longitude":127.04754},{"latitude":37.27799,"longitude":127.04757}
+        ],
+        "legs": [
+          {
+            "legIndex": 1, "mode": "WALK", "routeName": null, "routeColor": null, "providerRouteId": null, "vehicleType": null, "serviceAvailable": null,
+            "startName": "출발지", "startLatitude": 37.26279588, "startLongitude": 127.02852502,
+            "endName": "수원시청역9번출구.국민연금공단", "endLatitude": 37.26295277777778, "endLongitude": 127.0325,
+            "distanceM": 488, "durationSec": 496, "stationCount": null,
+            "routePoints": [
+{"latitude":37.262806,"longitude":127.028465},{"latitude":37.262733,"longitude":127.02844},{"latitude":37.262623,"longitude":127.02887},
+{"latitude":37.262585,"longitude":127.02908},{"latitude":37.26254,"longitude":127.02933},{"latitude":37.262436,"longitude":127.02973},
+{"latitude":37.262184,"longitude":127.03071},{"latitude":37.26215,"longitude":127.03084},{"latitude":37.262135,"longitude":127.03089},
+{"latitude":37.26204,"longitude":127.03113},{"latitude":37.262012,"longitude":127.03122},{"latitude":37.26194,"longitude":127.03152},
+{"latitude":37.26199,"longitude":127.03166},{"latitude":37.261944,"longitude":127.031685},{"latitude":37.261925,"longitude":127.0317},
+{"latitude":37.26191,"longitude":127.031746},{"latitude":37.26184,"longitude":127.032036},{"latitude":37.26183,"longitude":127.03208},
+{"latitude":37.26184,"longitude":127.032104},{"latitude":37.26188,"longitude":127.03219},{"latitude":37.26196,"longitude":127.03213},
+{"latitude":37.2623,"longitude":127.032265},{"latitude":37.262356,"longitude":127.03229},{"latitude":37.262947,"longitude":127.032524}
+            ],
+            "stops": [],
+            "steps": [
+{"stepIndex":1,"instruction":"보행자도로를 따라 9m 이동","streetName":"보행자도로","distanceM":9,"points":[{"latitude":37.262806,"longitude":127.028465},{"latitude":37.262733,"longitude":127.02844}]},
+{"stepIndex":2,"instruction":"좌회전 후 효원로를 따라 59m 이동","streetName":"효원로","distanceM":59,"points":[{"latitude":37.262733,"longitude":127.02844},{"latitude":37.262623,"longitude":127.02887},{"latitude":37.262585,"longitude":127.02908}]},
+{"stepIndex":3,"instruction":"횡단보도 후 보행자도로를 따라 22m 이동","streetName":"보행자도로","distanceM":22,"points":[{"latitude":37.262585,"longitude":127.02908},{"latitude":37.26254,"longitude":127.02933}]},
+{"stepIndex":4,"instruction":"직진 후 효원로를 따라 128m 이동","streetName":"효원로","distanceM":128,"points":[{"latitude":37.26254,"longitude":127.02933},{"latitude":37.262436,"longitude":127.02973},{"latitude":37.262184,"longitude":127.03071}]},
+{"stepIndex":5,"instruction":"횡단보도 후 보행자도로를 따라 12m 이동","streetName":"보행자도로","distanceM":12,"points":[{"latitude":37.262184,"longitude":127.03071},{"latitude":37.26215,"longitude":127.03084}]},
+{"stepIndex":6,"instruction":"직진 후 효원로를 따라 79m 이동","streetName":"효원로","distanceM":79,"points":[{"latitude":37.26215,"longitude":127.03084},{"latitude":37.262135,"longitude":127.03089},{"latitude":37.26204,"longitude":127.03113},{"latitude":37.262012,"longitude":127.03122},{"latitude":37.26194,"longitude":127.03152},{"latitude":37.26199,"longitude":127.03166}]},
+{"stepIndex":7,"instruction":"우리은행 수원시청역지점에서 우측 횡단보도 후 5m 이동","streetName":null,"distanceM":5,"points":[{"latitude":37.26199,"longitude":127.03166},{"latitude":37.261944,"longitude":127.031685}]},
+{"stepIndex":8,"instruction":"직진 후 7m 이동","streetName":null,"distanceM":7,"points":[{"latitude":37.261944,"longitude":127.031685},{"latitude":37.261925,"longitude":127.0317},{"latitude":37.26191,"longitude":127.031746}]},
+{"stepIndex":9,"instruction":"횡단보도 후 27m 이동","streetName":null,"distanceM":27,"points":[{"latitude":37.26191,"longitude":127.031746},{"latitude":37.26184,"longitude":127.032036}]},
+{"stepIndex":10,"instruction":"직진 후 7m 이동","streetName":null,"distanceM":7,"points":[{"latitude":37.26184,"longitude":127.032036},{"latitude":37.26183,"longitude":127.03208},{"latitude":37.26184,"longitude":127.032104}]},
+{"stepIndex":11,"instruction":"횡단보도 후 보행자도로를 따라 8m 이동","streetName":"보행자도로","distanceM":8,"points":[{"latitude":37.26184,"longitude":127.032104},{"latitude":37.26188,"longitude":127.03219}]},
+{"stepIndex":12,"instruction":"좌회전 후 권광로를 따라 125m 이동","streetName":"권광로","distanceM":125,"points":[{"latitude":37.26188,"longitude":127.03219},{"latitude":37.26196,"longitude":127.03213},{"latitude":37.2623,"longitude":127.032265},{"latitude":37.262356,"longitude":127.03229},{"latitude":37.262947,"longitude":127.032524}]}
+            ]
+          },
+          {
+            "legIndex": 2, "mode": "BUS", "routeName": "일반:11-1", "routeColor": "53B332", "providerRouteId": "1017865001", "vehicleType": 1, "serviceAvailable": true,
+            "startName": "수원시청역9번출구.국민연금공단", "startLatitude": 37.26295277777778, "startLongitude": 127.0325,
+            "endName": "아주대병원", "endLatitude": 37.27831666666667, "endLongitude": 127.04685,
+            "distanceM": 3106, "durationSec": 536, "stationCount": 9,
+            "routePoints": [
+{"latitude":37.262972,"longitude":127.032414},{"latitude":37.265694,"longitude":127.033442},{"latitude":37.266733,"longitude":127.033833},
+{"latitude":37.266022,"longitude":127.036917},{"latitude":37.265253,"longitude":127.040258},{"latitude":37.265292,"longitude":127.040367},
+{"latitude":37.265303,"longitude":127.0404},{"latitude":37.265336,"longitude":127.040489},{"latitude":37.266125,"longitude":127.040847},
+{"latitude":37.269728,"longitude":127.042483},{"latitude":37.270458,"longitude":127.042814},{"latitude":37.270556,"longitude":127.042861},
+{"latitude":37.270897,"longitude":127.043031},{"latitude":37.271244,"longitude":127.0433},{"latitude":37.271422,"longitude":127.043519},
+{"latitude":37.271689,"longitude":127.044044},{"latitude":37.272525,"longitude":127.046025},{"latitude":37.273419,"longitude":127.048142},
+{"latitude":37.273475,"longitude":127.048294},{"latitude":37.273533,"longitude":127.048461},{"latitude":37.274522,"longitude":127.050011},
+{"latitude":37.275225,"longitude":127.051111},{"latitude":37.275328,"longitude":127.051108},{"latitude":37.275433,"longitude":127.051106},
+{"latitude":37.275678,"longitude":127.050878},{"latitude":37.276319,"longitude":127.050278},{"latitude":37.276911,"longitude":127.049728},
+{"latitude":37.277278,"longitude":127.048983},{"latitude":37.277344,"longitude":127.04885},{"latitude":37.277706,"longitude":127.048119},
+{"latitude":37.277942,"longitude":127.047594},{"latitude":37.277983,"longitude":127.047503},{"latitude":37.278011,"longitude":127.047442},
+{"latitude":37.278289,"longitude":127.046828}
+            ],
+            "stops": [
+{"stopIndex":0,"stationId":"720501","name":"수원시청역9번출구.국민연금공단","latitude":37.262953,"longitude":127.0325},
+{"stopIndex":1,"stationId":"720586","name":"뉴코아아울렛","latitude":37.265664,"longitude":127.033569},
+{"stopIndex":2,"stationId":"720595","name":"경기문화재단.매탄주공4.5단지","latitude":37.265989,"longitude":127.036906},
+{"stopIndex":3,"stationId":"720596","name":"삼성1차아파트","latitude":37.266089,"longitude":127.040969},
+{"stopIndex":4,"stationId":"720745","name":"삼성2차아파트","latitude":37.269706,"longitude":127.042564},
+{"stopIndex":5,"stationId":"720863","name":"매탄2동행정복지센터","latitude":37.272492,"longitude":127.046044},
+{"stopIndex":6,"stationId":"720935","name":"수원나누리병원","latitude":37.274497,"longitude":127.050039},
+{"stopIndex":7,"stationId":"721015","name":"수원정보과학고.원천중학교","latitude":37.276339,"longitude":127.050314},
+{"stopIndex":8,"stationId":"721110","name":"아주대병원","latitude":37.278317,"longitude":127.04685}
+            ],
+            "steps": []
+          },
+          {
+            "legIndex": 3, "mode": "WALK", "routeName": null, "routeColor": null, "providerRouteId": null, "vehicleType": null, "serviceAvailable": null,
+            "startName": "아주대병원", "startLatitude": 37.27831666666667, "startLongitude": 127.04685,
+            "endName": "도착지", "endLatitude": 37.27798891, "endLongitude": 127.04757842,
+            "distanceM": 74, "durationSec": 52, "stationCount": null,
+            "routePoints": [
+{"latitude":37.27833,"longitude":127.04686},{"latitude":37.278053,"longitude":127.04744},{"latitude":37.278008,"longitude":127.04754},
+{"latitude":37.27799,"longitude":127.04757}
+            ],
+            "stops": [],
+            "steps": [
+{"stepIndex":1,"instruction":"월드컵로를 따라 74m 이동","streetName":"월드컵로","distanceM":74,"points":[{"latitude":37.27833,"longitude":127.04686},{"latitude":37.278053,"longitude":127.04744},{"latitude":37.278008,"longitude":127.04754},{"latitude":37.27799,"longitude":127.04757}]}
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}
