@@ -20,16 +20,28 @@ export function SosSheet({
 }) {
   const [contacts, setContacts] = useState<EmergencyContactResponse[]>([])
   const [sending, setSending] = useState(false)
+  /** 연락처를 못 불러왔는가 — 「없다」와 구분해야 안내 문구가 맞는다 */
+  const [loadFailed, setLoadFailed] = useState(false)
 
   // 열릴 때 비상 연락처를 읽어 1순위(우선순위 낮은 값)를 보호자로 삼는다.
   useEffect(() => {
     if (!open) return
     let alive = true
+    setLoadFailed(false)
     listContacts()
       .then((cs) => {
         if (alive) setContacts(cs)
       })
-      .catch(() => {})
+      /*
+       * **못 불러온 것과 없는 것은 다르다.**
+       *
+       * 예전에는 실패를 조용히 삼켜서, 연락처가 있는 분에게도 「먼저 비상 연락처를
+       * 등록해 주세요」가 떴다. 이미 등록해둔 사람에게 등록하라고 말하는 것이고,
+       * 그것도 급할 때 그런다. 119 는 어느 쪽이든 되므로 그것만은 분명히 해둔다.
+       */
+      .catch(() => {
+        if (alive) setLoadFailed(true)
+      })
     return () => {
       alive = false
     }
@@ -44,7 +56,11 @@ export function SosSheet({
 
   function sendGuardian() {
     if (!guardian) {
-      onToast('먼저 설정에서 비상 연락처를 등록해 주세요')
+      onToast(
+        loadFailed
+          ? '비상 연락처를 불러오지 못했어요. 119에는 바로 전화하실 수 있어요'
+          : '먼저 설정에서 비상 연락처를 등록해 주세요',
+      )
       return
     }
     const openSms = (body: string) => {
@@ -93,7 +109,9 @@ export function SosSheet({
         <p>
           {guardian
             ? `1순위 연락처인 ${guardian.name}님에게 현재 위치를 문자로 보내고, 119에 바로 전화할 수 있어요.`
-            : '119에 바로 전화할 수 있어요. 보호자에게 위치를 보내려면 먼저 비상 연락처를 등록해 주세요.'}
+            : loadFailed
+              ? '비상 연락처를 불러오지 못했어요. 119에는 바로 전화하실 수 있어요.'
+              : '119에 바로 전화할 수 있어요. 보호자에게 위치를 보내려면 먼저 비상 연락처를 등록해 주세요.'}
         </p>
         <div className="sheet-actions">
           <a className="btn danger" href="tel:119">
