@@ -25,7 +25,7 @@ import {
 } from '../mock/place'
 
 import { useMock } from './mode'
-import { SERVICE_RADIUS_KM, SERVICE_SEARCH_RADIUS_KM, SUWON_CENTER, distanceKm } from './geo'
+import { SERVICE_SEARCH_RADIUS_KM, SUWON_CENTER } from './geo'
 import { bestMatchTier, hasRelevantPlace, hasStrongMatch } from './placeRank'
 
 const USE_MOCK = () => useMock('place')
@@ -43,6 +43,7 @@ export function searchPlaces(req: PlaceSearchRequest): Promise<PlaceSearchRespon
     radiusKm: req.radiusKm,
     page: req.page,
     size: req.size,
+    sort: req.sort,
   })
   return api.get<PlaceSearchResponse>(`/api/places/search${qs}`)
 }
@@ -129,20 +130,24 @@ export async function searchPlacesNear(
   }
 
   /**
-   * 좌표를 **빼고** 보낸다 → 백엔드가 정확도순(searchtypCd=A)으로 찾는다.
+   * 이름이 잘 맞는 순으로 찾는다 — 수원 안에서.
    *
-   * 대신 전국이 대상이 되므로, 받아서 **서비스 지역 안만 남긴다.**
-   * 이 앱은 수원 서비스라 수원 밖 결과는 고를 수 있는 것이 아니다.
+   * BE 가 `sort` 를 열어주기 전에는 **좌표를 빼야만** 정확도순이 됐다. 그러면 전국이
+   * 대상이 되어서 받아온 것을 우리가 25km 로 잘라내야 했고, 수원 경계 근처가 재단됐다.
+   * 이제 좌표와 함께 정확도순을 요청할 수 있어 그 낭비가 사라졌다
+   * (2026-08-16 BE PlaceSearchSort 추가 — 부탁드린 그대로 열어주셨다).
    */
   const byAccuracy = async (word: string) => {
     try {
-      const res = await searchPlaces({ keyword: word, size: SEARCH_SIZE })
-      const places = (res.places ?? []).filter(
-        (p) =>
-          distanceKm({ latitude: p.latitude, longitude: p.longitude }, SUWON_CENTER) <=
-          SERVICE_RADIUS_KM,
-      )
-      return places.length ? { ...res, places } : null
+      const res = await searchPlaces({
+        keyword: word,
+        lat: String(SUWON_CENTER.latitude),
+        lon: String(SUWON_CENTER.longitude),
+        radiusKm: SERVICE_SEARCH_RADIUS_KM,
+        size: SEARCH_SIZE,
+        sort: 'accuracy',
+      })
+      return res.places?.length ? res : null
     } catch {
       return null
     }

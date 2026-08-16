@@ -168,6 +168,14 @@ export interface PlaceSearchRequest {
   radiusKm?: string
   page?: string
   size?: string
+  /**
+   * 정렬 방식 ✅ 2026-08-16 BE 추가(PlaceSearchSort).
+   *   accuracy — 이름이 잘 맞는 순. 「광교중앙역」처럼 특정 장소를 찾을 때
+   *   distance — 가까운 순. 「근처 병원」처럼 카테고리로 찾을 때
+   * 안 보내면 좌표가 있으면 distance, 없으면 accuracy (기존 동작 유지).
+   * ⚠️ distance 는 좌표가 없으면 INVALID_REQUEST 다.
+   */
+  sort?: 'accuracy' | 'distance'
 }
 
 /** 장소 한 건 */
