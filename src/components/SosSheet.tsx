@@ -35,6 +35,11 @@ export function SosSheet({
     }
   }, [open])
 
+  /*
+   * 위치를 보낼 곳은 **1순위 연락처 한 명**이다.
+   * 여러 명에게 보내지 않는다 — 급할 때 문자 앱이 여러 번 열리면 오히려 아무에게도 못 보낸다.
+   * 화면에도 「1순위 연락처인 ○○○님」이라고 적어서 누구에게 가는지 미리 알 수 있게 한다.
+   */
   const guardian = [...contacts].sort((a, b) => a.priority - b.priority)[0] ?? null
 
   function sendGuardian() {
@@ -87,7 +92,7 @@ export function SosSheet({
         <h3>비상 연락처에 알릴까요?</h3>
         <p>
           {guardian
-            ? `${guardian.name}님에게 현재 위치를 보내고, 119에 바로 전화할 수 있어요.`
+            ? `1순위 연락처인 ${guardian.name}님에게 현재 위치를 문자로 보내고, 119에 바로 전화할 수 있어요.`
             : '119에 바로 전화할 수 있어요. 보호자에게 위치를 보내려면 먼저 비상 연락처를 등록해 주세요.'}
         </p>
         <div className="sheet-actions">

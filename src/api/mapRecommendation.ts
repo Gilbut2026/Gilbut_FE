@@ -158,17 +158,48 @@ function buildStairComparison(items: RouteRecommendationItemDto[]): StairCompari
 }
 
 /** 추천 후보 1건 → 카드 1장 (지표·사유는 BE 값, 나머지 문구는 템플릿). */
+/**
+ * 두 번째 길에 붙일 이름 — **사실인 것만** 적는다.
+ *
+ * 어르신에게 「걷기 적은 길」은 몸이 덜 힘들다는 약속이다. 1분 덜 걷는 길에
+ * 그렇게 적으면 지키지 못할 약속이 된다. 그래서 차이가 뚜렷할 때만 그 이름을 쓴다.
+ *
+ * 기준은 **걷는 시간 3분** 또는 **걷는 거리 200m**. 3분은 신호등 한 번 더 기다리는
+ * 정도이고, 200m 는 버스 한 정거장 남짓이다 — 그쯤 되어야 사람이 체감한다.
+ */
+function secondLabel(
+  first: RouteRecommendationItemDto | undefined,
+  second: RouteRecommendationItemDto,
+): { title: string; sub: string } | undefined {
+  if (!first) return undefined
+  const a = first.candidate.metrics
+  const b = second.candidate.metrics
+
+  const walkGap = a.totalWalkTimeSec - b.totalWalkTimeSec
+  const distGap = a.totalWalkDistanceM - b.totalWalkDistanceM
+  // 기본 문구(걷기 적은 길)를 그대로 쓴다
+  if (walkGap >= 180 || distGap >= 200) return undefined
+
+  const timeGap = a.totalTimeSec - b.totalTimeSec
+  if (timeGap >= 180) {
+    return { title: '빠른 길', sub: '걷는 양은 비슷하지만 더 일찍 도착하는 경로' }
+  }
+  return { title: '다른 길', sub: '걷는 양과 걸리는 시간이 비슷한 또 다른 경로' }
+}
+
 function itemToOption(
   item: RouteRecommendationItemDto,
   key: RouteKey,
   be: RouteRecommendationResult,
+  /** 기본 문구 대신 쓸 이름 — 「걷기 적은 길」이 사실이 아닐 때 바꾼다 */
+  label?: { title: string; sub: string },
 ): RouteOption {
   const m = item.candidate.metrics
   const text = CARD_TEXT[key]
   return {
     key,
-    title: text.title,
-    sub: text.sub,
+    title: label?.title ?? text.title,
+    sub: label?.sub ?? text.sub,
     time: formatTime(m.totalTimeSec),
     walk: formatWalk(m.totalWalkTimeSec),
     transfer: formatTransfer(m.transferCount),
@@ -262,13 +293,22 @@ export function mapRecommendationToRouteResult(
   const comfortItem = ranked[0]
   if (comfortItem) options.push(itemToOption(comfortItem, 'comfort', be))
 
-  // 2. 나머지 중 걷는 시간이 가장 짧은 후보 → 걷기 적은 길
+  /*
+   * 2. 두 번째 길 — 나머지 중 걷는 시간이 가장 짧은 것.
+   *
+   * 이름은 **실제로 덜 걸을 때만** 「걷기 적은 길」이라고 붙인다.
+   * 1분 덜 걷는 길에 그렇게 적으면 고른 사람이 속았다고 느낀다. 어르신에게
+   * 「걷기 적은」은 몸이 덜 힘들다는 약속이라, 차이가 없으면 지키지 못한 약속이 된다.
+   * 차이가 크지 않으면 더 빠른지 보고 「빠른 길」, 그것도 아니면 그냥 「다른 길」이다.
+   */
   const rest = ranked.slice(1)
   const shortItem = rest.reduce<RouteRecommendationItemDto | null>((best, cur) => {
     if (!best) return cur
     return cur.candidate.metrics.totalWalkTimeSec < best.candidate.metrics.totalWalkTimeSec ? cur : best
   }, null)
-  if (shortItem) options.push(itemToOption(shortItem, 'short', be))
+  if (shortItem) {
+    options.push(itemToOption(shortItem, 'short', be, secondLabel(comfortItem, shortItem)))
+  }
 
   /*
    * 3. 똑버스 / 콜택시
@@ -289,7 +329,15 @@ export function mapRecommendationToRouteResult(
    * 콜택시(taxiGuide)는 권역 개념이 없어 이 판정에서 뺀다 — 전화로 부르는 것이다.
    */
   const drt = be.drtDecision
-  let drtKey: 'drt' | 'calltaxi' | null = drt?.show ? (drt.taxiGuide ? 'calltaxi' : 'drt') : null
+  /*
+   * **taxiGuide 를 show 보다 먼저 본다.**
+   *
+   * AI 가 show=false · taxiGuide=true 로 내려주는 경우가 있다(BE 확인, 2026-08-16).
+   * show 를 먼저 보면 그때 카드가 통째로 사라져서, 휠체어를 쓰시는 분에게
+   * **콜택시 안내가 아예 안 나온다.** 휠체어는 똑버스를 못 타므로(7/31 회의)
+   * 콜택시가 유일한 선택지인데 그것이 사라지는 것이라 그냥 불편한 정도가 아니다.
+   */
+  let drtKey: 'drt' | 'calltaxi' | null = drt?.taxiGuide ? 'calltaxi' : drt?.show ? 'drt' : null
   if (drtKey === 'drt') {
     const guide = be.drtGuide
     const usable = guide == null || (guide.show !== false && guide.availability !== 'OUT_OF_SERVICE_AREA')
