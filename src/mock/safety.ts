@@ -22,7 +22,12 @@ export function mockListContacts(): Promise<EmergencyContactResponse[]> {
 export function mockAddContact(
   req: EmergencyContactSaveRequest,
 ): Promise<EmergencyContactResponse> {
-  const created: EmergencyContactResponse = { id: nextId(), ...req }
+  // 순위는 등록 순서로 서버가 정한다(2026-08-16 BE 변경). Mock 도 같은 규칙을 따른다.
+  const created: EmergencyContactResponse = {
+    id: nextId(),
+    ...req,
+    priority: contacts.length + 1,
+  }
   contacts = [...contacts, created]
   syncCount()
   return delay(created)
@@ -38,6 +43,8 @@ export function mockUpdateContact(
 
 export function mockDeleteContact(id: number): Promise<void> {
   contacts = contacts.filter((c) => c.id !== id)
+  // 지우면 남은 것의 순위를 다시 매긴다 — BE 도 그렇게 한다
+  contacts = contacts.map((c, i) => ({ ...c, priority: i + 1 }))
   syncCount()
   return delay(undefined)
 }

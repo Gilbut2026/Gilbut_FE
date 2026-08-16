@@ -63,7 +63,7 @@ export function ContactsScreen({
         name: name.trim(),
         relationship: relationship.trim(),
         phoneNumber: phoneNumber.trim(),
-        priority: contacts.length + 1,
+        // 순위는 BE 가 등록 순서로 정한다. 지울 때 다시 매기는 것도 BE 몫이다.
       })
       setSheetOpen(false)
       reload()

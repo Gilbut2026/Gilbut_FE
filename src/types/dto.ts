@@ -238,14 +238,19 @@ export interface HomePlaceResponse {
  *  5. 안전 / 비상연락처  ✅  (dto/user - EmergencyContact)
  * ============================================================ */
 
-/** POST·PUT /api/users/me/emergency-contacts */
+/**
+ * POST·PUT /api/users/me/emergency-contacts
+ *
+ * ⚠️ `priority` 는 보내지 않는다 ✅ 2026-08-16 BE 변경.
+ * 등록한 순서대로 BE 가 정하고, 지우면 남은 것의 순위를 다시 매긴다.
+ * 프론트가 `contacts.length + 1` 로 계산하던 시절에는 두 기기에서 동시에 추가하면
+ * 같은 순위가 둘 생길 수 있었다 — 순위는 목록 전체를 아는 쪽이 정해야 한다.
+ */
 export interface EmergencyContactSaveRequest {
   name: string
   relationship: string
   /** ^[0-9-]{8,20}$ */
   phoneNumber: string
-  /** 우선순위 1 이상 */
-  priority: number
 }
 
 /** 비상 연락처 */
