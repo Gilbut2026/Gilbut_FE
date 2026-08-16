@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { TopBar } from '../components/TopBar'
 import { RouteMap } from '../components/RouteMap'
 import { speak } from '../state/tts'
+import { useKeepAwake } from '../state/wakeLock'
 import { getFacilitiesAlongRoute } from '../api/facility'
 import type { FacilityItem, FacilityType, RouteOption } from '../types/dto'
 
@@ -84,6 +85,13 @@ export function NavigateScreen({
 
   const step = steps[index]
   const isLast = index >= steps.length - 1
+
+  /*
+   * 걷는 동안 화면이 꺼지지 않게 한다.
+   * 길 안내 화면에서만 건다 — 앱 전체에 걸면 켜둔 채 주머니에 넣었을 때 배터리가 샌다.
+   * 안내할 단계가 없으면(아래에서 안내문 대신 안내 실패를 그린다) 걸 이유도 없다.
+   */
+  useKeepAwake(steps.length > 0)
 
 
   /*
