@@ -254,6 +254,75 @@ const FILTER_TEXT: Record<RouteFilterCode, string> = {
     '휠체어로 지나기 어려운 계단이 있어 제외했어요. 콜택시 안내를 함께 보여드려요.',
 }
 
+/**
+ * 기다리는 동안 문구를 바꾼다 — **흘러간 시간**만 기준으로 삼는다.
+ *
+ * 가짜 진행률을 그리지 않는 이유: 서버가 지금 어디까지 왔는지 우리는 모른다.
+ * 막대가 80% 에서 멈춰 있으면 "다 됐는데 왜 안 되지"가 되어 오히려 불안해진다.
+ * 우리가 확실히 아는 것은 몇 초가 지났는가 하나뿐이라, 그것에만 근거해서 말한다.
+ */
+const WAIT_NOTES: { after: number; text: string }[] = [
+  { after: 0, text: '보통 10초쯤 걸려요.' },
+  { after: 10, text: '거의 다 됐어요. 조금만 더 기다려 주세요.' },
+  { after: 25, text: '길이 복잡해서 조금 더 걸리고 있어요. 그대로 두시면 돼요.' },
+]
+
+/**
+ * 길을 찾는 동안 보여주는 화면.
+ *
+ * 왜 만들었나 — 경로 조회는 TMAP 길찾기와 AI 스코어링을 거쳐서 10~30초씩 걸린다.
+ * 그동안 화면에는 「편한 길을 찾고 있어요…」 글자 한 줄만 있었다(2026-08-16 스크린샷 09).
+ * 어르신에게 **빈 화면은 고장과 구별되지 않는다.** 실제로 이 단계에서 뒤로 가거나
+ * 앱을 껐다 켜면, 방금까지 한 대화가 통째로 날아간다.
+ *
+ * 그래서 세 가지를 보여준다.
+ *   1. 움직이는 것 — 멈춘 게 아니라는 신호. 글자보다 이게 먼저 읽힌다
+ *   2. 어디를 찾는 중인지 — 내가 말한 그곳이 맞는지 확인시켜 준다
+ *   3. 얼마나 더 기다리면 되는지 — 끝을 모르는 기다림이 사람을 손 떼게 만든다
+ */
+function RouteSearching({ destination }: { destination: string }) {
+  const [seconds, setSeconds] = useState(0)
+
+  useEffect(() => {
+    const timer = window.setInterval(() => setSeconds((s) => s + 1), 1000)
+    return () => window.clearInterval(timer)
+  }, [])
+
+  // 지난 시간에 해당하는 문구 중 가장 마지막 것
+  const note = WAIT_NOTES.reduce((acc, n) => (seconds >= n.after ? n.text : acc), WAIT_NOTES[0].text)
+
+  return (
+    // role/aria-live — 화면을 못 보시는 분에게도 상황이 읽힌다
+    <div className="route-empty route-loading glass" role="status" aria-live="polite">
+      <div className="route-loading-art" aria-hidden="true">
+        <span className="ring" />
+        <svg viewBox="0 0 24 24" fill="none">
+          <path
+            d="M6 20c0-2.5 1.6-3.6 4-3.9 2.4-.3 4-1.4 4-3.9s-1.6-3.6-4-3.9"
+            stroke="currentColor"
+            strokeWidth="1.9"
+            strokeLinecap="round"
+          />
+          <circle cx="6" cy="20" r="2.1" fill="currentColor" />
+          <path
+            d="M18 3.5c1.9 0 3.5 1.6 3.5 3.6 0 2.6-3.5 5.9-3.5 5.9s-3.5-3.3-3.5-5.9c0-2 1.6-3.6 3.5-3.6Z"
+            stroke="currentColor"
+            strokeWidth="1.9"
+            strokeLinejoin="round"
+          />
+        </svg>
+      </div>
+      <h2>
+        {destination}까지
+        <br />
+        편한 길을 찾고 있어요
+      </h2>
+      <p>계단과 경사, 갈아타는 횟수까지 하나씩 확인하고 있어요.</p>
+      <div className="route-empty-hint">{note}</div>
+    </div>
+  )
+}
+
 export function ResultsScreen({
   destination,
   departureDateTime,
@@ -429,7 +498,7 @@ export function ResultsScreen({
           </div>
         )}
 
-        {destination && !error && !selected && <p className="screen-lead">편한 길을 찾고 있어요…</p>}
+        {destination && !error && !selected && <RouteSearching destination={destination} />}
 
         {destination && !error && result && selected && (
           <RouteView result={result} selected={selected} onNext={nextRoute} onGuide={onGuide} />
