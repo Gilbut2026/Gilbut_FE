@@ -1,10 +1,4 @@
-declare global {
-  interface Window {
-    SpeechRecognition: any
-    webkitSpeechRecognition: any
-  }
-}
-
+import { SPEECH_ERROR_TEXT, listenOnce, type SpeechSession } from '../state/speech'
 import {
   useCallback,
   useEffect,
@@ -152,45 +146,64 @@ export function ChatView({
   busy = false,
   placeholder = '목적지나 질문을 입력하세요',
 }: ChatViewProps) {
+  /*
+   * 마이크 — 홈 화면과 **같은 모듈**을 쓴다(state/speech).
+   *
+   * 예전에는 여기만 SpeechRecognition 을 직접 다뤘다. 그래서 두 가지가 갈렸다.
+   *   · 오류 문구가 서로 달랐다
+   *   · 홈에는 「듣고 있어요」 화면이 뜨는데 여기는 토스트뿐이라, 정작 말을 많이 하는
+   *     대화 화면에서 지금 듣고 있는지 알기 어려웠다. 토스트는 몇 초 뒤 사라진다
+   *   · 두 번 누르면 인식이 두 개 돌았다 — 막는 코드가 없었다
+   */
+  const [listening, setListening] = useState(false)
+  const sessionRef = useRef<SpeechSession | null>(null)
+
+  // 화면을 떠날 때 듣던 것을 정리한다 — 마이크가 열린 채 남으면 안 된다
+  useEffect(() => () => sessionRef.current?.cancel(), [])
+
   function micTap() {
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition
+    if (listening || busy) return
+    setListening(true)
+    sessionRef.current = listenOnce({
+      onResult: (text) => {
+        sessionRef.current = null
+        setListening(false)
+        onTranscript(text)
+      },
+      onError: (kind) => {
+        sessionRef.current = null
+        setListening(false)
+        onToast(SPEECH_ERROR_TEXT[kind])
+      },
+    })
+  }
 
-    if (!SpeechRecognition) {
-      onToast('이 브라우저는 음성 인식을 지원하지 않아요. Chrome을 사용해 주세요.')
-      return
-    }
-
-    const recognition = new SpeechRecognition()
-    recognition.lang = 'ko-KR'
-    recognition.interimResults = false
-    recognition.maxAlternatives = 1
-
-    onToast('말씀을 듣고 있어요…')
-
-    recognition.onresult = (event: any) => {
-      const text = event.results[0][0].transcript
-      if (text) onTranscript(text)
-    }
-
-    recognition.onerror = (event: any) => {
-      if (event.error === 'not-allowed') {
-        onToast('마이크 권한을 허용해 주세요')
-      } else if (event.error === 'no-speech') {
-        onToast('음성이 감지되지 않았어요. 다시 눌러주세요')
-      } else {
-        onToast('음성 인식 오류가 발생했어요')
-      }
-    }
-
-    try {
-      recognition.start()
-    } catch {
-      onToast('마이크를 시작할 수 없어요. 다시 눌러주세요')
-    }
+  function stopListening() {
+    sessionRef.current?.cancel()
+    sessionRef.current = null
+    setListening(false)
   }
 
   return (
     <section className="screen">
+      {/* 듣는 중에는 화면 전체로 알린다. 홈과 같은 모양이라 처음 보는 화면이 아니다 */}
+      {listening && (
+        <div className="listening" role="status" aria-live="assertive">
+          <div className="listening-wave" aria-hidden="true">
+            <i />
+            <i />
+            <i />
+            <i />
+            <i />
+          </div>
+          <h2>듣고 있어요</h2>
+          <p>천천히 말씀해 주세요</p>
+          <span className="listening-help">말씀이 끝나면 저절로 넘어가요</span>
+          <button className="btn neutral listening-cancel" onClick={stopListening}>
+            그만두기
+          </button>
+        </div>
+      )}
       <TopBar title="대화로 길찾기" onBack={onBack} backLabel="홈으로 돌아가기" onSos={onSos} />
 
       <div className="chat-step">
