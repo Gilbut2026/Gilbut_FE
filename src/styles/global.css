@@ -167,7 +167,11 @@ button { color: inherit; }
 .listening-wave i:nth-child(3) { height: 44px; animation-delay: 0.24s; }
 .listening-wave i:nth-child(4) { height: 30px; animation-delay: 0.36s; }
 .listening-wave i:nth-child(5) { height: 16px; animation-delay: 0.48s; }
-.listening-cancel { margin-top: 26px; min-width: 168px; }
+.listening-cancel { margin-top: 22px; min-width: 168px; }
+/* 듣는 중에도 보이는 빠른 답변 — 이게 없으면 버튼을 누르려고 듣기를 꺼야 했다.
+   많으면 넘치므로 스스로 스크롤한다(길 후보가 넷까지 뜬다) */
+.listening-actions { margin-top: 22px; width: 100%; max-height: 34vh; overflow-y: auto; display: flex; flex-direction: column; align-items: center; gap: 8px; }
+.listening-actions > * { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; }
 @keyframes listenWave { 0%, 100% { transform: scaleY(0.45); } 50% { transform: scaleY(1); } }
 @media (prefers-reduced-motion: reduce) {
   .listening-wave i { animation: none; }

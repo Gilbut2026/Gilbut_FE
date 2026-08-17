@@ -17,7 +17,7 @@ import { CallTaxiScreen } from './screens/CallTaxiScreen'
 import { NavigateScreen } from './screens/NavigateScreen'
 import { StairChoiceScreen } from './screens/StairChoiceScreen'
 import { useSettings, updateSettings } from './state/settings'
-import { clearJourney, loadJourney, saveJourney } from './state/journey'
+import { clearJourney, loadJourney, loadScreen, saveJourney, saveScreen } from './state/journey'
 import { HAS_MOCK, mockBadgeLabel, useMock } from './api/mode'
 import { kakaoLogin, KAKAO_CALLBACK_PATH } from './api/auth'
 import { getMobilityProfile } from './api/user'
@@ -194,6 +194,8 @@ export default function App() {
       drtInfo,
       stairChoice,
     })
+    // 길과 상관없는 화면(내 정보 등)은 이름만 따로 기억해둔다
+    saveScreen(screen)
   }, [screen, destination, destCoords, departure, origin, guideOption, drtInfo, stairChoice])
 
   useEffect(() => {
@@ -208,8 +210,14 @@ export default function App() {
       setBooting(false)
     }
     getMobilityProfile()
-      // 가다 만 길이 있으면 그 화면으로, 없으면 홈으로
-      .then(() => settle(resumeJourney() ?? 'home'))
+      /*
+       * 보고 있던 화면으로 되돌린다.
+       *
+       * 가다 만 길이 먼저다 — 값까지 함께 되살아나야 화면이 제대로 그려진다.
+       * 그것이 없으면 「내 정보」처럼 이름만으로 되살아나는 화면을 본다.
+       * (resumeJourney 는 화면과 상관없이 값을 되돌려 놓으므로 늘 먼저 부른다)
+       */
+      .then(() => settle(resumeJourney() ?? loadScreen() ?? 'home'))
       .catch((e) => {
         if (e instanceof ApiError && e.status === 401) return settle(null)
         settle(e instanceof ApiError && e.status === 404 ? 'onboarding' : 'home')

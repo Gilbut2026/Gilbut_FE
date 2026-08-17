@@ -206,6 +206,25 @@ export function ChatView({
     return 0
   }
 
+  /**
+   * 아직 답하지 않은 빠른 답변 버튼 — **듣는 중에도 눌러야 한다.**
+   *
+   * 듣는 화면이 화면 전체를 덮어서, 「찾는 곳이 없어요 · 다시 말하기」가 떠도
+   * 그 버튼을 누를 수가 없었다(2026-08-17). 「그만두기」로 화면을 걷어내야 했는데
+   * 그것이 말하기 모드까지 꺼버려서, 정작 「다시 말하기」를 누르면 마이크가 안 열리고
+   * 문구도 「다시 입력해 주세요」로 나왔다 — 말로 하시던 분에게 엉뚱한 말이다.
+   *
+   * 사용자가 답한 뒤(user 말풍선)의 버튼은 이미 지난 것이라 보여주지 않는다.
+   */
+  const pendingActions = ((): ReactNode => {
+    for (let i = messages.length - 1; i >= 0; i -= 1) {
+      const m = messages[i]
+      if (m.type === 'actions') return m.content
+      if (m.type === 'user') return null
+    }
+    return null
+  })()
+
   // 화면을 떠날 때 듣던 것을 정리한다 — 마이크가 열린 채 남으면 안 된다
   useEffect(() => () => sessionRef.current?.cancel(), [])
 
@@ -244,11 +263,21 @@ export function ChatView({
   const micTapRef = useRef(micTap)
   micTapRef.current = micTap
 
-  /** 사용자가 「그만두기」를 눌렀다 = 이제 자판으로 하시겠다는 뜻 */
-  function stopListening() {
+  /**
+   * 지금 듣던 것만 멈춘다. **말하기 모드는 그대로 둔다.**
+   *
+   * 듣는 중에 빠른 답변(「다시 말하기」·「병원」)을 누르셨을 때 쓴다.
+   * 버튼을 눌렀다고 해서 「이제 자판으로 하겠다」는 뜻은 아니다.
+   */
+  function cancelListen() {
     sessionRef.current?.cancel()
     sessionRef.current = null
     setListening(false)
+  }
+
+  /** 「자판으로 할게요」 = 앞으로 마이크를 열지 않는다 */
+  function switchToTyping() {
+    cancelListen()
     setVoiceMode(false)
   }
 
@@ -292,8 +321,17 @@ export function ChatView({
           <h2>듣고 있어요</h2>
           <p>천천히 말씀해 주세요</p>
           <span className="listening-help">말씀이 끝나면 저절로 넘어가요</span>
-          <button className="btn neutral listening-cancel" onClick={stopListening}>
-            그만두기
+
+          {/* 빠른 답변은 듣는 중에도 누를 수 있어야 한다. 누르면 듣기만 멈추고
+              말하기 모드는 그대로 둔다 — 버튼을 눌렀다고 자판으로 바꾸겠다는 뜻은 아니다 */}
+          {pendingActions && (
+            <div className="listening-actions" onClickCapture={cancelListen}>
+              {pendingActions}
+            </div>
+          )}
+
+          <button className="btn neutral listening-cancel" onClick={switchToTyping}>
+            자판으로 할게요
           </button>
         </div>
       )}

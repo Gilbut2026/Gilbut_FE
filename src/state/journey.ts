@@ -76,3 +76,42 @@ export function clearJourney(): void {
     /* 무시 */
   }
 }
+
+/* ──────────────────────────────────────────────────────────
+ *  값 없이 화면 이름만으로 되살아나는 화면들
+ * ────────────────────────────────────────────────────────── */
+
+/**
+ * 목적지도 경로도 필요 없이, 어느 화면이었는지만 알면 그대로 다시 그려지는 것들.
+ *
+ * 「내 정보」를 보다가 탭이 다시 뜨면 홈으로 튕겼다(2026-08-17). 위에서 되살리는 것은
+ * 「가다 만 길」뿐이라, 길과 상관없는 화면은 전부 홈행이었다. 보고 있던 것을 다시 찾아
+ * 들어가야 하는데, 어르신에게는 그 자체가 큰 일이다.
+ *
+ * 대화(chat)는 넣지 않는다 — 화면 이름만으로는 못 되살린다. 주고받은 말은 메모리에만
+ * 있고, 서버 세션도 대화 화면에 들어갈 때마다 새로 시작한다(ServerChatScreen).
+ * 되살린들 「어디로 가고 싶으세요?」부터 다시라, 되살린 척만 하는 셈이다.
+ */
+const STANDALONE: Screen[] = ['settings', 'favorites', 'history', 'help', 'contacts']
+
+const SCREEN_KEY = 'gilbet.screen'
+
+/** 지금 화면이 그런 화면이면 기억하고, 아니면 지운다 */
+export function saveScreen(screen: Screen): void {
+  try {
+    if (STANDALONE.includes(screen)) sessionStorage.setItem(SCREEN_KEY, screen)
+    else sessionStorage.removeItem(SCREEN_KEY)
+  } catch {
+    /* 저장이 안 되는 환경이라도 앱은 그대로 굴러가야 한다 */
+  }
+}
+
+/** 기억해둔 화면. 없거나 이제 되살릴 수 없는 것이면 null */
+export function loadScreen(): Screen | null {
+  try {
+    const s = sessionStorage.getItem(SCREEN_KEY) as Screen | null
+    return s && STANDALONE.includes(s) ? s : null
+  } catch {
+    return null
+  }
+}
