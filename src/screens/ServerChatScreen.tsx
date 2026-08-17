@@ -16,6 +16,7 @@ import { SEARCH_RADIUS_KM } from '../api/geo'
 import { QUICK_DESTINATION_NAMES } from './quickDestinations'
 import { ChatView, useChatLog, askAgainVerb, type InputMode } from '../components/ChatView'
 import { DepartureSheet } from '../components/DepartureSheet'
+import { MapPicker } from '../components/MapPicker'
 import type { ChatOutcome } from '../types/nav'
 import type {
   ChatMessageResponse,
@@ -97,6 +98,16 @@ export function ServerChatScreen({
    * 화면은 집 주소 문자열만 갖고 있어서, 화면이 직접 만들면 집 출발만 좌표가 빈다.
    */
   const originRef = useRef<{ name: string; coords: LatLng } | null>(null)
+  /*
+   * 화면에 쓸 출발지 이름 — 서버가 붙이는 이름 대신.
+   *
+   * 지도에서 고른 자리는 서버가 「현재 위치」라고 이름 붙인다(ChatSessionService).
+   * 그대로 두면 결과 화면에 「현재 위치 → 지동시장」이 뜨는데, 어르신이 지도에서
+   * 다른 데를 짚으셨다면 그건 사실이 아니다. 우리가 아는 주소를 쓴다.
+   */
+  const originNameRef = useRef<string | null>(null)
+  // 「지도에서 고르기」 시트가 열려 있는가
+  const [mapPicker, setMapPicker] = useState(false)
   // 발화에 실어 보낼 현재 좌표 — "내 근처 병원" 같은 기준 위치 검색에 쓰인다(있으면 보내고 없으면 생략)
   const coordsRef = useRef<{ latitude: number; longitude: number } | null>(null)
   /*
@@ -156,6 +167,7 @@ export function ServerChatScreen({
         destCoordsRef.current = null
         departureRef.current = ''
         originRef.current = null
+        originNameRef.current = null
         setState('DESTINATION_WAITING')
         botSay(message)
         actions(destinationReplies())
@@ -245,6 +257,14 @@ export function ServerChatScreen({
           🏠 집
         </button>
       )}
+      {/*
+        어르신께 가장 어려운 선택지가 「직접 입력」이다 — 이름을 정확히 적어야 하고
+        오타 하나에 엉뚱한 데가 나온다. 지도는 눈으로 보고 짚는 것이라 훨씬 쉽다.
+        그래서 직접 입력 앞에 둔다.
+      */}
+      <button className="chat-reply" onClick={() => setMapPicker(true)}>
+        🗺️ 지도에서 고르기
+      </button>
       <button
         className="chat-reply"
         onClick={() => botSay('출발지를 아래 입력창에 적어주세요. 예: 행복아파트 정문')}
@@ -340,7 +360,8 @@ export function ServerChatScreen({
       if (session.destination?.name) destNameRef.current = session.destination.name
       if (session.origin) {
         originRef.current = {
-          name: session.origin.name,
+          // 우리가 아는 이름이 있으면 그것이 맞다 (지도에서 고른 자리 등)
+          name: originNameRef.current ?? session.origin.name,
           coords: { latitude: session.origin.latitude, longitude: session.origin.longitude },
         }
       }
@@ -513,8 +534,28 @@ export function ServerChatScreen({
     }
   }
 
+  /**
+   * 지도에서 짚은 자리에서 출발.
+   *
+   * originType 은 CURRENT_LOCATION 으로 보낸다. BE 의 PLACE 는 placeId·이름·주소를
+   * 셋 다 요구하는데(ChatSessionService.confirmPlace) 지도에서 짚은 점에는 placeId 가
+   * 없다. 없는 것을 지어내느니 좌표만 요구하는 쪽으로 보낸다 — 이 뒤로 쓰이는 것도
+   * 좌표뿐이다. 화면에 보일 이름만 우리가 따로 들고 간다.
+   */
+  function pickFromMap(place: { coords: LatLng; address: string | null }) {
+    setMapPicker(false)
+    const name = place.address ?? '지도에서 고른 곳'
+    originNameRef.current = name
+    submitOrigin(`${name}에서 출발할게요`, {
+      originType: 'CURRENT_LOCATION',
+      latitude: place.coords.latitude,
+      longitude: place.coords.longitude,
+    })
+  }
+
   /** 현재 위치 출발 — BE 가 좌표를 필수로 검사하므로 없으면 위치 화면으로 보낸다 */
   function pickCurrentLocation() {
+    originNameRef.current = null
     const c = coordsRef.current
     if (c) {
       submitOrigin('현재 위치에서 출발할게요', {
@@ -545,10 +586,12 @@ export function ServerChatScreen({
   }
 
   function pickHome() {
+    originNameRef.current = null
     submitOrigin('집에서 출발할게요', { originType: 'HOME' })
   }
 
   function pickPlaceOrigin(p: PlaceItemResponse) {
+    originNameRef.current = null
     submitOrigin(`${p.name}에서 출발할게요`, {
       originType: 'PLACE',
       placeId: p.placeId,
@@ -750,6 +793,12 @@ export function ServerChatScreen({
         busy={busy}
         /* 되물을 때 「말씀해」와 「입력해」를 가르려면 지금 어느 쪽인지 알아야 한다 */
         onInputModeChange={(m) => (inputModeRef.current = m)}
+      />
+      <MapPicker
+        open={mapPicker}
+        center={coordsRef.current}
+        onPick={pickFromMap}
+        onClose={() => setMapPicker(false)}
       />
       <DepartureSheet
         open={timeSheet}

@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import type { FacilityItem, LatLng, RouteSegment } from '../types/dto'
+import { hasKakaoKey, loadKakaoSdk } from '../state/kakaoSdk'
 
 /**
  * 경로 지도 — 카카오맵 위에 **TMAP 이 준 실제 경로 좌표**를 그린다.
@@ -21,10 +22,6 @@ import type { FacilityItem, LatLng, RouteSegment } from '../types/dto'
  *      (403 disabled OPEN_MAP_AND_LOCAL service). 무료 쿼터는 계정의 첫 활성화 앱에만 준다.
  */
 
-const KAKAO_JS_KEY = import.meta.env.VITE_KAKAO_JS_KEY as string | undefined
-
-const SDK_ID = 'kakao-maps-sdk'
-
 /** 「내 위치로」를 눌렀을 때 당겨 보는 배율. 작을수록 가깝다 */
 const ME_ZOOM_LEVEL = 3
 
@@ -35,38 +32,6 @@ const ME_ZOOM_LEVEL = 3
  * 여기가 어디인지 알 수 없어진다. 주변이 조금은 보여야 방향을 잡는다.
  */
 const MIN_FOCUS_LEVEL = 3
-
-declare global {
-  interface Window {
-    kakao?: any
-  }
-}
-
-/** 카카오 지도 SDK 를 한 번만 불러온다 */
-function loadKakaoSdk(): Promise<any> {
-  if (!KAKAO_JS_KEY) return Promise.reject(new Error('no-key'))
-  if (window.kakao?.maps) return Promise.resolve(window.kakao)
-
-  return new Promise((resolve, reject) => {
-    const existing = document.getElementById(SDK_ID) as HTMLScriptElement | null
-    const onReady = () => window.kakao.maps.load(() => resolve(window.kakao))
-
-    if (existing) {
-      existing.addEventListener('load', onReady)
-      existing.addEventListener('error', () => reject(new Error('sdk-failed')))
-      return
-    }
-
-    const script = document.createElement('script')
-    script.id = SDK_ID
-    script.async = true
-    // autoload=false → maps.load() 로 우리가 시점을 잡는다
-    script.src = `https://dapi.kakao.com/v2/maps/sdk.js?appkey=${KAKAO_JS_KEY}&autoload=false`
-    script.addEventListener('load', onReady)
-    script.addEventListener('error', () => reject(new Error('sdk-failed')))
-    document.head.appendChild(script)
-  })
-}
 
 /**
  * 선을 그리는 규칙 — **세 가지를 서로 다른 수단으로** 나타낸다.
@@ -1104,7 +1069,7 @@ export function RouteMap({
 
   const style = height ? { height } : undefined
 
-  if (failed || !KAKAO_JS_KEY) {
+  if (failed || !hasKakaoKey) {
     return (
       <div className="route-map empty" style={style}>
         <b>지도는 준비 중이에요</b>
