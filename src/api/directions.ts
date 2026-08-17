@@ -113,6 +113,8 @@ function transitLeg(leg: TransitLegDto): GuideStep[] {
   const vehicle = vehicleLabel(leg)
   const from = leg.startName?.trim()
   const stops = leg.stationCount && leg.stationCount > 0 ? `${leg.stationCount}정거장` : ''
+  // 무엇을 타는지는 타기·내리기 두 단계가 함께 안다 — 내리는 곳 그림도 버스와 지하철이 다르다
+  const mode = leg.mode ?? undefined
   const steps: GuideStep[] = [
     {
       kind: 'ride',
@@ -120,10 +122,11 @@ function transitLeg(leg: TransitLegDto): GuideStep[] {
       detail:
         [vehicle.note, from ? `${from}에서 타요` : '', stops].filter(Boolean).join(' · ') ||
         undefined,
+      mode,
     },
   ]
   const to = leg.endName?.trim()
-  if (to) steps.push({ kind: 'getoff', title: `${to}에서 내려요` })
+  if (to) steps.push({ kind: 'getoff', title: `${to}에서 내려요`, mode })
   return steps
 }
 

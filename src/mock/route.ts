@@ -46,8 +46,8 @@ const MOCK_TRANSIT_DIRECTIONS: RouteDirections = {
   path: MOCK_PATH,
   steps: [
     { kind: 'walk', title: '350m 걷기', detail: '수원시청 정류장까지' },
-    { kind: 'ride', title: '3-1번 버스', detail: '수원시청에서 타요 · 6정거장' },
-    { kind: 'getoff', title: '아주대학교병원에서 내려요' },
+    { kind: 'ride', title: '3-1번 버스', detail: '수원시청에서 타요 · 6정거장', mode: 'BUS' },
+    { kind: 'getoff', title: '아주대학교병원에서 내려요', mode: 'BUS' },
     { kind: 'walk', title: '200m 걷기', detail: '아주대학교병원 정문까지' },
   ],
   // 앞뒤로 걷고 가운데를 버스로 간다. 토막이 겹치는 점을 공유해야 선이 끊겨 보이지 않는다.

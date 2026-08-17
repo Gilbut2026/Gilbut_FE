@@ -39,10 +39,25 @@ function PinMark({ kind }: { kind: 'shelter' | 'toilet' }) {
   )
 }
 
-const KIND_ICON: Record<string, string> = {
-  walk: '🚶',
-  ride: '🚌',
-  getoff: '🚏',
+/**
+ * 단계 그림 — **무엇을 타는지까지 본다.**
+ *
+ * 예전에는 타는 단계면 무조건 🚌 였다. 「수도권1호선」이라고 적힌 옆에 버스 그림이
+ * 붙어 있었고, 내리는 단계는 지하철인데도 버스 정류장 표지판(🚏)이었다.
+ * 수원 시내 짧은 구간만 시험하다 보니 버스만 나와서 아무도 못 봤다(2026-08-17).
+ *
+ * 무엇을 타는지 모르면(BE 가 mode 를 안 준 경우) 안내문이 이미 「차량 타기」라고
+ * 적으므로, 그림도 특정 탈것을 말하지 않는 쪽으로 둔다 — 버스라고 단정하지 않는다.
+ */
+function stepIcon(step: { kind: string; mode?: string }): string {
+  if (step.kind === 'walk') return '🚶'
+  const mode = step.mode?.toUpperCase()
+  const rail = mode === 'SUBWAY' || mode === 'TRAIN'
+  if (step.kind === 'getoff') return rail ? '🚉' : mode ? '🚏' : '🏁'
+  if (mode === 'SUBWAY') return '🚇'
+  if (mode === 'TRAIN') return '🚆'
+  if (mode === 'BUS' || mode === 'EXPRESSBUS') return '🚌'
+  return '🚐'
 }
 
 export function NavigateScreen({
@@ -258,7 +273,7 @@ export function NavigateScreen({
 
         <div className="nav-step">
           <span className="ico" aria-hidden="true">
-            {KIND_ICON[step.kind] ?? '🚶'}
+            {stepIcon(step)}
           </span>
           <div>
             <b>{step.title}</b>
@@ -317,7 +332,7 @@ export function NavigateScreen({
             {steps.map((s, i) => (
               <li key={`${s.title}-${i}`} className={i === index ? 'on' : undefined}>
                 <button onClick={() => setIndex(i)}>
-                  <span aria-hidden="true">{KIND_ICON[s.kind] ?? '🚶'}</span>
+                  <span aria-hidden="true">{stepIcon(s)}</span>
                   <span>
                     <b>{s.title}</b>
                     {s.detail && <em>{s.detail}</em>}

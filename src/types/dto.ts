@@ -789,6 +789,13 @@ export interface GuideStep {
    * 지도가 **지금 단계만 진하게** 그리는 데 쓴다. 좌표가 없는 단계면 없다.
    */
   segmentIndex?: number
+  /**
+   * 무엇을 타는지 (BUS · SUBWAY · TRAIN …). 걷는 단계와 모르는 경우에는 없다.
+   *
+   * 토막(RouteSegment.mode)에도 같은 값이 있지만 여기에 따로 둔다 — BE 가 좌표를
+   * 안 주면 segmentIndex 가 없어서 토막을 찾을 수 없는데, 무엇을 타는지는 그때도 안다.
+   */
+  mode?: string
 }
 
 /**
