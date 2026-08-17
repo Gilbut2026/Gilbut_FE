@@ -161,10 +161,7 @@ button { color: inherit; }
 .listening-mic svg { width: 44px; height: 44px; }
 /* 소리 파형 — 지금 듣고 있다는 것이 정적인 그림보다 확실히 전달된다 */
 .listening-wave { display: flex; align-items: flex-end; gap: 7px; height: 46px; margin-bottom: 14px; }
-/* 소리 세기를 읽을 수 있으면 화면이 높이를 직접 넣고 animation 을 끈다(ListeningWave).
-   못 읽으면 이 애니메이션이 그대로 움직인다 — 막대가 멈춰 있으면 고장으로 보인다.
-   높이가 실시간으로 바뀌므로 조금 부드럽게 이어준다 */
-.listening-wave i { width: 8px; border-radius: 999px; background: var(--violet); animation: listenWave 1s ease-in-out infinite; transition: height 0.07s linear; }
+.listening-wave i { width: 8px; border-radius: 999px; background: var(--violet); animation: listenWave 1s ease-in-out infinite; }
 .listening-wave i:nth-child(1) { height: 16px; animation-delay: 0s; }
 .listening-wave i:nth-child(2) { height: 30px; animation-delay: 0.12s; }
 .listening-wave i:nth-child(3) { height: 44px; animation-delay: 0.24s; }

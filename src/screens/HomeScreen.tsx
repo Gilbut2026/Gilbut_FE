@@ -19,7 +19,6 @@ import { SPEECH_ERROR_TEXT, listenOnce, type SpeechSession } from '../state/spee
 import type { FavoritePlaceResponse } from '../types/dto'
 import { QUICK_DESTINATIONS } from './quickDestinations'
 import { InstallSheet } from '../components/InstallSheet'
-import { ListeningWave } from '../components/ListeningWave'
 import { dismiss, shouldOfferInstall } from '../state/install'
 
 /** 즐겨찾기 이름으로 어울리는 아이콘을 고른다 (서버는 아이콘을 주지 않는다) */
@@ -205,8 +204,13 @@ export function HomeScreen({
       */}
       {listening && (
         <div className="listening" role="status" aria-live="assertive">
-          {/* 막대가 실제 목소리 크기를 따라간다 — 「지금 듣고 있구나」가 눈으로 보인다 */}
-          <ListeningWave active={listening} />
+          <div className="listening-wave" aria-hidden="true">
+            <i />
+            <i />
+            <i />
+            <i />
+            <i />
+          </div>
           <div className="listening-mic" aria-hidden="true">
             <MicIcon />
           </div>
