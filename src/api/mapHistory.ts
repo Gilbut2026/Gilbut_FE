@@ -27,9 +27,18 @@ function formatWhen(iso: string): string {
   return `${d.getMonth() + 1}월 ${d.getDate()}일 ${time}`
 }
 
-/** 초 → "25분" (1시간 넘으면 "1시간 5분") */
-function formatDuration(totalSec: number | null): string {
-  if (totalSec == null) return '시간 미확인'
+/**
+ * 초 → "25분" (1시간 넘으면 "1시간 5분"). **모르면 null — 아무것도 적지 않는다.**
+ *
+ * BE 가 totalTimeSec 을 안 주는 이력이 있다. 예전에는 그것이 「1분」으로 찍혔고
+ * (Math.round(null/60) 이 0 이라 최소 1분 처리에 걸렸다), 고치면서 「시간 미확인」을
+ * 넣었다. 둘 다 카드에 한 줄이 더 붙는 셈이라 「오늘 오후 2:15 · 시간 미확인」이 된다.
+ *
+ * 모르는 것은 모른다고 적기보다 **말하지 않는 편이 낫다.** 어르신이 읽을 화면이고,
+ * 그 자리에 없어도 「언제 어디에 다녀왔다」는 이력의 본뜻은 그대로다.
+ */
+function formatDuration(totalSec: number | null): string | null {
+  if (totalSec == null) return null
   const min = Math.max(1, Math.round(totalSec / 60))
   if (min < 60) return `${min}분`
   const h = Math.floor(min / 60)
@@ -62,7 +71,8 @@ export function mapHistoryResponse(r: RouteHistoryResponse): RouteHistoryItem {
   return {
     id: r.historyId,
     destination: r.destinationName,
-    when: `${formatWhen(r.createdAt)} · ${formatDuration(r.totalTimeSec)}`,
+    // 시간을 모르면 가운뎃점째 빠진다 — 「오늘 오후 2:15 · 」처럼 꼬리가 남지 않게
+    when: [formatWhen(r.createdAt), formatDuration(r.totalTimeSec)].filter(Boolean).join(' · '),
     routeKey: toRouteKey(r),
     badgeLabel: badge.label,
     badgeTone: badge.tone,
