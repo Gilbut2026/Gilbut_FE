@@ -9,6 +9,7 @@ import {
   type ReactNode,
 } from 'react'
 import { speak, whenSpeakingEnds } from '../state/tts'
+import { ListeningWave } from './ListeningWave'
 import { TopBar } from './TopBar'
 
 /**
@@ -306,13 +307,8 @@ export function ChatView({
       {/* 듣는 중에는 화면 전체로 알린다. 홈과 같은 모양이라 처음 보는 화면이 아니다 */}
       {listening && (
         <div className="listening" role="status" aria-live="assertive">
-          <div className="listening-wave" aria-hidden="true">
-            <i />
-            <i />
-            <i />
-            <i />
-            <i />
-          </div>
+          {/* 막대가 실제 목소리 크기를 따라간다 — 「지금 듣고 있구나」가 눈으로 보인다 */}
+          <ListeningWave active={listening} />
           <h2>듣고 있어요</h2>
           <p>천천히 말씀해 주세요</p>
           <span className="listening-help">
