@@ -182,8 +182,20 @@ export default function App() {
    * 화면이 바뀔 때마다 지금 이동을 저장해둔다.
    * 되살릴 수 없는 화면(홈·대화 중)에서는 saveJourney 가 알아서 지운다 —
    * 홈에 돌아왔는데 예전 길이 남아 있으면 다음에 엉뚱하게 되살아난다.
+   *
+   * ⚠️ **되살리기가 끝나기 전에는 저장하지 않는다.**
+   *
+   * 새로고침하면 screen 이 'signup' 으로 시작한다. 그 상태로 이 효과가 먼저 돌면
+   * 「되살릴 수 없는 화면」으로 판정되어 sessionStorage 를 **지워버린다.** 그다음에야
+   * 서버 확인이 끝나고 복구가 도는데, 그때는 읽을 것이 남아 있지 않다.
+   *
+   * 그래서 새로고침하면 어디에 있었든 늘 홈으로 튕겼다(2026-08-17). 「내 정보」만이
+   * 아니라 가다 만 길도 마찬가지였다 — 되살리는 코드는 처음부터 한 번도 제 일을
+   * 못 하고 있었다. 휴대폰에서 잠깐 앱을 벗어났다 돌아오는 경우에는 탭이 통째로
+   * 다시 뜨지 않아(화면 상태가 메모리에 그대로) 겉으로는 멀쩡해 보였다.
    */
   useEffect(() => {
+    if (booting) return
     saveJourney({
       screen,
       destination,
@@ -196,7 +208,7 @@ export default function App() {
     })
     // 길과 상관없는 화면(내 정보 등)은 이름만 따로 기억해둔다
     saveScreen(screen)
-  }, [screen, destination, destCoords, departure, origin, guideOption, drtInfo, stairChoice])
+  }, [booting, screen, destination, destCoords, departure, origin, guideOption, drtInfo, stairChoice])
 
   useEffect(() => {
     if (!booting) return

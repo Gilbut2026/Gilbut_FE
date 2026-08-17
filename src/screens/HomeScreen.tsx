@@ -99,6 +99,16 @@ export function HomeScreen({
     })
   }
 
+  /*
+   * 다 말했어요 — 지금까지 들은 것을 확정해서 보낸다.
+   * 시끄러우면 브라우저가 「말이 끝났다」를 못 잡는다. 그때 버리는 길만 있으면
+   * 처음부터 다시 말해야 하고, 시끄러운 곳에서는 몇 번을 해도 마찬가지다.
+   * 화면은 여기서 닫지 않는다 — 결과가 뒤이어 오고 그때 닫힌다.
+   */
+  function finishListening() {
+    sessionRef.current?.finish()
+  }
+
   function stopListening() {
     sessionRef.current?.cancel()
     sessionRef.current = null
@@ -206,7 +216,12 @@ export function HomeScreen({
           </div>
           <h2>듣고 있어요</h2>
           <p>어디로 가고 싶으신지 말씀해 주세요</p>
-          <span className="listening-help">말씀이 끝나면 저절로 넘어가요</span>
+          <span className="listening-help">
+            말씀이 끝나면 저절로 넘어가요. 안 넘어가면 아래를 눌러주세요
+          </span>
+          <button className="btn primary listening-done" onClick={finishListening}>
+            다 말했어요
+          </button>
           <button className="btn neutral listening-cancel" onClick={stopListening}>
             그만두기
           </button>

@@ -264,6 +264,20 @@ export function ChatView({
   micTapRef.current = micTap
 
   /**
+   * **다 말했어요** — 지금까지 들은 것을 확정해서 보낸다.
+   *
+   * 왜 필요한가 — 주위가 시끄러우면 브라우저가 「말이 끝났다」를 못 잡는다. 말씀은
+   * 다 하셨는데 화면은 계속 「듣고 있어요」다. 그때 버리는 것(그만두기)밖에 없으면
+   * 다시 처음부터 말해야 하고, 시끄러운 곳에서는 몇 번을 해도 마찬가지다.
+   *
+   * 여기서 화면을 닫지 않는다 — 결과가 뒤이어 오고, 그때 onResult 가 닫는다.
+   * 먼저 닫아버리면 알아들은 말이 어디로 갔는지 모르게 된다.
+   */
+  function finishListen() {
+    sessionRef.current?.finish()
+  }
+
+  /**
    * 지금 듣던 것만 멈춘다. **말하기 모드는 그대로 둔다.**
    *
    * 듣는 중에 빠른 답변(「다시 말하기」·「병원」)을 누르셨을 때 쓴다.
@@ -320,7 +334,15 @@ export function ChatView({
           </div>
           <h2>듣고 있어요</h2>
           <p>천천히 말씀해 주세요</p>
-          <span className="listening-help">말씀이 끝나면 저절로 넘어가요</span>
+          <span className="listening-help">
+            말씀이 끝나면 저절로 넘어가요. 안 넘어가면 아래를 눌러주세요
+          </span>
+
+          {/* 시끄러우면 「말이 끝났다」를 브라우저가 못 잡는다. 그때 말씀하신 것을
+              버리지 않고 보낼 수 있어야 한다 — 버리는 길만 있으면 처음부터 다시다 */}
+          <button className="btn primary listening-done" onClick={finishListen}>
+            다 말했어요
+          </button>
 
           {/* 빠른 답변은 듣는 중에도 누를 수 있어야 한다. 누르면 듣기만 멈추고
               말하기 모드는 그대로 둔다 — 버튼을 눌렀다고 자판으로 바꾸겠다는 뜻은 아니다 */}
