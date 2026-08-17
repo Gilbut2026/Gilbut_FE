@@ -30,6 +30,8 @@ export function MapPicker({
   open,
   center,
   title = '지도에서 출발지 고르기',
+  hint = '지도를 움직여 출발할 곳에 맞춰주세요',
+  confirmLabel = '여기서 출발할게요',
   onPick,
   onClose,
 }: {
@@ -37,6 +39,8 @@ export function MapPicker({
   /** 처음 보여줄 자리. 보통 현재 위치. 없으면 수원시청에서 시작한다 */
   center?: LatLng | null
   title?: string
+  hint?: string
+  confirmLabel?: string
   onPick: (place: { coords: LatLng; address: string | null }) => void
   onClose: () => void
 }) {
@@ -104,7 +108,7 @@ export function MapPicker({
     <div className="map-picker" role="dialog" aria-modal="true" aria-label={title}>
       <div className="map-picker-head">
         <h2>{title}</h2>
-        <p>지도를 움직여 출발할 곳에 맞춰주세요</p>
+        <p>{hint}</p>
       </div>
 
       {usable ? (
@@ -128,7 +132,7 @@ export function MapPicker({
           <p>
             지금은 지도를 불러오지 못했어요.
             <br />
-            아래 입력창에 출발지를 적어주세요.
+            주소를 글자로 적어서 찾아주세요.
           </p>
         </div>
       )}
@@ -145,7 +149,7 @@ export function MapPicker({
           disabled={!usable || looking}
           onClick={() => onPick({ coords: at, address })}
         >
-          여기서 출발할게요
+          {confirmLabel}
         </button>
         <button className="btn neutral" onClick={onClose}>
           그만두기

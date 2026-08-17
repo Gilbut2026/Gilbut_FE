@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { getHome, saveHome, searchPlaces, searchPlacesNear } from '../api/place'
 import { SEARCH_RADIUS_KM } from '../api/geo'
 import { areaOf, areasDiffer, rankPlaceCandidates } from '../api/placeRank'
+import { MapPicker } from './MapPicker'
 import type { LatLng, PlaceItemResponse } from '../types/dto'
 
 /**
@@ -27,6 +28,7 @@ export function HomeAddressSheet({
   const [input, setInput] = useState('')
   const [saving, setSaving] = useState(false)
   const [candidates, setCandidates] = useState<PlaceItemResponse[] | null>(null)
+  const [mapPicker, setMapPicker] = useState(false)
   const posRef = useRef<LatLng | null>(null)
 
   // 열릴 때 저장된 주소가 있으면 채우고, 현재 위치도 받아둔다.
@@ -186,6 +188,20 @@ export function HomeAddressSheet({
           📍 현재 위치 근처에서 찾기
         </button>
 
+        {/*
+          지도에서 짚기.
+
+          집은 이름으로 검색되지 않는 경우가 많다 — 아파트가 아니면 「행복빌라 3동」 같은
+          이름이 지도에 없고, 도로명 주소를 정확히 적기는 어르신께 어렵다. 그런데 본인 집은
+          지도에서 대번에 알아보신다.
+
+          이제 좌표→주소가 프론트에서 되므로(state/kakaoSdk) 짚기만 하면 주소가 따라온다.
+          예전에는 그게 안 돼서 「근처 아파트를 검색해 고르기」로 돌아가야 했다.
+        */}
+        <button className="home-gps" onClick={() => setMapPicker(true)} disabled={saving}>
+          🗺️ 지도에서 집 고르기
+        </button>
+
         {/* 같은 이름이 여러 곳일 때만 고르게 한다 */}
         {candidates && candidates.length > 0 && (
           <div className="home-candidates">
@@ -218,6 +234,33 @@ export function HomeAddressSheet({
           </button>
         </div>
       </div>
+
+      <MapPicker
+        open={mapPicker}
+        center={posRef.current}
+        title="지도에서 집 고르기"
+        hint="지도를 움직여 집에 맞춰주세요"
+        confirmLabel="여기가 우리 집이에요"
+        onClose={() => setMapPicker(false)}
+        onPick={({ coords, address }) => {
+          /*
+           * 집은 주소를 못 찾으면 저장하지 않는다.
+           *
+           * 출발지는 좌표만 있어도 길을 찾을 수 있지만, 집 주소는 설정 화면과 대화에
+           * **글자로** 계속 보인다. 「지도에서 고른 곳」이라고 적혀 있으면 그게 어디인지
+           * 본인도 알 수 없고, 나중에 맞는지 확인할 방법도 없다.
+           * 집이 있는 곳이면 도로명 주소가 거의 다 있다 — 없으면 조금 옮기면 된다.
+           */
+          if (!address) {
+            onToast('이 자리는 주소를 찾지 못했어요. 조금 옮겨서 다시 해주세요')
+            return
+          }
+          setMapPicker(false)
+          setInput(address)
+          setCandidates(null)
+          commit(address, coords)
+        }}
+      />
     </>
   )
 }
