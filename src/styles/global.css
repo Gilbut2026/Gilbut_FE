@@ -596,15 +596,16 @@ button { color: inherit; }
 .route-facility:active svg { transform: scale(0.94); transform-origin: 50% 100%; }
 
 /* 지금 단계에서 가야 할 곳 — 한 번에 하나만 뜬다.
-   지도에 이미 청색(경로)·갈색(쉼터)·청록(화장실)·초록(내 위치)·흰색(정류장)이 있어서
-   여섯 번째 색은 서로를 흐린다. 색 대신 **모양**으로 가른다 — 깃발은 어느 표시와도 겹치지 않는다.
-   몸통은 가장 진한 남색이라 지하철 노선색(초록·노랑) 위에서도 그대로 보인다. */
+   모양(깃발)이 이미 지도의 어느 표시와도 겹치지 않으므로, 색은 눈에 잘 띄는 쪽으로 고른다.
+   처음에는 남색으로 뒀다가 지도 위에서 무겁게 보여 앱 브랜드 보라로 바꿨다(2026-08-17).
+   보라는 지도에서 아직 안 쓴 색이라 경로(청색)·쉼터(갈색)·화장실(청록)·내 위치(초록)와 갈린다.
+   빨강은 쓰지 않는다 — 이 앱에서 빨강은 SOS 다. */
 .route-goal { width: 28px; height: 38px; line-height: 0; pointer-events: none; }
 .route-goal svg { width: 28px; height: 38px; filter: drop-shadow(0 2px 5px rgba(21, 33, 59, 0.5)); }
 /* 흰 테두리를 같은 모양 한 겹으로 깐다. 도형마다 stroke 를 주면 깃대와 깃발이
    만나는 자리에 흰 줄이 가로질러 그어진다 — 경로선에 흰 케이싱을 까는 것과 같은 방식이다. */
 .route-goal .halo { fill: #fff; stroke: #fff; stroke-width: 3.4; stroke-linejoin: round; }
-.route-goal .body { fill: var(--ink); }
+.route-goal .body { fill: var(--violet); }
 
 /* 토글 — 지도 바로 아래. 무엇이 켜졌는지 지도와 함께 보여야 한다 */
 /* 도착 예정 시각 — 소요시간 아래 한 줄. 추정치라 본 값보다 작고 흐리게 둔다 */

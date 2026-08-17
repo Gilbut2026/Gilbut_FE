@@ -360,10 +360,9 @@ const FACILITY_GLYPH: Record<'SHELTER' | 'TOILET', string> = {
  * **한 번에 하나만** 뜬다. 걷는 길은 단계가 마흔 개가 넘어서(api/directions) 단계마다
  * 찍으면 지도가 마커로 덮인다. 지금 단계의 목표 하나가 단계를 따라 옮겨 다닌다.
  *
- * 색을 새로 들이지 않고 **모양으로 가른다.** 지도에는 이미 청색(경로)·갈색(쉼터)·
- * 청록(화장실)·초록(내 위치)·흰색(정류장)이 있어서 여섯 번째 색은 서로를 흐린다.
- * 깃발은 어느 표시와도 안 겹치는 모양이고, 몸통은 어떤 노선색 위에서도 보이도록
- * 가장 진한 남색이다. 빨강은 쓰지 않는다 — 이 앱에서 빨강은 SOS 다.
+ * 지도의 어느 표시와도 안 겹치는 **모양**이라 색은 눈에 잘 띄는 쪽으로 고른다.
+ * 처음에는 남색으로 뒀는데 지도 위에서 무겁게 보여 앱 브랜드 보라로 바꿨다(2026-08-17).
+ * 빨강은 쓰지 않는다 — 이 앱에서 빨강은 SOS 다.
  *
  * 흰 테두리는 같은 모양을 두 겹으로 겹쳐서 만든다. 도형마다 stroke 를 주면 깃대와
  * 깃발이 만나는 자리에 흰 줄이 가로질러 그어진다.
@@ -575,23 +574,44 @@ export function RouteMap({
   }, [])
 
   /**
-   * 지금 단계의 목표에 깃발을 꽂는다. 자리가 없으면 아무것도 안 찍는다.
+   * 지금 단계의 목표에 깃발을 꽂는다. 자리가 없으면 감춘다.
+   *
+   * **깃발은 한 번만 만들고 그 뒤로는 자리만 옮긴다.**
+   *
+   * 처음에는 단계가 바뀔 때마다 지우고 새로 만들었는데, 폰에서 단계를 넘기면
+   * 이전 단계 깃발이 그대로 남았다(2026-08-17). 「지우고 새로 만들기」는 지우는 쪽이
+   * 한 번이라도 어긋나면 그 즉시 깃발이 둘이 된다 — 우리가 무엇을 놓쳤는지 찾기 전에,
+   * 애초에 둘이 될 수 없는 모양으로 두는 편이 낫다.
+   *
+   * 내 위치 표시(paintMe)도 같은 이유로 같은 방식이다. 지도에서 **하나뿐이어야 하는
+   * 것**은 만들었다 지웠다 하지 않고 옮긴다.
    *
    * 깃대 밑동의 동그라미가 좌표를 정확히 가리켜야 하므로 yAnchor 를 그 자리로 맞춘다
    * (28×38 그림에서 밑동 중심이 y=33.4). 아래 끝(1)에 맞추면 깃발이 몇 픽셀 뜬다.
    */
   const paintGoal = useCallback(() => {
-    goalRef.current?.setMap(null)
-    goalRef.current = null
-
     const kakao = kakaoRef.current
     const map = mapRef.current
     const at = stepTargetRef.current
-    if (!kakao || !map || !at) return
+    if (!kakao || !map) return
+
+    // 마지막 단계처럼 찍을 자리가 없으면 감춘다. 지우지는 않는다 — 다음에 또 쓴다.
+    if (!at) {
+      goalRef.current?.setMap(null)
+      return
+    }
+
+    const pos = new kakao.maps.LatLng(at.latitude, at.longitude)
+    if (goalRef.current) {
+      goalRef.current.setPosition(pos)
+      // 감춰뒀다면 다시 보이게. 이미 붙어 있으면 아무 일도 일어나지 않는다.
+      goalRef.current.setMap(map)
+      return
+    }
 
     goalRef.current = new kakao.maps.CustomOverlay({
       map,
-      position: new kakao.maps.LatLng(at.latitude, at.longitude),
+      position: pos,
       content: goalHtml(),
       yAnchor: 33.4 / 38,
       // 정류장(5)·화살표(6)·시설(7)보다 위 — 지금 가야 할 곳이 가려지면 안 된다
@@ -888,6 +908,28 @@ export function RouteMap({
         window.kakao?.maps?.event?.removeListener(map, 'idle', handler)
         idleRef.current = null
       }
+      /*
+       * 얹어둔 것들을 **지도에서 떼고** 비운다.
+       *
+       * 예전에는 배열만 비웠다. 그러면 요소는 지도에 남은 채 우리 손만 놓는 셈이라,
+       * 이 효과가 다시 돌면 지운 줄 알았던 것이 그대로 남아 새로 그린 것과 겹친다.
+       * 단계를 넘겼는데 이전 단계 깃발이 그대로 보이던 원인이다(2026-08-17).
+       *
+       * 화살표·정류장은 지도를 새로 만들면서 대개 함께 지워져 티가 안 났는데,
+       * 깃발은 지도를 다시 만들지 않는 경로(단계 변경)로도 그려져서 드러났다.
+       * 원인이 같으므로 같이 고친다.
+       */
+      linesRef.current.forEach(({ line, casing }) => {
+        line.setMap(null)
+        casing.setMap(null)
+      })
+      arrowsRef.current.forEach((o) => o.setMap(null))
+      stopsRef.current.forEach((o) => o.setMap(null))
+      facilityRef.current.forEach((o) => o.setMap(null))
+      goalRef.current?.setMap(null)
+      meRef.current?.dot.setMap(null)
+      meRef.current?.ring.setMap(null)
+
       meRef.current = null
       mapRef.current = null
       linesRef.current = []
