@@ -62,3 +62,35 @@ export function speak(text: string, opts: SpeakOptions = {}): boolean {
 export function stopSpeaking(): void {
   if (hasTTS()) window.speechSynthesis.cancel()
 }
+
+/**
+ * 지금 읽고 있는 말이 **끝나면** 알려준다. 읽는 중이 아니면 곧바로 알린다.
+ *
+ * 왜 필요한가 — 말이 끝나기 전에 마이크를 열면 우리 목소리를 우리가 받아 적는다.
+ * 「다시 말씀해 주시겠어요?」를 읽는 도중에 마이크를 열면 그 문장이 사용자의 말로
+ * 들어간다.
+ *
+ * Web Speech 에는 「다 읽었다」를 알리는 전역 신호가 없다. utterance 마다 onend 가
+ * 있지만 speak() 는 그것을 밖으로 내주지 않고, 여러 곳에서 부르므로 어느 utterance 를
+ * 기다려야 하는지도 알 수 없다. 그래서 speaking 을 지켜본다.
+ *
+ * 상한을 둔다 — 브라우저가 speaking 을 참인 채로 두고 멈추는 경우가 있는데
+ * (탭이 백그라운드로 가거나 음성이 끊겼을 때), 그러면 영영 안 열린다.
+ * 못 기다렸으면 그냥 여는 편이 낫다.
+ *
+ * @returns 그만 기다리게 하는 함수. 화면을 떠날 때 부른다.
+ */
+export function whenSpeakingEnds(cb: () => void): () => void {
+  if (!hasTTS() || !window.speechSynthesis.speaking) {
+    const t = window.setTimeout(cb, 0)
+    return () => window.clearTimeout(t)
+  }
+  const started = performance.now()
+  const id = window.setInterval(() => {
+    if (!window.speechSynthesis.speaking || performance.now() - started > 12_000) {
+      window.clearInterval(id)
+      cb()
+    }
+  }, 180)
+  return () => window.clearInterval(id)
+}

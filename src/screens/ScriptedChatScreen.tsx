@@ -5,7 +5,7 @@ import { departureAfter, parseDepartureMinutes } from '../api/time'
 import { SEARCH_RADIUS_KM, SUWON_CENTER, isInServiceArea } from '../api/geo'
 import { rankPlaceCandidates, type RankedPlaces } from '../api/placeRank'
 import { PlaceCandidates } from '../components/PlaceCandidates'
-import { ChatView, useChatLog } from '../components/ChatView'
+import { ChatView, useChatLog, askAgainVerb, type InputMode } from '../components/ChatView'
 import { DepartureSheet } from '../components/DepartureSheet'
 import { QUICK_DESTINATION_NAMES } from './quickDestinations'
 import type { ChatOutcome } from '../types/nav'
@@ -68,6 +68,8 @@ export function ScriptedChatScreen({
   const [step, setStep] = useState<Step>('destination')
   const [input, setInput] = useState('')
   const [busy, setBusy] = useState(false)
+  // 말로 하시는지 자판으로 치시는지(ChatView 가 알려준다) — 되물을 문구를 여기에 맞춘다
+  const inputModeRef = useRef<InputMode>('text')
   const [locationDenied, setLocationDenied] = useState(false)
   // 출발 날짜·시간 고르기 시트 — 실연동 화면과 같은 것을 쓴다
   const [timeSheet, setTimeSheet] = useState(false)
@@ -161,7 +163,10 @@ export function ScriptedChatScreen({
 
       if (!res.places.length) {
         if (outside) sayOutOfArea()
-        else botSay(`"${name}" 근처에서 장소를 찾지 못했어요. 조금 더 자세히 말씀해 주시겠어요?`)
+        else
+          botSay(
+            `"${name}" 근처에서 장소를 찾지 못했어요. 조금 더 자세히 ${askAgainVerb(inputModeRef.current)} 주시겠어요?`,
+          )
         actions(destinationReplies())
         return
       }
@@ -178,7 +183,10 @@ export function ScriptedChatScreen({
       hideTyping()
       // 백엔드가 결과 0건도 502 로 내려주기 때문에, 지역 밖이면 그쪽 안내를 먼저 한다
       if (outside) sayOutOfArea()
-      else botSay('장소를 찾는 중에 문제가 생겼어요. 잠시 뒤 다시 말씀해 주시겠어요?')
+      else
+        botSay(
+          `장소를 찾는 중에 문제가 생겼어요. 잠시 뒤 다시 ${askAgainVerb(inputModeRef.current)} 주시겠어요?`,
+        )
       actions(destinationReplies())
     } finally {
       setBusy(false)
@@ -189,7 +197,11 @@ export function ScriptedChatScreen({
     userSay('다시 말할게요')
     setStep('destination')
     typing(() => {
-      botSay('괜찮아요. 목적지를 다시 말씀하거나 아래에서 골라주세요.')
+      botSay(
+        inputModeRef.current === 'voice'
+          ? '괜찮아요. 목적지를 다시 말씀하거나 아래에서 골라주세요.'
+          : '괜찮아요. 목적지를 다시 입력하거나 아래에서 골라주세요.',
+      )
       actions(destinationReplies())
     })
   }
@@ -400,7 +412,11 @@ export function ScriptedChatScreen({
       const mins = parseDepartureMinutes(text)
       if (mins === null) {
         userSay(text)
-        typing(() => botSay('언제 나서실지 잘 못 알아들었어요. “30분 뒤”나 “오후 3시”처럼 말씀해 주시겠어요?'))
+        typing(() =>
+          botSay(
+            `언제 나서실지 잘 못 알아들었어요. “30분 뒤”나 “오후 3시”처럼 ${askAgainVerb(inputModeRef.current)} 주시겠어요?`,
+          ),
+        )
         return
       }
       chooseTime(text, mins)
@@ -448,6 +464,8 @@ export function ScriptedChatScreen({
         onSos={onSos}
         onToast={onToast}
         busy={busy}
+        /* 되물을 때 「말씀해」와 「입력해」를 가르려면 지금 어느 쪽인지 알아야 한다 */
+        onInputModeChange={(m) => (inputModeRef.current = m)}
       />
       <DepartureSheet
         open={timeSheet}

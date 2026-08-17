@@ -14,7 +14,7 @@ import { rankPlaceCandidates, type RankedPlaces } from '../api/placeRank'
 import { PlaceCandidates } from '../components/PlaceCandidates'
 import { SEARCH_RADIUS_KM } from '../api/geo'
 import { QUICK_DESTINATION_NAMES } from './quickDestinations'
-import { ChatView, useChatLog } from '../components/ChatView'
+import { ChatView, useChatLog, askAgainVerb, type InputMode } from '../components/ChatView'
 import { DepartureSheet } from '../components/DepartureSheet'
 import type { ChatOutcome } from '../types/nav'
 import type {
@@ -99,6 +99,13 @@ export function ServerChatScreen({
   const originRef = useRef<{ name: string; coords: LatLng } | null>(null)
   // 발화에 실어 보낼 현재 좌표 — "내 근처 병원" 같은 기준 위치 검색에 쓰인다(있으면 보내고 없으면 생략)
   const coordsRef = useRef<{ latitude: number; longitude: number } | null>(null)
+  /*
+   * 말로 하시는 중인지 자판으로 치시는 중인지(ChatView 가 알려준다).
+   *
+   * 되물을 때 문구를 여기에 맞춘다 — 자판으로 치시는 분께 「다시 말씀해 주시겠어요?」는
+   * 엉뚱한 말이다. 무엇을 하라는 것인지 알 수 없어 그 자리에서 멈추신다.
+   */
+  const inputModeRef = useRef<InputMode>('text')
 
   /**
    * 사람이 읽을 수 있는 에러 문구로 바꾼다.
@@ -109,13 +116,15 @@ export function ServerChatScreen({
    * (AI 서버가 잠들어 있다 깨어날 때 첫 요청이 특히 오래 걸린다)
    */
   const errorText = (e: unknown): string => {
-    if (!(e instanceof ApiError)) return '문제가 생겼어요. 다시 한 번 말씀해 주시겠어요?'
+    // 말로 하시는지 자판으로 치시는지에 맞춘다 — 자판 쓰시는 분께 「말씀해」는 어긋난다
+    const again = askAgainVerb(inputModeRef.current)
+    if (!(e instanceof ApiError)) return `문제가 생겼어요. 다시 한 번 ${again} 주시겠어요?`
     if (e.status === 0) return '인터넷 연결을 확인해 주세요.'
     if (e.status === 503) {
       return 'AI 상담 서버가 아직 연결되지 않았어요. 아래 버튼으로 목적지를 골라주세요.'
     }
     if (e.status === 502) {
-      return '응답이 늦어지고 있어요. 한 번만 다시 말씀해 주시겠어요?'
+      return `응답이 늦어지고 있어요. 한 번만 다시 ${again} 주시겠어요?`
     }
     // 409(CHAT_STATE_CONFLICT)는 여기서 문구만 만들지 않는다 — fail() 이 실제로 되돌린다
     return e.message
@@ -376,7 +385,10 @@ export function ServerChatScreen({
                 botSay('출발지를 다시 알려주세요.')
                 askFor('ORIGIN_CONFIRMATION')
               }
-            : () => void restartDestination('다시 말씀해 주세요. 어디로 가고 싶으세요?')
+            : () =>
+                void restartDestination(
+                  `다시 ${askAgainVerb(inputModeRef.current)} 주세요. 어디로 가고 싶으세요?`,
+                )
         }
       />
     )
@@ -686,7 +698,9 @@ export function ServerChatScreen({
       const mins = parseDepartureMinutes(value)
       if (mins === null) {
         userSay(value)
-        botSay('언제 나서실지 잘 못 알아들었어요. “30분 뒤”나 “오후 3시”처럼 말씀해 주시겠어요?')
+        botSay(
+          `언제 나서실지 잘 못 알아들었어요. “30분 뒤”나 “오후 3시”처럼 ${askAgainVerb(inputModeRef.current)} 주시겠어요?`,
+        )
         return
       }
       pickDeparture(value, mins)
@@ -734,6 +748,8 @@ export function ServerChatScreen({
         onSos={onSos}
         onToast={onToast}
         busy={busy}
+        /* 되물을 때 「말씀해」와 「입력해」를 가르려면 지금 어느 쪽인지 알아야 한다 */
+        onInputModeChange={(m) => (inputModeRef.current = m)}
       />
       <DepartureSheet
         open={timeSheet}

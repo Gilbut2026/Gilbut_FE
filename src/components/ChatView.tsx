@@ -8,7 +8,7 @@ import {
   type ReactElement,
   type ReactNode,
 } from 'react'
-import { speak } from '../state/tts'
+import { speak, whenSpeakingEnds } from '../state/tts'
 import { TopBar } from './TopBar'
 
 /**
@@ -30,6 +30,19 @@ export type MsgInput =
   | { type: 'typing' }
 
 export type Msg = MsgInput & { id: number }
+
+/**
+ * 지금 어르신이 말로 하시는지 자판으로 치시는지.
+ *
+ * 화면(엔진)도 알아야 한다 — 되물을 때 문구가 달라지기 때문이다.
+ * 자판으로 치시는 분에게 「다시 말씀해 주시겠어요?」라고 하면 엉뚱한 말이 된다.
+ */
+export type InputMode = 'voice' | 'text'
+
+/** 되물을 때 쓸 동사 — 「다시 ○○ 주시겠어요?」 */
+export function askAgainVerb(mode: InputMode): string {
+  return mode === 'voice' ? '말씀해' : '입력해'
+}
 
 /** ReactNode(JSX) 말풍선에서 읽어줄 순수 텍스트만 뽑는다. <br> 은 공백으로 처리. */
 export function nodeToText(node: ReactNode): string {
@@ -128,6 +141,11 @@ export interface ChatViewProps {
   /** 서버 응답을 기다리는 중이면 입력을 잠근다(같은 말을 두 번 보내는 것 방지) */
   busy?: boolean
   placeholder?: string
+  /**
+   * 말로 하시는지 자판으로 치시는지 바뀔 때 알려준다.
+   * 엔진이 되물을 문구를 그에 맞게 쓴다 — 자판 쓰시는 분께 「말씀해 주세요」는 어긋난다.
+   */
+  onInputModeChange?: (mode: InputMode) => void
 }
 
 export function ChatView({
@@ -145,6 +163,7 @@ export function ChatView({
   onToast,
   busy = false,
   placeholder = '목적지나 질문을 입력하세요',
+  onInputModeChange,
 }: ChatViewProps) {
   /*
    * 마이크 — 홈 화면과 **같은 모듈**을 쓴다(state/speech).
@@ -158,11 +177,54 @@ export function ChatView({
   const [listening, setListening] = useState(false)
   const sessionRef = useRef<SpeechSession | null>(null)
 
+  /*
+   * **말로 하시는 중인가.**
+   *
+   * 봇이 「한 번만 다시 말씀해 주시겠어요?」라고 해놓고 마이크를 안 열고 있었다
+   * (2026-08-17). 말로 대화하시던 분은 마이크가 닫힌 줄 모르니, 대답을 해도
+   * 아무 일도 일어나지 않는다. 앱이 먼저 물어놓고 안 듣고 있는 것이다.
+   *
+   * 그래서 한 번 마이크를 쓰신 분에게는 **봇이 말할 때마다 마이크를 다시 연다.**
+   *   · 켜짐 — 마이크를 누르셨을 때
+   *   · 꺼짐 — 「그만두기」를 누르거나 자판으로 보내셨을 때
+   *
+   * 처음부터 자판으로 치시는 분에게는 켜지 않는다. 묻지도 않고 마이크를
+   * 들이미는 것은 도움이 아니라 방해다.
+   *
+   * 「그만두기」가 곧 「이제 자판으로 할게요」라는 뜻이 되는 것이 중요하다 —
+   * 마이크가 계속 열리는 게 싫을 때 빠져나갈 길이 없으면 갇힌 것이 된다.
+   */
+  const [voiceMode, setVoiceMode] = useState(false)
+  /** 이 말풍선에는 이미 마이크를 열어봤다. 같은 말에 두 번 열지 않게 */
+  const answeredRef = useRef(0)
+
+  /** 지금까지 나온 마지막 봇 말풍선 번호 */
+  const lastBotId = (): number => {
+    for (let i = messages.length - 1; i >= 0; i -= 1) {
+      if (messages[i].type === 'bot') return messages[i].id
+    }
+    return 0
+  }
+
   // 화면을 떠날 때 듣던 것을 정리한다 — 마이크가 열린 채 남으면 안 된다
   useEffect(() => () => sessionRef.current?.cancel(), [])
 
-  function micTap() {
+  // 어느 쪽으로 하시는지 엔진에도 알린다 — 되물을 문구가 달라진다
+  const modeChangeRef = useRef(onInputModeChange)
+  modeChangeRef.current = onInputModeChange
+  useEffect(() => {
+    modeChangeRef.current?.(voiceMode ? 'voice' : 'text')
+  }, [voiceMode])
+
+  const micTap = useCallback(() => {
     if (listening || busy) return
+    setVoiceMode(true)
+    /*
+     * 지금 화면에 떠 있는 말은 이미 답한 것으로 친다.
+     * 안 그러면 이 말에 답하는 사이(듣기가 끝나고 봇이 답하기 전 짧은 틈)에
+     * 아직 답 안 한 말로 보여서 마이크가 한 번 더 열린다.
+     */
+    answeredRef.current = lastBotId()
     setListening(true)
     sessionRef.current = listenOnce({
       onResult: (text) => {
@@ -176,13 +238,44 @@ export function ChatView({
         onToast(SPEECH_ERROR_TEXT[kind])
       },
     })
-  }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [listening, busy, messages, onTranscript, onToast])
 
+  const micTapRef = useRef(micTap)
+  micTapRef.current = micTap
+
+  /** 사용자가 「그만두기」를 눌렀다 = 이제 자판으로 하시겠다는 뜻 */
   function stopListening() {
     sessionRef.current?.cancel()
     sessionRef.current = null
     setListening(false)
+    setVoiceMode(false)
   }
+
+  /** 자판으로 보내셨다 = 마이크를 더 열지 않는다 */
+  function sendTyped() {
+    setVoiceMode(false)
+    onSend()
+  }
+
+  /*
+   * 봇이 새로 말했으면 마이크를 다시 연다.
+   *
+   * **말이 끝난 뒤에** 연다 — 읽는 도중에 열면 우리 목소리를 우리가 받아 적는다
+   * (state/tts whenSpeakingEnds).
+   *
+   * 점점점이 떠 있거나 답을 기다리는 중이면 아직이다. 그때 열어봐야 곧 다시
+   * 닫히고, 어르신에게는 마이크가 깜빡이는 것처럼 보인다.
+   */
+  useEffect(() => {
+    if (!voiceMode || busy || listening) return
+    if (messages.some((m) => m.type === 'typing')) return
+    const id = lastBotId()
+    if (!id || answeredRef.current === id) return
+    answeredRef.current = id
+    return whenSpeakingEnds(() => micTapRef.current())
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [messages, busy, listening, voiceMode])
 
   return (
     <section className="screen">
@@ -276,7 +369,7 @@ export function ChatView({
               className="chat-input"
               value={input}
               onChange={(e) => onInputChange(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && !busy && onSend()}
+              onKeyDown={(e) => e.key === 'Enter' && !busy && sendTyped()}
               placeholder={busy ? '답변을 기다리는 중이에요…' : placeholder}
               aria-label="AI 길벗에게 메시지 입력"
               disabled={busy}
@@ -288,7 +381,7 @@ export function ChatView({
               </svg>
             </button>
           </div>
-          <button className="chat-send" onClick={onSend} aria-label="메시지 보내기" disabled={busy}>
+          <button className="chat-send" onClick={sendTyped} aria-label="메시지 보내기" disabled={busy}>
             <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
               <path d="m4 4 17 8-17 8 3-8-3-8Z" fill="currentColor" />
               <path d="M7 12h14" stroke="white" strokeWidth="1.7" />
