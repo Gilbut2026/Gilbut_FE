@@ -10,7 +10,7 @@
  *    BE 는 route 추천을 실제로 서빙할 때만 기록을 저장하므로(saveRecommendation),
  *    route(경사도) 실연동이 켜진 뒤에 FORCED_MOCK 에서 'history' 를 빼야 실데이터가 쌓인다.
  *
- * 🚨 화면용 RouteHistoryItem 으로의 번역은 mapHistory.ts 어댑터가 담당한다.
+ * 화면용 RouteHistoryItem 으로의 번역은 mapHistory.ts 어댑터가 담당한다.
  */
 import { api } from './client'
 import { useMock } from './mode'
