@@ -350,6 +350,36 @@ const FACILITY_GLYPH: Record<'SHELTER' | 'TOILET', string> = {
     '<path d="M17.4 11.6c1.9 0 2.9 1.2 3.3 3.1l.5 2.6h-1.7v3.1h-4.2v-3.1h-1.7l.5-2.6c.4-1.9 1.4-3.1 3.3-3.1z"/>',
 }
 
+/**
+ * 지금 단계에서 **가야 할 곳** — 깃발 하나.
+ *
+ * 왜 필요한가 — 「120m 걷기 · 광교중앙역까지」가 떠도 지도에는 그 끝이 안 찍혀 있었다.
+ * 타는 구간은 정류장 흰 동그라미가 그 몫을 했지만 걷는 구간에는 아무것도 없어서,
+ * 어디까지 가면 되는지를 글자로만 알 수 있었다.
+ *
+ * **한 번에 하나만** 뜬다. 걷는 길은 단계가 마흔 개가 넘어서(api/directions) 단계마다
+ * 찍으면 지도가 마커로 덮인다. 지금 단계의 목표 하나가 단계를 따라 옮겨 다닌다.
+ *
+ * 색을 새로 들이지 않고 **모양으로 가른다.** 지도에는 이미 청색(경로)·갈색(쉼터)·
+ * 청록(화장실)·초록(내 위치)·흰색(정류장)이 있어서 여섯 번째 색은 서로를 흐린다.
+ * 깃발은 어느 표시와도 안 겹치는 모양이고, 몸통은 어떤 노선색 위에서도 보이도록
+ * 가장 진한 남색이다. 빨강은 쓰지 않는다 — 이 앱에서 빨강은 SOS 다.
+ *
+ * 흰 테두리는 같은 모양을 두 겹으로 겹쳐서 만든다. 도형마다 stroke 를 주면 깃대와
+ * 깃발이 만나는 자리에 흰 줄이 가로질러 그어진다.
+ */
+function goalHtml(): string {
+  const shapes =
+    '<rect x="6" y="3.2" width="2.8" height="29.6" rx="1.4"/>' +
+    '<path d="M9.4 4.6 L23.2 10.2 L9.4 15.8 Z"/>' +
+    '<circle cx="7.4" cy="33.4" r="3.6"/>'
+  return (
+    '<div class="route-goal" aria-hidden="true">' +
+    `<svg viewBox="0 0 28 38"><g class="halo">${shapes}</g><g class="body">${shapes}</g></svg>` +
+    '</div>'
+  )
+}
+
 function facilityHtml(item: FacilityItem): HTMLElement {
   const kind = item.type === 'SHELTER' ? 'SHELTER' : 'TOILET'
   const el = document.createElement('div')
@@ -369,6 +399,7 @@ export function RouteMap({
   segments = NO_SEGMENTS,
   activeSegment,
   panTo,
+  stepTarget,
   facilities = NO_FACILITIES,
   onFacilityTap,
   height,
@@ -384,6 +415,11 @@ export function RouteMap({
    * 화면(NavigateScreen)이 정해서 넘긴다 — 지도가 스스로 판단하지 않는다.
    */
   panTo?: LatLng | null
+  /**
+   * 지금 단계에서 가야 할 곳. 깃발 하나를 찍는다(한 번에 하나만).
+   * 어디가 목표인지는 화면(NavigateScreen)이 정한다 — 지도가 스스로 고르지 않는다.
+   */
+  stepTarget?: LatLng | null
   /** 가는 길 주변 쉼터·화장실. 빈 배열이면 아무것도 안 찍는다 */
   facilities?: FacilityItem[]
   /** 시설을 눌렀을 때 — 이름과 운영시간을 알려주는 몫은 화면이 한다 */
@@ -421,6 +457,11 @@ export function RouteMap({
   const stopsRef = useRef<any[]>([])
   /** 지금 찍어둔 쉼터·화장실. 토글이 바뀌면 걷어내고 다시 찍는다 */
   const facilityRef = useRef<any[]>([])
+  /** 지금 단계의 목표 깃발. 단계가 바뀌면 걷어내고 새 자리에 다시 꽂는다 */
+  const goalRef = useRef<any>(null)
+  /* 지금 값을 ref 로도 들고 있는다 — 지도는 SDK 를 받은 뒤에야 그려진다 */
+  const stepTargetRef = useRef<LatLng | null | undefined>(stepTarget)
+  stepTargetRef.current = stepTarget
   /* 지금 값을 ref 로도 들고 있는다 — 지도는 SDK 를 받은 뒤에야 그려진다 */
   const facilitiesRef = useRef<FacilityItem[]>(facilities)
   facilitiesRef.current = facilities
@@ -531,6 +572,31 @@ export function RouteMap({
         }),
       )
     }
+  }, [])
+
+  /**
+   * 지금 단계의 목표에 깃발을 꽂는다. 자리가 없으면 아무것도 안 찍는다.
+   *
+   * 깃대 밑동의 동그라미가 좌표를 정확히 가리켜야 하므로 yAnchor 를 그 자리로 맞춘다
+   * (28×38 그림에서 밑동 중심이 y=33.4). 아래 끝(1)에 맞추면 깃발이 몇 픽셀 뜬다.
+   */
+  const paintGoal = useCallback(() => {
+    goalRef.current?.setMap(null)
+    goalRef.current = null
+
+    const kakao = kakaoRef.current
+    const map = mapRef.current
+    const at = stepTargetRef.current
+    if (!kakao || !map || !at) return
+
+    goalRef.current = new kakao.maps.CustomOverlay({
+      map,
+      position: new kakao.maps.LatLng(at.latitude, at.longitude),
+      content: goalHtml(),
+      yAnchor: 33.4 / 38,
+      // 정류장(5)·화살표(6)·시설(7)보다 위 — 지금 가야 할 곳이 가려지면 안 된다
+      zIndex: 8,
+    })
   }, [])
 
   /** 지금 타는 구간의 정류장을 찍는다. 걷는 구간에는 정류장이 없다 */
@@ -792,6 +858,7 @@ export function RouteMap({
         paintArrows()
         paintStops()
         paintFacilities()
+        paintGoal()
         focusActive()
 
         /*
@@ -832,13 +899,35 @@ export function RouteMap({
       arrowsRef.current = []
       stopsRef.current = []
       facilityRef.current = []
+      goalRef.current = null
     }
-  }, [path, segments, paintMe, paintActive, paintArrows, paintStops, paintFacilities, focusActive])
+  }, [
+    path,
+    segments,
+    paintMe,
+    paintActive,
+    paintArrows,
+    paintStops,
+    paintFacilities,
+    paintGoal,
+    focusActive,
+  ])
 
   // 토글을 켜고 끄면 시설만 다시 찍는다 — 지도를 다시 그리지 않는다
   useEffect(() => {
     paintFacilities()
   }, [facilities, paintFacilities])
+
+  /*
+   * 단계가 바뀌면 깃발만 옮긴다.
+   *
+   * activeSegment 가 아니라 좌표를 본다 — 타기와 내리기는 **같은 토막**을 가리켜서
+   * (api/directions) 단계를 넘겨도 activeSegment 는 그대로다. 그런데 목표는
+   * 타는 곳에서 내리는 곳으로 바뀌므로, 토막으로 판단하면 깃발이 안 움직인다.
+   */
+  useEffect(() => {
+    paintGoal()
+  }, [stepTarget, paintGoal])
 
   /*
    * 단계가 바뀌면 그 토막만 진하게.
