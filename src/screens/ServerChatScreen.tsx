@@ -470,13 +470,23 @@ export function ServerChatScreen({
          * 배포 직후 첫 요청, 네트워크 순간 끊김 등 502 는 다른 이유로도 난다.
          * 사용자에게 "다시 말해보세요"라고 시키지 말고 우리가 한 번 대신 눌러준다.
          */
+        /*
+         * 점점점을 **먼저 걷어낸다.**
+         *
+         * 여기서 안 걷으면 아직 떠 있는 점점점 아래로 말이 붙고, 그 아래에 점점점을
+         * 하나 더 띄우게 된다. 화면에는 「… / 조금만 더 기다려 주세요… / …」 이렇게
+         * 세 줄이 뜬다(2026-08-17 실기기). 점점점이 둘이면 사람은 두 가지를 기다리는
+         * 줄로 읽는다.
+         */
+        hideTyping()
         const isTimeout = e instanceof ApiError && e.status === 502
         if (!isTimeout) {
           fail(e)
           setBusy(false)
           return
         }
-        botSay('조금만 더 기다려 주세요…')
+        // 말끝에 「…」를 붙이지 않는다 — 바로 아래 점점점이 이미 기다리라는 뜻이다
+        botSay('조금만 더 기다려 주세요.')
         showTyping()
         try {
           const res = await sendChatMessage(value, coordsRef.current ?? undefined)

@@ -99,7 +99,17 @@ export function useChatLog() {
   const actions = useCallback((content: ReactNode) => push({ type: 'actions', content }), [push])
   const card = useCallback((content: ReactNode) => push({ type: 'card', content }), [push])
 
-  const showTyping = useCallback(() => push({ type: 'typing' }), [push])
+  /*
+   * 점점점은 **하나만** 둔다.
+   *
+   * 그냥 push 하면 부르는 만큼 쌓인다. 재시도처럼 두 번 부르는 자리가 생기면
+   * 화면에 점점점이 두 줄 뜨는데, 사람은 그걸 두 가지를 기다리는 줄로 읽는다.
+   * 부르는 쪽마다 짝을 맞추라고 하는 것보다 여기서 막는 편이 확실하다.
+   */
+  const showTyping = useCallback(
+    () => setMessages((m) => (m.some((x) => x.type === 'typing') ? m : [...m, { id: idRef.current++, type: 'typing' }])),
+    [],
+  )
   const hideTyping = useCallback(() => {
     setMessages((m) => m.filter((x) => x.type !== 'typing'))
   }, [])
