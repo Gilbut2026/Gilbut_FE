@@ -80,17 +80,177 @@ function toLatLng(points?: RoutePointDto[] | null): LatLng[] {
     .map((p) => ({ latitude: p.latitude, longitude: p.longitude }))
 }
 
-/** 보행 한 단계 → 안내 한 줄 */
-function walkStep(step: WalkingStepDto): GuideStep | null {
-  const dist = distanceText(step.distanceM)
-  const text = step.instruction?.trim()
-  // 안내문도 거리도 없으면 보여줄 것이 없다
-  if (!text && !dist) return null
-  return {
-    kind: 'walk',
-    title: text || `${dist} 걷기`,
-    detail: text && dist ? dist : undefined,
+/*
+ * ── 걷는 길 묶기 ──────────────────────────────────────────────────────────
+ *
+ * TMAP 이 준 단계를 그대로 한 줄씩 보여주면 너무 잘게 끊긴다.
+ * 실제 응답(수원시청→아주대 3.3km, 2026-08-17 확인)은 40단계였고 이랬다.
+ *
+ *     15m  횡단보도 후 보행자도로를 따라 15m 이동
+ *    119m  직진 후 권광로를 따라 119m 이동
+ *     10m  횡단보도 후 보행자도로를 따라 10m 이동
+ *    261m  직진 후 권광로를 따라 261m 이동
+ *
+ * 세 가지가 겹쳐 있다.
+ *   · 횡단보도가 매번 제 줄을 차지한다(40 중 18개). 늘 「횡단보도 10m」+「직진 261m」
+ *     쌍으로 오므로, 한 번에 알아야 할 것이 항상 두 줄로 갈라진다.
+ *   · 4m·5m·8m 짜리 단계가 한 줄씩 있다 — 세 걸음이다.
+ *   · TMAP 이 같은 안내문을 연달아 준다. 7·8번이 둘 다 「…좌회전 후 효원로를 따라
+ *     14m 이동」인데 실제 거리는 14m 와 149m 다. 같은 문장이 두 줄 뜨면 어르신은
+ *     두 번 꺾으라는 말로 읽는다.
+ *
+ * 그래서 **꺾는 곳에서만 새 안내를 시작하고** 사이의 직진·횡단보도는 그 안으로 넣는다.
+ * 회전과 계단·육교·지하보도는 절대 넣지 않는다 — 어르신께 가장 중요한 것이라
+ * 사라지면 안 된다. 한 묶음이 길어지면(GROUP_MAX_M) 거기서 끊는다. 지금 어디쯤인지
+ * 짚어주지 못할 만큼 길어지면 묶은 뜻이 없다.
+ *
+ * 위 40단계가 13단계가 된다.
+ */
+
+/** TMAP turnType — 꺾는 곳. 여기서 새 안내가 시작된다 */
+const TURN_ACTION: Record<number, string> = {
+  12: '좌회전',
+  13: '우회전',
+  14: '유턴',
+  16: '8시 방향 좌회전',
+  17: '10시 방향 좌회전',
+  18: '2시 방향 우회전',
+  19: '4시 방향 우회전',
+}
+
+/** 어르신께 가장 중요한 것들 — 흡수하지 않고 반드시 제 줄을 준다 */
+const FACILITY_ACTION: Record<number, string> = {
+  125: '육교를 지나',
+  126: '지하보도를 지나',
+  127: '계단을 지나',
+  128: '경사로를 지나',
+  129: '계단을 지나',
+}
+
+/** 211 직진 횡단보도 · 212 좌측 · 213 우측 */
+const CROSSWALK = new Set([211, 212, 213])
+
+/** 이만큼 걸으면 끊는다 — 더 길면 "지금 이 구간"을 짚어줄 수 없다 */
+const GROUP_MAX_M = 300
+/** 이보다 짧은 자투리는 제 줄을 갖지 않는다 */
+const GROUP_MIN_M = 50
+
+interface WalkGroup {
+  /** 이 묶음이 무엇을 하라는 것인지는 첫 단계가 정한다 */
+  head: WalkingStepDto
+  steps: WalkingStepDto[]
+}
+
+function groupMeters(g: WalkGroup): number {
+  return g.steps.reduce((sum, s) => sum + (s.distanceM ?? 0), 0)
+}
+
+function startsNewGroup(step: WalkingStepDto): boolean {
+  const turn = step.turnType ?? 0
+  return turn in TURN_ACTION || turn in FACILITY_ACTION
+}
+
+function groupWalkSteps(raw: WalkingStepDto[]): WalkGroup[] {
+  const groups: WalkGroup[] = []
+
+  for (const s of raw) {
+    const last = groups[groups.length - 1]
+    if (!last) {
+      groups.push({ head: s, steps: [s] })
+      continue
+    }
+    // 앞과 똑같은 안내문이면 TMAP 이 되풀이한 것이다 — 한 줄로 둔다
+    const repeated = s.instruction != null && s.instruction === last.head.instruction
+    if (!repeated && (startsNewGroup(s) || groupMeters(last) >= GROUP_MAX_M)) {
+      groups.push({ head: s, steps: [s] })
+    } else {
+      last.steps.push(s)
+    }
   }
+
+  /*
+   * 자투리를 앞 묶음에 붙인다. 붙일 때 **받는 쪽의 머리를 그대로 둔다** —
+   * 자투리에는 꺾는 말이 없으니 잃을 것이 없지만, 받는 쪽의 머리를 자투리 것으로
+   * 바꾸면 어디서 꺾어야 하는지가 사라진다.
+   */
+  const merged: WalkGroup[] = []
+  for (const g of groups) {
+    const prev = merged[merged.length - 1]
+    if (prev && !startsNewGroup(g.head) && groupMeters(g) < GROUP_MIN_M) {
+      prev.steps.push(...g.steps)
+      continue
+    }
+    merged.push(g)
+  }
+
+  // 첫 묶음이 자투리면 앞이 없으니 뒤에 붙인다. 머리는 뒤엣것을 쓴다.
+  const first = merged[0]
+  if (merged.length > 1 && first && !startsNewGroup(first.head) && groupMeters(first) < GROUP_MIN_M) {
+    merged[1].steps.unshift(...first.steps)
+    merged.shift()
+  }
+
+  return merged
+}
+
+/** 안내문에 들어 있는 길 이름 — 「효원로를 따라」의 효원로. 없으면 빈 문자열 */
+function roadName(g: WalkGroup): string {
+  const longestFirst = [...g.steps].sort((a, b) => (b.distanceM ?? 0) - (a.distanceM ?? 0))
+  for (const s of longestFirst) {
+    const m = s.instruction?.match(/([가-힣A-Za-z0-9]+(?:로|길))[을를] 따라/)
+    // 「보행자도로」는 길 이름이 아니다 — 어디를 걷는지 알려주지 못한다
+    if (m && m[1] !== '보행자도로' && m[1] !== '자전거도로') return m[1]
+  }
+  return ''
+}
+
+/**
+ * 「우리은행 수원시청역지점에서 좌회전」의 앞부분.
+ * 어르신은 길 이름보다 눈에 보이는 건물로 길을 찾으신다 — 있으면 살린다.
+ */
+function landmark(step: WalkingStepDto): string {
+  const m = step.instruction?.match(/^(.{2,20}?)에서 /)
+  return m ? m[1] : ''
+}
+
+/** 묶음 하나 → 안내 한 줄 */
+function walkGroupStep(g: WalkGroup): GuideStep | null {
+  const turn = g.head.turnType ?? 0
+  const action = FACILITY_ACTION[turn] ?? (TURN_ACTION[turn] ? `${TURN_ACTION[turn]} 후` : '')
+  const dist = distanceText(groupMeters(g))
+  const road = roadName(g)
+  const where = landmark(g.head)
+
+  // 보여줄 것이 아무것도 없으면 줄을 만들지 않는다
+  if (!dist && !action && !road && !where) return null
+
+  const via = road ? `${road}${road.endsWith('길') ? '을' : '를'} 따라` : ''
+  const cross = !action && CROSSWALK.has(turn) ? '횡단보도를 건너' : ''
+  const title = [where ? `${where}에서` : '', action, cross, via, dist ? `${dist} 걷기` : '걷기']
+    .filter(Boolean)
+    .join(' ')
+
+  // 몇 번을 건너는지는 남긴다. 머리가 이미 횡단보도인데 한 곳뿐이면 되풀이일 뿐이다.
+  const crossings = g.steps.filter((s) => CROSSWALK.has(s.turnType ?? 0)).length
+  const detail =
+    crossings >= 2 || (crossings === 1 && !CROSSWALK.has(turn))
+      ? `횡단보도 ${crossings}곳`
+      : undefined
+
+  return { kind: 'walk', title, detail }
+}
+
+/** 묶음의 좌표. 단계 경계에서 같은 점이 두 번 들어오므로 한 번만 둔다 */
+function groupPoints(g: WalkGroup): LatLng[] {
+  const out: LatLng[] = []
+  for (const s of g.steps) {
+    for (const p of toLatLng(s.points)) {
+      const last = out[out.length - 1]
+      if (last && last.latitude === p.latitude && last.longitude === p.longitude) continue
+      out.push(p)
+    }
+  }
+  return out
 }
 
 /** 대중교통 한 구간 → 안내 한두 줄 (타기 + 내리기) */
@@ -141,17 +301,17 @@ export function buildDirections(
   const walking = be.walkingRoute?.routes?.find((r) => r.routeId === routeId)
   if (walking) {
     /*
-     * 걷는 길은 **단계 하나가 곧 토막 하나**다.
-     * 전체를 한 줄로 그리면 "지금 이 구간"을 짚어줄 수가 없는데, 걷는 길은 마흔 단계가
-     * 넘어서 지금 어디를 걷고 있는지가 가장 알기 어렵다. TMAP 이 단계마다 좌표를 주므로
-     * 그대로 나눠 둔다.
+     * 걷는 길은 **묶음 하나가 곧 토막 하나**다.
+     * 전체를 한 줄로 그리면 "지금 이 구간"을 짚어줄 수가 없다. 그렇다고 TMAP 단계를
+     * 그대로 쓰면 12m 마다 토막이 바뀌어 깃발이 눈앞에서 옮겨다닌다.
+     * 안내를 묶은 그대로 토막도 묶는다 — 깃발이 「지금 걷는 한 구간의 끝」에 선다.
      */
     const steps: GuideStep[] = []
     const segments: RouteSegment[] = []
-    for (const raw of walking.steps ?? []) {
-      const step = walkStep(raw)
+    for (const group of groupWalkSteps(walking.steps ?? [])) {
+      const step = walkGroupStep(group)
       if (!step) continue
-      const points = toLatLng(raw.points)
+      const points = groupPoints(group)
       if (points.length >= 2) {
         step.segmentIndex = segments.length
         segments.push({ kind: 'walk', points })
