@@ -693,14 +693,17 @@ button { color: inherit; }
 /* ── 지도에서 고르기 ──────────────────────────────────────────────
    핀은 화면 한가운데 못 박혀 있고 지도가 움직인다. 손이 떨리셔도 어디를 잡아
    밀든 되므로, 작은 핀을 정확히 집어야 하는 방식보다 훨씬 쉽다. */
-.map-picker { position: absolute; inset: 0; z-index: 40; display: flex; flex-direction: column; background: var(--bg); animation: screenIn 0.18s ease both; }
+/* ⚠️ 배경은 **불투명**이어야 한다. --bg 라는 변수는 없어서(tokens.css) 그대로 투명이 됐고,
+   뒤의 대화 화면과 하단 탭이 그대로 비쳐 글자가 겹쳐 읽혔다(2026-08-17 실기기). */
+.map-picker { position: absolute; inset: 0; z-index: 40; display: flex; flex-direction: column; background: var(--phone-bg); animation: screenIn 0.18s ease both; }
 .map-picker-head { padding: 18px 20px 12px; }
 .map-picker-head h2 { margin: 0; font-size: 25px; font-weight: 920; letter-spacing: -0.03em; color: var(--ink); }
 .map-picker-head p { margin: 6px 0 0; font-size: 18px; font-weight: 720; color: var(--ink-2); }
 .map-picker-stage { position: relative; flex: 1; min-height: 0; margin: 0 14px; border-radius: 18px; overflow: hidden; border: 2px solid rgba(21, 33, 59, 0.1); }
 .map-picker-map { width: 100%; height: 100%; }
 /* 핀 끝(아래 뾰족한 곳)이 한가운데에 오도록 위로 올려 앉힌다 — 핀 몸통이 아니라 끝이 가리키는 자리다 */
-.map-picker-pin { position: absolute; left: 50%; top: 50%; width: 32px; height: 44px; transform: translate(-50%, -100%); pointer-events: none; filter: drop-shadow(0 6px 10px rgba(21, 33, 59, 0.35)); }
+/* z-index 를 꼭 준다 — 카카오 지도가 안에 제 겹을 여러 장 쌓기 때문에, 없으면 핀이 지도 밑에 깔린다 */
+.map-picker-pin { position: absolute; left: 50%; top: 50%; z-index: 20; width: 32px; height: 44px; transform: translate(-50%, -100%); pointer-events: none; filter: drop-shadow(0 6px 10px rgba(21, 33, 59, 0.35)); }
 .map-picker-pin svg { width: 100%; height: 100%; }
 .map-picker-off { display: grid; place-items: center; padding: 24px; text-align: center; background: rgba(21, 33, 59, 0.04); }
 .map-picker-off p { margin: 0; font-size: 19px; font-weight: 760; line-height: 1.55; color: var(--ink-2); word-break: keep-all; }
