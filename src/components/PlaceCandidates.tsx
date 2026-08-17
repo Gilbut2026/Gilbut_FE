@@ -35,6 +35,7 @@ export function PlaceCandidates({
   ranked,
   onPick,
   onRedo,
+  onMap,
   disabled,
   title = '어디로 모실까요?',
   hint = '가시려는 곳을 골라주세요.',
@@ -43,6 +44,13 @@ export function PlaceCandidates({
   onPick: (place: PlaceItemResponse) => void
   /** "찾는 곳이 없어요" — 다시 묻는다 */
   onRedo: () => void
+  /**
+   * 지도에서 짚기. 넘기지 않으면 이 길은 안 보인다.
+   *
+   * 이름이 아예 없는 곳이 있다 — 친척 집, 골목 안 어디. 그런 데는 몇 번을 다시 말해도
+   * 검색에 안 나온다. 다시 말하기만 있으면 거기서 막힌다.
+   */
+  onMap?: () => void
   disabled?: boolean
   /*
    * 이 카드는 목적지와 출발지에 **둘 다** 쓰인다.
@@ -117,6 +125,11 @@ export function PlaceCandidates({
         <button className="full" onClick={onRedo}>
           찾는 곳이 없어요 · 다시 말하기
         </button>
+        {onMap && (
+          <button className="full" onClick={onMap}>
+            🗺️ 지도에서 고르기
+          </button>
+        )}
       </div>
       {/* 펼쳤을 때 여기까지 따라간다 */}
       <div ref={endRef} />

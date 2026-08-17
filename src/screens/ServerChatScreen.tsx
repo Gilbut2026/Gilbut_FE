@@ -106,8 +106,8 @@ export function ServerChatScreen({
    * 다른 데를 짚으셨다면 그건 사실이 아니다. 우리가 아는 주소를 쓴다.
    */
   const originNameRef = useRef<string | null>(null)
-  // 「지도에서 고르기」 시트가 열려 있는가
-  const [mapPicker, setMapPicker] = useState(false)
+  // 「지도에서 고르기」를 무엇을 고르려고 열었는가. 닫혀 있으면 null
+  const [mapPicker, setMapPicker] = useState<'origin' | 'destination' | null>(null)
   // 발화에 실어 보낼 현재 좌표 — "내 근처 병원" 같은 기준 위치 검색에 쓰인다(있으면 보내고 없으면 생략)
   const coordsRef = useRef<{ latitude: number; longitude: number } | null>(null)
   /*
@@ -262,7 +262,7 @@ export function ServerChatScreen({
         오타 하나에 엉뚱한 데가 나온다. 지도는 눈으로 보고 짚는 것이라 훨씬 쉽다.
         그래서 직접 입력 앞에 둔다.
       */}
-      <button className="chat-reply" onClick={() => setMapPicker(true)}>
+      <button className="chat-reply" onClick={() => setMapPicker('origin')}>
         🗺️ 지도에서 고르기
       </button>
       <button
@@ -400,6 +400,8 @@ export function ServerChatScreen({
          * 출발지는 되돌리지 않는다. 서버는 이미 출발지를 묻는 단계에 있어서 다시
          * 물어보기만 하면 되고, 세션을 되돌리면 **애써 확정한 목적지까지 날아간다.**
          */
+        /* 이름으로 안 나오는 곳은 몇 번을 다시 말해도 안 나온다 — 지도로 빠져나갈 길을 둔다 */
+        onMap={() => setMapPicker(isOrigin ? 'origin' : 'destination')}
         onRedo={
           isOrigin
             ? () => {
@@ -543,10 +545,39 @@ export function ServerChatScreen({
    * 좌표뿐이다. 화면에 보일 이름만 우리가 따로 들고 간다.
    */
   function pickFromMap(place: { coords: LatLng; address: string | null }) {
-    setMapPicker(false)
-    const name = place.address ?? '지도에서 고른 곳'
-    originNameRef.current = name
-    submitOrigin(`${name}에서 출발할게요`, {
+    /*
+     * 주소를 못 알아낸 자리는 받지 않는다.
+     *
+     * 그 이름은 결과 화면과 길 안내에 **글자로** 계속 보인다. 「지도에서 고른 곳 가는 길」이라고
+     * 적혀 있으면 맞게 골랐는지 확인할 방법이 없고, 지난 기록에서 다시 찾을 수도 없다.
+     * 사람이 오가는 자리면 도로명 주소가 거의 다 있다 — 없으면 조금 옮기면 된다.
+     */
+    if (!place.address) {
+      onToast('이 자리는 주소를 찾지 못했어요. 조금 옮겨서 다시 해주세요')
+      return
+    }
+    const forWhat = mapPicker
+    setMapPicker(null)
+
+    if (forWhat === 'destination') {
+      confirmDestination({
+        /*
+         * 지도에서 짚은 점에는 TMAP placeId 가 없다. BE 는 @NotBlank 라 빈 값을 받지 않는데,
+         * 이 값은 대화 세션에 적히기만 하고 어디서도 다시 조회되지 않는다(ChatSession —
+         * 저장하고 응답에 돌려줄 뿐이다). 그래서 어디서 온 것인지 알아볼 수 있는 형태로 만든다.
+         * 진짜 장소 ID 인 척하는 문자열을 지어내지는 않는다.
+         */
+        placeId: `map:${place.coords.latitude.toFixed(6)},${place.coords.longitude.toFixed(6)}`,
+        name: place.address,
+        address: place.address,
+        latitude: place.coords.latitude,
+        longitude: place.coords.longitude,
+      })
+      return
+    }
+
+    originNameRef.current = place.address
+    submitOrigin(`${place.address}에서 출발할게요`, {
       originType: 'CURRENT_LOCATION',
       latitude: place.coords.latitude,
       longitude: place.coords.longitude,
@@ -795,10 +826,17 @@ export function ServerChatScreen({
         onInputModeChange={(m) => (inputModeRef.current = m)}
       />
       <MapPicker
-        open={mapPicker}
+        open={mapPicker !== null}
         center={coordsRef.current}
+        title={mapPicker === 'destination' ? '지도에서 갈 곳 고르기' : '지도에서 출발지 고르기'}
+        hint={
+          mapPicker === 'destination'
+            ? '지도를 움직여 가시려는 곳에 맞춰주세요'
+            : '지도를 움직여 출발할 곳에 맞춰주세요'
+        }
+        confirmLabel={mapPicker === 'destination' ? '여기로 갈게요' : '여기서 출발할게요'}
         onPick={pickFromMap}
-        onClose={() => setMapPicker(false)}
+        onClose={() => setMapPicker(null)}
       />
       <DepartureSheet
         open={timeSheet}
