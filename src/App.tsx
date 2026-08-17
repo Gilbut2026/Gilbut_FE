@@ -221,18 +221,25 @@ export default function App() {
       if (next) setScreen(next)
       setBooting(false)
     }
+    /*
+     * 보고 있던 화면은 **서버에 묻기 전에** 먼저 읽어둔다.
+     *
+     * 가다 만 길이 먼저다 — 값까지 함께 되살아나야 화면이 제대로 그려진다.
+     * 그것이 없으면 「내 정보」처럼 이름만으로 되살아나는 화면을 본다.
+     * (resumeJourney 는 화면과 상관없이 값을 되돌려 놓으므로 늘 먼저 부른다)
+     *
+     * 예전에는 getMobilityProfile() 이 성공한 가지에서만 되살렸다. 그래서 서버가
+     * 잠깐 느리거나 재배포 중이면 — 오늘 백엔드 배포가 그랬다 — 되살릴 것이 멀쩡히
+     * 있는데도 홈으로 보냈다. **어디에 있었는지는 서버와 아무 상관이 없다.**
+     */
+    const back = resumeJourney() ?? loadScreen()
     getMobilityProfile()
-      /*
-       * 보고 있던 화면으로 되돌린다.
-       *
-       * 가다 만 길이 먼저다 — 값까지 함께 되살아나야 화면이 제대로 그려진다.
-       * 그것이 없으면 「내 정보」처럼 이름만으로 되살아나는 화면을 본다.
-       * (resumeJourney 는 화면과 상관없이 값을 되돌려 놓으므로 늘 먼저 부른다)
-       */
-      .then(() => settle(resumeJourney() ?? loadScreen() ?? 'home'))
+      .then(() => settle(back ?? 'home'))
       .catch((e) => {
         if (e instanceof ApiError && e.status === 401) return settle(null)
-        settle(e instanceof ApiError && e.status === 404 ? 'onboarding' : 'home')
+        // 404 = 아직 온보딩을 안 했다. 이것만은 되살리기보다 앞선다.
+        if (e instanceof ApiError && e.status === 404) return settle('onboarding')
+        settle(back ?? 'home')
       })
     return () => {
       alive = false
