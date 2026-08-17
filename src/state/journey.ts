@@ -11,9 +11,27 @@
  *   · 반대로 대화 중간은 되살리지 않는다. 대화 상태는 서버가 들고 있어서,
  *     화면만 되살리면 서버와 어긋나 오히려 꼬인다(그때는 서버가 409 로 되돌린다)
  *
- * sessionStorage 를 쓰는 이유 — 탭이 다시 떠도 살아남지만, 탭을 닫으면 사라진다.
- * localStorage 였다면 어제 가다 만 길이 오늘 앱을 열 때 튀어나온다.
+ * **왜 sessionStorage 가 아니라 localStorage 인가.**
+ *
+ * 처음에는 sessionStorage 를 썼다. 탭이 다시 떠도 살아남고 탭을 닫으면 사라지니
+ * 딱 맞아 보였다. 그런데 홈 화면에 둔 앱(TWA)은 **닫았다 열면 세션이 새로 시작한다.**
+ * 브라우저에서 새로고침할 때와 달리 sessionStorage 가 통째로 비어서, 정작 앱에서는
+ * 되살아나는 일이 한 번도 없었다(2026-08-17). 우리가 앱으로 시연할 것을 생각하면
+ * 가장 중요한 경우에서만 안 되고 있던 셈이다.
+ *
+ * localStorage 로 옮기되 **시간을 함께 적어두고 오래된 것은 버린다.** 그냥 옮기기만
+ * 하면 어제 가다 만 길이 오늘 앱을 열 때 튀어나온다 — 그건 되살리는 것이 아니라
+ * 남의 일정을 들이미는 것이다.
  */
+
+/**
+ * 이 시간이 지난 것은 되살리지 않는다.
+ *
+ * 세 시간 — 「잠깐 다른 앱 보다가 돌아왔다」와 「어제 일」을 가르는 선이다.
+ * 길게 잡으면 지난 일정이 튀어나오고, 짧게 잡으면 정작 필요할 때 사라진다.
+ * 출발 시각이 이미 지난 경우는 App 이 따로 걷어낸다(isFuture).
+ */
+const MAX_AGE_MS = 3 * 60 * 60 * 1000
 import type { LatLng, RouteOption, DrtGuideResponse, DrtReasonCode } from '../types/dto'
 import type { ChatOutcome, Screen } from '../types/nav'
 
@@ -40,21 +58,23 @@ export interface Journey {
 export function saveJourney(j: Journey): void {
   try {
     if (!RESUMABLE.includes(j.screen) || !j.destination) {
-      sessionStorage.removeItem(KEY)
+      localStorage.removeItem(KEY)
       return
     }
-    sessionStorage.setItem(KEY, JSON.stringify(j))
+    localStorage.setItem(KEY, JSON.stringify({ ...j, savedAt: Date.now() }))
   } catch {
     // 저장이 안 되는 환경(사생활 보호 모드 등)이라도 앱은 그대로 굴러가야 한다
   }
 }
 
-/** 저장해둔 이동. 없거나 깨졌으면 null */
+/** 저장해둔 이동. 없거나 깨졌거나 오래됐으면 null */
 export function loadJourney(): Journey | null {
   try {
-    const raw = sessionStorage.getItem(KEY)
+    const raw = localStorage.getItem(KEY)
     if (!raw) return null
-    const j = JSON.parse(raw) as Journey
+    const j = JSON.parse(raw) as Journey & { savedAt?: number }
+    // 오래된 것은 되살리지 않는다 — 어제 가다 만 길이 오늘 튀어나오면 안 된다
+    if (!j.savedAt || Date.now() - j.savedAt > MAX_AGE_MS) return null
     // 저장 형식이 바뀐 뒤 남은 옛 값에 걸려 화면이 죽지 않게 최소한만 확인한다
     if (!j || !RESUMABLE.includes(j.screen) || !j.destination) return null
     /*
@@ -71,7 +91,7 @@ export function loadJourney(): Journey | null {
 
 export function clearJourney(): void {
   try {
-    sessionStorage.removeItem(KEY)
+    localStorage.removeItem(KEY)
   } catch {
     /* 무시 */
   }
@@ -99,18 +119,25 @@ const SCREEN_KEY = 'gilbet.screen'
 /** 지금 화면이 그런 화면이면 기억하고, 아니면 지운다 */
 export function saveScreen(screen: Screen): void {
   try {
-    if (STANDALONE.includes(screen)) sessionStorage.setItem(SCREEN_KEY, screen)
-    else sessionStorage.removeItem(SCREEN_KEY)
+    // 여정과 같은 이유로 localStorage 다 — 앱을 닫았다 열면 sessionStorage 는 비어 있다
+    if (STANDALONE.includes(screen)) {
+      localStorage.setItem(SCREEN_KEY, JSON.stringify({ screen, savedAt: Date.now() }))
+    } else {
+      localStorage.removeItem(SCREEN_KEY)
+    }
   } catch {
     /* 저장이 안 되는 환경이라도 앱은 그대로 굴러가야 한다 */
   }
 }
 
-/** 기억해둔 화면. 없거나 이제 되살릴 수 없는 것이면 null */
+/** 기억해둔 화면. 없거나 오래됐거나 이제 되살릴 수 없는 것이면 null */
 export function loadScreen(): Screen | null {
   try {
-    const s = sessionStorage.getItem(SCREEN_KEY) as Screen | null
-    return s && STANDALONE.includes(s) ? s : null
+    const raw = localStorage.getItem(SCREEN_KEY)
+    if (!raw) return null
+    const { screen, savedAt } = JSON.parse(raw) as { screen?: Screen; savedAt?: number }
+    if (!screen || !savedAt || Date.now() - savedAt > MAX_AGE_MS) return null
+    return STANDALONE.includes(screen) ? screen : null
   } catch {
     return null
   }
