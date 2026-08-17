@@ -220,6 +220,19 @@ function RouteView({
         </div>
 
         {/*
+          버스·지하철이 아예 없을 때, 왜 없는지 적는다.
+
+          짧은 길에서도 정상 응답이 오게 된 뒤(2026-08-17 BE)로 도보 카드만 뜨는 경우가
+          생겼다. 「가까워서 원래 없는 것」과 「지금 못 불러온 것」이 화면에서 똑같이
+          보이면, 시연 중 조회 한도가 차서 버스가 사라져도 아무도 알아채지 못한다.
+        */}
+        {result.transitNotice && (
+          <div className={`result-note${result.transitNotice.tone === 'warn' ? ' warn' : ''}`}>
+            {result.transitNotice.text}
+          </div>
+        )}
+
+        {/*
           똑버스·콜택시 안내만 남았다는 것은 걷거나 타고 갈 길을 하나도 찾지 못했다는 뜻이다.
           카드 한 장만 덩그러니 두면 "왜 이것뿐이지" 하고 끝난다 — 이유와 할 일을 적어준다.
           BE·AI 는 왜 걸렀는지 알고 있다(filteredResults). 우리가 안 쓸 이유가 없다.

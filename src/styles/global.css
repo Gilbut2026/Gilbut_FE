@@ -691,6 +691,8 @@ button { color: inherit; }
 .empty-note p { margin: 0 0 16px; color: var(--ink-2); font-size: 17px; font-weight: 700; word-break: keep-all; }
 .result-note { margin: 10px 0 0; padding: 13px 15px; border-radius: 15px; background: rgba(255, 244, 214, 0.75); border: 1px solid rgba(214, 158, 46, 0.28); color: var(--ink-2); font-size: 16.5px; font-weight: 720; line-height: 1.5; word-break: keep-all; }
 .result-note b { font-weight: 900; }
+/* 「지금 못 불러왔다」는 「원래 없다」와 다른 일이다 — 색으로도 갈라놓는다 */
+.result-note.warn { background: rgba(201, 54, 62, 0.07); border-color: rgba(201, 54, 62, 0.3); }
 .result-note span { display: block; margin-top: 9px; padding-top: 9px; border-top: 1px solid rgba(214, 158, 46, 0.25); font-weight: 700; }
 
 /* ── 「홈 화면에 추가」 안내 ────────────────────────────────────────

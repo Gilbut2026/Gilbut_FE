@@ -479,6 +479,11 @@ export interface RouteResult {
    * "길을 못 찾았어요"로 끝내면 사용자가 다음에 할 일을 알 수 없다.
    */
   filteredReasons?: RouteFilterCode[]
+  /**
+   * 버스·지하철이 왜 없는지 한 줄. 대중교통 후보가 정상으로 나왔으면 null.
+   * 「가까워서 없는 것」과 「지금 못 불러온 것」은 사용자가 할 일이 다르다.
+   */
+  transitNotice?: { tone: 'info' | 'warn'; text: string } | null
 }
 
 /** 지난 길찾기 기록 한 건 — 화면용(프론트가 만든 형태). BE 응답은 아래 RouteHistoryResponse. */
@@ -773,6 +778,31 @@ export interface RouteRecommendationResult {
   drtGuide: DrtGuideResponse | null
   walkingRoute: { routes: WalkingRouteItemDto[] | null } | null
   transitRoutes: { routes: TransitRouteItemDto[] | null } | null
+  /**
+   * 대중교통을 못 불러왔을 때 **왜 못 불러왔는지**. 잘 불러왔으면 null.
+   *
+   * 2026-08-17 BE 가 짧은 길에서도 200 을 주기 시작하면서 실제로 오는 값이 됐다.
+   * 그전에는 대중교통이 실패하면 500 이라 화면이 오류로 끝났다. 이제는 걸어가는 길만
+   * 담겨 정상 응답으로 오므로, 이 값을 안 보면 버스가 왜 없는지 아무도 설명하지 못한다.
+   */
+  transitRouteFailure: TransitRouteFailure | null
+}
+
+/** 대중교통 조회 실패 사유 (BE TransitRouteFailureCode) */
+export type TransitRouteFailureCode =
+  /** 탈 수 있는 노선이 없다 — 아주 가까운 거리면 정상이다 */
+  | 'NO_ROUTE'
+  /** TMAP 하루 조회 한도 초과 */
+  | 'QUOTA_EXCEEDED'
+  /** API 키·권한 문제 */
+  | 'KEY_OR_PERMISSION'
+  /** 그 밖의 조회 실패 */
+  | 'PROVIDER_ERROR'
+
+export interface TransitRouteFailure {
+  code: TransitRouteFailureCode | null
+  /** BE 가 붙인 설명. 개발자용 문구라 화면에는 우리 말로 바꿔 쓴다 */
+  message: string | null
 }
 
 /* ── 화면이 쓰는 길 안내 ─────────────────────────────── */

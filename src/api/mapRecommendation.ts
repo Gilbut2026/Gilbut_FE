@@ -338,6 +338,43 @@ function filterReasons(filtered: FilteredRouteDto[] | null): RouteFilterCode[] {
   return [...seen]
 }
 
+/**
+ * 버스·지하철이 왜 없는지 한 줄로.
+ *
+ * 2026-08-17 BE 가 짧은 길에서도 200 을 주기 시작했다. 그전에는 대중교통 조회가
+ * 실패하면 500 이라 오류 화면으로 끝났는데, 이제는 **걸어가는 길만 담긴 정상 응답**이
+ * 온다. 그래서 팔달문 → 지동시장처럼 가까운 곳을 물으면 도보 카드만 덩그러니 뜬다.
+ *
+ * 이때 이유를 안 적으면 두 가지가 똑같이 보인다.
+ *   · 가까워서 원래 버스가 필요 없는 것        → 그냥 걸어가시면 된다
+ *   · TMAP 한도가 차서 지금 못 불러온 것        → 잠시 뒤 다시 하면 나온다
+ * 앞의 것은 정상이고 뒤의 것은 고장이다. 사용자가 할 일이 다르므로 나눠서 말한다.
+ *
+ * 대중교통 후보가 실제로 왔으면 아무 말도 하지 않는다 — 잘 된 일에 설명을 붙이면
+ * 그것대로 불안하다.
+ */
+function transitNotice(
+  be: RouteRecommendationResult,
+  options: RouteOption[],
+): { tone: 'info' | 'warn'; text: string } | null {
+  const failure = be.transitRouteFailure
+  if (!failure) return null
+  if ((be.transitRoutes?.routes?.length ?? 0) > 0) return null
+  // 걸어갈 길조차 없으면 화면이 따로 「갈 수 있는 길 없음」을 안내한다 — 두 번 말하지 않는다
+  if (!options.some((o) => o.guide === 'navigate')) return null
+
+  if (failure.code === 'NO_ROUTE') {
+    return {
+      tone: 'info',
+      text: '이 거리는 버스나 지하철 노선이 없어요. 걸어가시는 길로 안내해 드려요.',
+    }
+  }
+  return {
+    tone: 'warn',
+    text: '지금 버스·지하철 정보를 불러오지 못했어요. 걸어가시는 길만 보여드려요. 잠시 뒤 다시 해보시면 나올 수 있어요.',
+  }
+}
+
 export function mapRecommendationToRouteResult(
   be: RouteRecommendationResult,
   ctx: RouteDisplayContext,
@@ -425,6 +462,8 @@ export function mapRecommendationToRouteResult(
     options,
     // 왜 길이 줄었는지 설명할 수 있게 제외 사유를 함께 넘긴다
     filteredReasons: filterReasons(be.filteredResults),
+    // 버스·지하철이 왜 없는지 (짧은 길이라 없는 것인지, 지금 못 불러온 것인지)
+    transitNotice: transitNotice(be, options),
     recommendedKey,
     // 계단 있는 길 ↔ 없는 길. 두 후보가 다 있을 때만 물어본다(위 주석 6).
     stairComparison: buildStairComparison(be, ranked),
