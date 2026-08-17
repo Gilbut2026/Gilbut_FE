@@ -166,14 +166,21 @@ function RouteView({
         )}
 
         <article className="route-card glass">
-          <h3>{selected.title}</h3>
+          {/*
+            도착 시각은 길 이름 옆에 둔다.
+            「예상 시간」 칸 안에 넣었더니 25분과 도착 시각이 한 덩어리로 붙어서,
+            셋으로 나란한 칸 중 하나만 두 줄이 되어 균형이 무너졌다.
+            약속 시간과 견주는 정보라 카드를 열자마자 보이는 자리가 낫다.
+          */}
+          <div className="route-card-head">
+            <h3>{selected.title}</h3>
+            {arriveAt && <em className="route-arrive">{arriveAt} 도착</em>}
+          </div>
           <p className="route-sub">{selected.sub}</p>
           <div className="metrics">
             <div className="metric">
               <span>예상 시간</span>
               <strong>{selected.time}</strong>
-              {/* 약속 시간과 견주려면 「몇 시 도착」이 있어야 한다. 암산은 우리가 한다 */}
-              {arriveAt && <em className="metric-when">{arriveAt} 도착</em>}
             </div>
             <div className="metric">
               <span>걷는 시간</span>

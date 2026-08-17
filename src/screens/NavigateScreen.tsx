@@ -119,22 +119,23 @@ export function NavigateScreen({
   /*
    * 지금 단계에서 **가야 할 곳** — 지도에 깃발 하나로 찍는다.
    *
-   * 옮기는 것(panTo)과는 다른 일이다. 걷는 길은 눈앞이 이어지니 지도를 옮기지 않지만,
-   * 어디까지 가면 되는지는 걷는 길에서도 알아야 한다. 지금까지는 「120m 걷기 ·
+   * **걷는 단계에만** 찍는다.
+   *
+   * 걷는 길에는 「어디까지」를 알려주는 것이 아무것도 없었다. 「120m 걷기 ·
    * 광교중앙역까지」가 글자로만 있고 지도에는 그 끝이 안 찍혀 있었다.
    *
-   *   걷기   그 구간 끝점
-   *   타기   그 구간 첫 좌표 = 타는 곳
-   *   내리기 그 구간 끝 좌표 = 내리는 곳
+   * 버스·지하철은 이미 두 가지가 그 몫을 한다 — 정류장 흰 동그라미가 타고 내리는
+   * 양 끝을 크게 그리고(RouteMap.stopHtml), 화면도 그리로 옮겨준다(panTo).
+   * 거기에 깃발까지 얹으면 같은 말을 세 번 하는 셈이라 지도만 시끄러워진다.
    *
    * 마지막 단계에는 찍지 않는다. 그 자리는 곧 경로의 끝이라 도착 핀이 이미 서 있고
    * (RouteMap 이 path 양 끝에 찍는다), 겹쳐 놓으면 표시가 잘못된 것처럼 보인다.
    */
   const stepTarget = useMemo(() => {
-    if (!step || step.segmentIndex == null || isLast) return null
+    if (!step || step.kind !== 'walk' || step.segmentIndex == null || isLast) return null
     const seg = segments[step.segmentIndex]
     if (!seg || seg.points.length < 2) return null
-    return step.kind === 'ride' ? seg.points[0] : seg.points[seg.points.length - 1]
+    return seg.points[seg.points.length - 1]
   }, [step, isLast, segments])
 
 

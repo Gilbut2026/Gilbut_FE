@@ -263,26 +263,34 @@ button { color: inherit; }
 /* ---------- 결과 (가는 길) ---------- */
 .result-intro { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; margin: 2px 1px 13px; }
 .result-intro h2 { margin: 0; font-size: 25px; line-height: 1.25; font-weight: 920; letter-spacing: -0.04em; }
-.result-intro p { margin: 5px 0 0; font-size: 18px; color: var(--ink-3); font-weight: 650; }
+.result-intro p { margin: 5px 0 0; font-size: 19px; color: var(--ink-3); font-weight: 650; }
 .today-best { display: flex; align-items: center; gap: 8px; font-size: 22px; font-weight: 900; color: var(--green); margin: 2px 2px 13px; }
 .today-best svg { width: 27px; height: 27px; flex: 0 0 auto; }
 .today-alt { font-size: 19px; font-weight: 900; color: var(--ink-2); margin: 2px 2px 13px; }
 .route-card { border-radius: 25px; padding: 18px; margin-bottom: 11px; position: relative; overflow: hidden; }
 .route-card::after { content: ""; position: absolute; width: 130px; height: 130px; border-radius: 50%; right: -62px; top: -65px; background: linear-gradient(145deg, rgba(103, 85, 245, 0.19), rgba(52, 136, 244, 0.08)); pointer-events: none; }
-.route-card h3 { margin: 0 0 2px; font-size: 25px; line-height: 1.25; letter-spacing: -0.04em; font-weight: 920; position: relative; z-index: 1; }
-.route-card .route-sub { margin: 0; color: var(--ink-3); font-size: 16px; font-weight: 680; position: relative; z-index: 1; }
+/* 길 이름과 도착 시각을 한 줄에. 좁으면 시각이 아래로 내려간다 —
+   이름이 줄어들어 「가장 편…」이 되는 것보다 낫다 */
+.route-card-head { display: flex; align-items: center; flex-wrap: wrap; gap: 4px 9px; margin-bottom: 2px; position: relative; z-index: 1; }
+.route-card h3 { margin: 0; font-size: 25px; line-height: 1.25; letter-spacing: -0.04em; font-weight: 920; }
+/* 도착 시각 — 추정치라 길 이름보다 작지만, 약속 시간과 견주는 값이라 눈에 띄어야 한다 */
+.route-arrive { font-style: normal; font-size: 17px; font-weight: 880; padding: 4px 11px; border-radius: 999px; background: rgba(103, 85, 245, 0.14); color: var(--violet-deep); white-space: nowrap; }
+.route-card .route-sub { margin: 0; color: var(--ink-3); font-size: 18px; font-weight: 680; position: relative; z-index: 1; }
 .metrics { display: grid; grid-template-columns: repeat(3, 1fr); gap: 7px; margin-top: 15px; }
-.metric { padding: 10px 7px; border-radius: 15px; text-align: center; background: rgba(245, 248, 255, 0.74); border: 1px solid rgba(148, 163, 184, 0.12); }
-.metric span { display: block; font-size: 16px; color: var(--ink-3); font-weight: 800; }
-.metric strong { display: block; margin-top: 1px; font-size: 18.5px; font-weight: 920; }
+.metric { padding: 11px 6px; border-radius: 15px; text-align: center; background: rgba(245, 248, 255, 0.74); border: 1px solid rgba(148, 163, 184, 0.12); }
+.metric span { display: block; font-size: 17.5px; color: var(--ink-3); font-weight: 800; }
+/* 「약 25분」 — 앱에서 주요 값은 20~24px 다(.nav-step b 24 · .route-pick .big 24).
+   같은 숫자가 길 고르기 시트에서 24px 인데 정작 먼저 보는 이 카드가 더 작았다.
+   시간 문구는 늘 「약 N분」이라(mapRecommendation) 가장 긴 「약 120분」도 칸에 들어온다. */
+.metric strong { display: block; margin-top: 2px; font-size: 22px; font-weight: 920; }
 .facility-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-.facility { display: flex; align-items: flex-start; gap: 8px; min-height: 55px; padding: 10px 11px; border-radius: 15px; background: rgba(255, 255, 255, 0.66); border: 1px solid rgba(148, 163, 184, 0.16); }
-.status-icon { width: 25px; height: 25px; border-radius: 9px; display: grid; place-items: center; flex: 0 0 auto; font-size: 15px; font-weight: 900; }
+.facility { display: flex; align-items: flex-start; gap: 8px; min-height: 58px; padding: 11px 11px; border-radius: 15px; background: rgba(255, 255, 255, 0.66); border: 1px solid rgba(148, 163, 184, 0.16); }
+.status-icon { width: 26px; height: 26px; border-radius: 9px; display: grid; place-items: center; flex: 0 0 auto; font-size: 16px; font-weight: 900; }
 .status-icon.ok { background: var(--green-soft); color: var(--green); }
 .status-icon.warn { background: var(--amber-soft); color: var(--amber); }
 .status-icon.info { background: var(--blue-soft); color: #246DBD; }
-.facility b { display: block; font-size: 18px; line-height: 1.2; font-weight: 900; }
-.facility span { display: block; margin-top: 2px; font-size: 16px; line-height: 1.2; color: var(--ink-3); font-weight: 700; }
+.facility b { display: block; font-size: 19px; line-height: 1.2; font-weight: 900; }
+.facility span { display: block; margin-top: 3px; font-size: 17.5px; line-height: 1.25; color: var(--ink-3); font-weight: 700; }
 .result-actions { display: flex; flex-direction: column; gap: 9px; margin-top: 13px; }
 .mini-map { position: relative; height: 120px; border-radius: 16px; overflow: hidden; margin: 13px 0 2px; border: 1px solid rgba(148, 163, 184, 0.2); }
 .mini-map svg { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
@@ -608,9 +616,9 @@ button { color: inherit; }
 .route-goal .body { fill: var(--violet); }
 
 /* 토글 — 지도 바로 아래. 무엇이 켜졌는지 지도와 함께 보여야 한다 */
-/* 도착 예정 시각 — 소요시간 아래 한 줄. 추정치라 본 값보다 작고 흐리게 둔다 */
-.metric-when { display: block; margin-top: 3px; font-size: 15px; font-weight: 750; font-style: normal; color: var(--ink-3); }
-.route-pick .big .when { display: block; margin-top: 2px; font-size: 15px; font-weight: 750; font-style: normal; color: var(--ink-3); }
+/* 길 고르기 시트의 도착 시각 — 여기는 길들을 나란히 견주는 자리라 소요시간 바로 아래가 맞다.
+   (결과 카드 쪽은 길 이름 옆으로 옮겼다 — .route-arrive) */
+.route-pick .big .when { display: block; margin-top: 2px; font-size: 16px; font-weight: 780; font-style: normal; color: var(--ink-3); }
 
 .facility-toggles { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; margin-top: 9px; }
 .facility-toggle { display: inline-flex; align-items: center; gap: 7px; min-height: 44px; padding: 0 15px; border-radius: 999px; border: 2px solid rgba(21, 33, 59, 0.12); background: rgba(255, 255, 255, 0.9); color: var(--ink-3); font-family: inherit; font-size: 17px; font-weight: 850; cursor: pointer; }
