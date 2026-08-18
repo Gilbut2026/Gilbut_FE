@@ -82,9 +82,24 @@ async function tryStep(label: string, run: () => Promise<unknown>): Promise<stri
   }
 }
 
-/** 서버에 탈퇴가 아직 없다는 신호 */
+/**
+ * 서버에 탈퇴가 아직 없다는 신호.
+ *
+ * 404·405 는 그대로의 뜻이다. **403 도 여기 들어간다** — 이 백엔드에서는 없는 경로가
+ * 404 가 아니라 403 으로 온다.
+ *
+ * 스프링이 매핑 없는 요청을 `/error` 로 넘길 때 그 넘김(ERROR dispatch)에서 JWT 필터가
+ * 다시 돌지 않는다(OncePerRequestFilter 는 기본이 그렇다). 그래서 인증이 없는 요청으로
+ * 취급되고, `anyRequest().authenticated()` 에 걸려 403 이 나간다. 로그인한 사람이
+ * 불러도 마찬가지다 — 실제로 배포된 서버에서 permitAll 인 `/api/auth/…` 의 없는 경로도
+ * 403 을 준다(2026-08-19 확인).
+ *
+ * 이 앱에는 권한 등급이 없어서 403 이 「권한이 모자란다」는 뜻일 일이 없다. 그래서
+ * 403 을 「아직 없는 문」으로 읽어도 잃을 것이 없다.
+ * 이걸 빼먹어서 탈퇴가 「탈퇴하지 못했어요」로 끝났다(2026-08-19).
+ */
 function notImplemented(e: unknown): boolean {
-  return e instanceof ApiError && (e.status === 404 || e.status === 405)
+  return e instanceof ApiError && (e.status === 403 || e.status === 404 || e.status === 405)
 }
 
 /** 서버에 남은 내 자료를 하나씩 지운다 — 탈퇴 엔드포인트가 없을 때의 차선책 */
