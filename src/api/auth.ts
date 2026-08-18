@@ -51,6 +51,14 @@ export async function refresh(refreshToken: string): Promise<TokenResponse> {
   return tokens
 }
 
+/** 회원 탈퇴 — 서버에서 계정과 딸린 자료를 지운다. 토큰 정리는 호출한 쪽(state/account)이 한다.
+ *
+ *  ⚠️ 백엔드에 아직 이 엔드포인트가 없을 수 있다(2026-08-18 기준 미구현).
+ *     없으면 404/405 가 오고, state/account 가 그때 할 수 있는 만큼만 지우는 길로 간다. */
+export function deleteAccount(): Promise<void> {
+  return api.del<void>('/api/users/me')
+}
+
 /** 로그아웃 → 로컬 토큰 삭제 */
 export async function logout(): Promise<void> {
   if (!USE_MOCK()) await api.post<void>('/api/auth/logout')

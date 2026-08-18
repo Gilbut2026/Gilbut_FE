@@ -4,6 +4,7 @@ import { InstallSheet } from '../components/InstallSheet'
 import { isInstalled } from '../state/install'
 import { HomeAddressSheet } from '../components/HomeAddressSheet'
 import { getSettings, saveAccessibility } from '../api/user'
+import { withdraw } from '../state/account'
 import { FONT_SIZES, type Settings } from '../state/settings'
 import { useScrollMemory } from '../state/scrollMemory'
 import type {
@@ -75,6 +76,15 @@ export function SettingsScreen({
   const scrollRef = useScrollMemory('settings', data !== null)
   const [homeSheet, setHomeSheet] = useState(false)
   const [installSheet, setInstallSheet] = useState(false)
+  /*
+   * 탈퇴는 두 번 묻는다.
+   *   0 = 안 묻는 중 · 1 = "탈퇴하시겠어요?" · 2 = "정말로 탈퇴하시겠습니까?"
+   *
+   * 되돌릴 수 없는 일에 한 번만 묻는 것은 위험하다. 게다가 이 앱은 글자와 버튼이 크고
+   * 손이 떨리는 분들이 쓴다 — 잘못 눌러 계정이 사라지는 일은 없어야 한다.
+   */
+  const [withdrawStep, setWithdrawStep] = useState<0 | 1 | 2>(0)
+  const [withdrawing, setWithdrawing] = useState(false)
   // 한 번만 본다 — 설정 화면을 보는 중에 설치 여부가 바뀔 일은 없다
   const [installed] = useState(isInstalled)
 
@@ -93,6 +103,28 @@ export function SettingsScreen({
       fontSize: next.fontSize,
       voiceSpeed: next.voiceSpeed,
     }).catch(() => onToast('설정 저장에 실패했어요'))
+  }
+
+  /**
+   * 탈퇴한다.
+   *
+   * 끝나고 나서 화면을 통째로 다시 연다. 이 앱은 라우터 없이 App 의 useState 하나로
+   * 화면을 갈아끼우기 때문에, 지우기만 하고 화면을 그대로 두면 방금 지운 값들이
+   * 메모리에 남아 계속 보인다. 새로고침이 가장 확실하다.
+   */
+  async function runWithdraw() {
+    if (withdrawing) return
+    setWithdrawing(true)
+    try {
+      await withdraw()
+    } catch {
+      setWithdrawing(false)
+      setWithdrawStep(0)
+      onToast('탈퇴하지 못했어요. 잠시 뒤 다시 해주세요')
+      return
+    }
+    // BASE_URL 로 간다 — GitHub Pages 는 하위 경로에 얹혀 있어서 '/' 로 보내면 앱 밖으로 나간다
+    window.location.replace(import.meta.env.BASE_URL)
   }
 
   const tags = data ? profileTags(data.mobilityProfile) : []
@@ -264,6 +296,25 @@ export function SettingsScreen({
           화면 위에 띄우지 않고 여기 맨 아래에 둔다 — 어르신에게는 아무 뜻도 없는 값이라
           평소에는 안 보이는 편이 낫고, 우리는 필요할 때 찾아보면 된다.
         */}
+        {/*
+          탈퇴.
+
+          그만 쓰겠다는 사람이 자기 자료를 지울 방법은 있어야 한다 — 집 주소, 비상 연락처,
+          어디를 언제 다녔는지가 다 남아 있는 앱이다.
+          시연 영상을 「처음 앱을 켠 사람」에서 시작하게 해주는 것도 이 버튼이다.
+
+          맨 아래, 빌드 표시 바로 위에 둔다 — 평소에 마주칠 자리가 아니어야 한다.
+        */}
+        <div className="section-label">계정</div>
+        <button className="setting-link danger" onClick={() => setWithdrawStep(1)}>
+          <span className="icon">👋</span>
+          <span className="copy">
+            <b>탈퇴하기</b>
+            <span>계정과 저장된 내용을 모두 지워요</span>
+          </span>
+          <span className="chev">›</span>
+        </button>
+
         <p className="build-stamp">
           {__BUILD_TIME__} · {__BUILD_COMMIT__}
         </p>
@@ -281,6 +332,65 @@ export function SettingsScreen({
         onSaved={reloadSettings}
       />
 
+      {/*
+        탈퇴 확인 — 두 번 묻는다.
+
+        한 시트 안에서 문구만 바꾼다. 시트를 두 개 두면 첫 시트가 닫히고 두 번째가 올라오는
+        사이에 화면이 한 번 번쩍이고, 그 순간이 "내가 취소한 건가?"로 읽힌다.
+
+        두 번째 물음에서는 「탈퇴」를 오른쪽이 아니라 위에 두되, 기본 손이 가는 자리
+        (아래·큰 버튼)는 「아니요」로 남긴다.
+      */}
+      <div
+        className={`scrim${withdrawStep ? ' show' : ''}`}
+        onClick={() => !withdrawing && setWithdrawStep(0)}
+      />
+      <div
+        className={`sheet${withdrawStep ? ' show' : ''}`}
+        role="dialog"
+        aria-modal="true"
+        aria-label="탈퇴하기"
+      >
+        <div className="sheet-grip" />
+        {withdrawStep === 2 ? (
+          <>
+            <h3>정말로 탈퇴하시겠습니까?</h3>
+            <p>
+              한 번 지우면 되돌릴 수 없어요. 집 주소·즐겨찾기·비상 연락처·길찾기 기록이
+              모두 사라지고, 가입 화면으로 돌아갑니다.
+            </p>
+            <div className="sheet-actions">
+              <button className="btn danger" onClick={runWithdraw} disabled={withdrawing}>
+                {withdrawing ? '지우는 중…' : '네, 탈퇴합니다'}
+              </button>
+              <button
+                className="btn neutral"
+                onClick={() => setWithdrawStep(0)}
+                disabled={withdrawing}
+              >
+                아니요, 그만둘게요
+              </button>
+            </div>
+          </>
+        ) : (
+          <>
+            <h3>탈퇴하시겠어요?</h3>
+            <p>
+              계정을 지우면 아래 내용이 함께 사라집니다.
+              <br />
+              집 주소 · 즐겨찾기 · 비상 연락처 · 길찾기 기록 · 이동 설정 답변
+            </p>
+            <div className="sheet-actions">
+              <button className="btn danger" onClick={() => setWithdrawStep(2)}>
+                탈퇴할게요
+              </button>
+              <button className="btn neutral" onClick={() => setWithdrawStep(0)}>
+                아니요, 계속 쓸게요
+              </button>
+            </div>
+          </>
+        )}
+      </div>
     </section>
   )
 }

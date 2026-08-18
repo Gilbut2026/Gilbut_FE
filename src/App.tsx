@@ -18,6 +18,7 @@ import { NavigateScreen } from './screens/NavigateScreen'
 import { StairChoiceScreen } from './screens/StairChoiceScreen'
 import { useSettings, updateSettings } from './state/settings'
 import { clearJourney, loadJourney, loadScreen, saveJourney, saveScreen } from './state/journey'
+import { clearFreshStart, isFreshStart } from './state/account'
 import { HAS_MOCK, mockBadgeLabel, useMock } from './api/mode'
 import { kakaoLogin, KAKAO_CALLBACK_PATH } from './api/auth'
 import { getMobilityProfile } from './api/user'
@@ -233,8 +234,17 @@ export default function App() {
      * 있는데도 홈으로 보냈다. **어디에 있었는지는 서버와 아무 상관이 없다.**
      */
     const back = resumeJourney() ?? loadScreen()
+    /*
+     * 탈퇴하고 다시 로그인한 참이면 온보딩부터다.
+     *
+     * 서버에 탈퇴 엔드포인트가 아직 없어서, 그 경우 이동특성(온보딩 답)만은 지우지 못하고
+     * 남는다. 그것만 보고 판단하면 「이미 답한 사람」이 되어 홈으로 가버린다.
+     * 표시가 있으면 프로필이 있든 없든 온보딩으로 보낸다 — 7문항을 다시 답하면 그 답이
+     * 예전 것을 덮어쓰므로, 결과도 처음 가입한 것과 같아진다. (state/account)
+     */
+    const fresh = isFreshStart()
     getMobilityProfile()
-      .then(() => settle(back ?? 'home'))
+      .then(() => settle(fresh ? 'onboarding' : (back ?? 'home')))
       .catch((e) => {
         if (e instanceof ApiError && e.status === 401) return settle(null)
         // 404 = 아직 온보딩을 안 했다. 이것만은 되살리기보다 앞선다.
@@ -359,6 +369,8 @@ export default function App() {
             // 이미 반영했고, 여기서 또 정하면 토글로 끄신 것을 되살려버린다.
             // 앱 열 때 못 보냈으면 여기서 한 번 더. 성공했으면 아무 일도 하지 않는다.
             if (!useMock('chat')) warmUpAi()
+            // 탈퇴 후 다시 온 사람이었다면 표시를 여기서 거둔다 — 온보딩을 마쳤으니 할 일이 끝났다
+            clearFreshStart()
             setScreen('home')
             toast('내게 맞는 이동 설정을 저장했어요')
             // 집 주소 미등록이면 홈 진입 후 등록을 권유한다 (7차 와이어프레임 #screen-home)
