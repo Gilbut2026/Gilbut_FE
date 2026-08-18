@@ -11,6 +11,7 @@ import {
 import { ApiError } from '../api/client'
 import { departureAfter, parseDepartureMinutes } from '../api/time'
 import { rankPlaceCandidates, type RankedPlaces } from '../api/placeRank'
+import { destinationKeyword } from '../api/destinationKeyword'
 import { PlaceCandidates } from '../components/PlaceCandidates'
 import { SEARCH_RADIUS_KM } from '../api/geo'
 import { QUICK_DESTINATION_NAMES } from './quickDestinations'
@@ -88,6 +89,15 @@ export function ServerChatScreen({
   const destCoordsRef = useRef<LatLng | null>(null)
   // 마지막 발화 — 서버가 준 장소 후보를 사용자가 말한 이름 기준으로 다시 정렬하는 데 쓴다
   const lastUtteranceRef = useRef('')
+  /*
+   * 이번 대화에서는 목적지를 AI 에게만 맡긴다는 표시.
+   *
+   * 빠른 길(AI 없이 프론트가 직접 검색)이 엉뚱한 곳을 보여줬을 때 사용자가
+   * 「찾는 곳이 없어요」를 누른다. 그 상태에서 같은 말을 다시 하면 빠른 길이 또
+   * 같은 답을 내놓는다 — 사용자는 같은 화면을 두 번 보고 갇힌다.
+   * 한 번 퇴짜를 맞으면 그다음부터는 느려도 AI 에게 물어본다.
+   */
+  const aiOnlyRef = useRef(false)
   const homeAddrRef = useRef<string | null>(null)
   // 서버에 확정한 출발 시각 — 결과 화면이 같은 값으로 경로를 조회해야 대화와 결과가 어긋나지 않는다
   const departureRef = useRef<string>('')
@@ -408,10 +418,13 @@ export function ServerChatScreen({
                 botSay('출발지를 다시 알려주세요.')
                 askFor('ORIGIN_CONFIRMATION')
               }
-            : () =>
+            : () => {
+                // 빠른 길이 내놓은 답에 퇴짜를 맞았다 — 다음부터는 느려도 AI 에게 물어본다
+                aiOnlyRef.current = true
                 void restartDestination(
                   `다시 ${askAgainVerb(inputModeRef.current)} 주세요. 어디로 가고 싶으세요?`,
                 )
+              }
         }
       />
     )
@@ -457,6 +470,8 @@ export function ServerChatScreen({
       setBusy(true)
       showTyping()
       try {
+        // AI 없이 되는 말이면 여기서 끝난다 — 0.5초. 안 되면 아래 원래 길로 간다
+        if (await tryFastDestination(value)) return
         const res = await sendChatMessage(value, coordsRef.current ?? undefined)
         hideTyping()
         handleMessage(res)
@@ -499,8 +514,50 @@ export function ServerChatScreen({
         setBusy(false)
       }
     },
-    [busy, userSay, botSay, showTyping, hideTyping, handleMessage, fail, onToast],
+    [busy, state, userSay, botSay, showTyping, hideTyping, handleMessage, fail, onToast],
   )
+
+  /**
+   * AI 를 부르지 않고 목적지 후보를 찾아본다. 찾았으면 true — 부르는 쪽은 거기서 멈춘다.
+   *
+   * 왜 있나(2026-08-19) — 목적지 발화 한 번이 AI 를 거치는데 그게 6~59초다(실측).
+   * 백엔드 타임아웃이 30초라 절반 가까이가 실패하고 재시도로 넘어간다. 그런데 AI 가
+   * 하는 일은 「수원역 가고 싶어요」에서 「수원역」을 뽑는 것뿐이고, 그 뒤의 장소 검색은
+   * **출발지에서 이미 우리가 직접 하고 있다**(searchOrigin). 그래서 흔한 말투는 우리가
+   * 뽑아서 바로 검색한다 — 0.5초면 후보가 나온다.
+   *
+   * 건너뛰어도 되는 이유 — 백엔드의 `POST /api/chat` 은 세션 상태를 바꾸지 않는다.
+   * 다음 단계인 confirmPlace 가 요구하는 상태(DESTINATION_WAITING)는 AI 를 거치기 전과
+   * 같아서, 이 길로 와도 흐름이 어긋나지 않는다(ChatSessionService.confirmDestination).
+   *
+   * 못 하겠으면 조용히 false 를 준다. 억지로 뽑아 엉뚱한 곳을 보여주느니 AI 에게 넘긴다.
+   */
+  async function tryFastDestination(value: string): Promise<boolean> {
+    if (state !== 'DESTINATION_WAITING' || aiOnlyRef.current) return false
+
+    const keyword = destinationKeyword(value)
+    if (!keyword) return false
+
+    try {
+      const res = await searchPlacesNear(keyword, coordsRef.current, SEARCH_RADIUS_KM)
+      const ranked = rankPlaceCandidates(res.places ?? [], keyword)
+      /*
+       * 마지막 판단은 검색이 한다.
+       *
+       * 말끝을 걷어내는 규칙은 사람 말을 다 못 따라간다. 그래서 뽑은 단어로 찾아보고
+       * 쓸 만한 것이 안 나오면 없던 일로 한다 — 그러면 아래에서 AI 가 다시 본다.
+       */
+      if (!ranked.primary.length) return false
+
+      hideTyping()
+      // 문구는 AI 로 갔을 때와 같게 둔다. 어느 길로 왔는지는 사용자가 알 일이 아니다
+      botSay('검색 결과에서 목적지를 선택해 주세요.')
+      card(placeCandidates(ranked, (p) => void confirmDestination(p)))
+      return true
+    } catch {
+      return false
+    }
+  }
 
   // ── 각 단계 확정 ─────────────────────────────────
   async function confirmDestination(p: PlaceItemResponse) {
