@@ -14,10 +14,23 @@ const hasTTS = (): boolean => typeof window !== 'undefined' && 'speechSynthesis'
 
 let cachedVoice: SpeechSynthesisVoice | null = null
 
+/**
+ * 한국어인가.
+ *
+ * `/^ko/` 로는 안 된다 — **코카니어(Konkani, 인도)의 언어 코드가 `kok`** 이라 같이 걸린다.
+ * 갤럭시 폴드 8 에서 「한국어 목소리」 3개 중 2개가 코카니어였다(2026-08-21). 이름에
+ * google 이 든 목소리가 없는 기기에서는 아래 규칙이 ko[0] — 목록 맨 앞 하나 — 로
+ * 떨어지는데, 목록 순서는 브라우저가 정한다. 코카니어가 앞에 오는 브라우저에서는
+ * **인도 목소리가 한국어를 읽는다.**
+ *
+ * 안드로이드는 로케일을 ko_KR 처럼 밑줄로 주기도 해서 둘 다 받는다.
+ */
+const isKorean = (v: SpeechSynthesisVoice): boolean => /^ko([-_]|$)/i.test(v.lang)
+
 /** 한국어 음성 중 Google(가장 자연스러움) → 그 외 ko → null 순으로 고른다. */
 function pickKoreanVoice(): SpeechSynthesisVoice | null {
   if (!hasTTS()) return null
-  const ko = window.speechSynthesis.getVoices().filter((v) => /^ko/i.test(v.lang))
+  const ko = window.speechSynthesis.getVoices().filter(isKorean)
   return ko.find((v) => /google/i.test(v.name)) ?? ko[0] ?? null
 }
 
@@ -123,10 +136,7 @@ export interface VoiceInfo {
 export function getVoiceInfo(): VoiceInfo {
   if (!hasTTS()) return { supported: false, name: null, lang: null, korean: [] }
   const voice = currentVoice()
-  const korean = window.speechSynthesis
-    .getVoices()
-    .filter((v) => /^ko/i.test(v.lang))
-    .map((v) => v.name)
+  const korean = window.speechSynthesis.getVoices().filter(isKorean).map((v) => v.name)
   return { supported: true, name: voice?.name ?? null, lang: voice?.lang ?? null, korean }
 }
 
