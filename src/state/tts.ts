@@ -60,6 +60,9 @@ if (hasTTS()) {
   cachedVoice = pickKoreanVoice()
 }
 
+/** speak() 가 마지막으로 실제 사용한 목소리와 속도. 설정 화면에서 대조용. */
+let lastSpoken: { voice: VoiceRef | null; rate: number } | null = null
+
 export interface SpeakOptions {
   /** true=자동 발화(음성 안내 off 면 읽지 않음). 생략/false=사용자가 직접 요청 → 설정과 무관하게 재생. */
   auto?: boolean
@@ -80,6 +83,9 @@ export function speak(text: string, opts: SpeakOptions = {}): boolean {
   utter.rate = settings.voiceSpeed || 1
   const voice = currentVoice()
   if (voice) utter.voice = voice
+  // 실제로 무엇으로 읽었는지 남긴다 — 설정 화면이 보여주는 건 '그 화면에 들어온 순간'
+  // 고른 목소리라, 말할 때 정말 그게 쓰였는지는 따로 적어 두지 않으면 알 수 없다.
+  lastSpoken = { voice: voice ? toRef(voice) : null, rate: utter.rate }
   window.speechSynthesis.speak(utter)
   return true
 }
@@ -158,6 +164,11 @@ export interface VoiceInfo {
   picked: VoiceRef | null
   /** 이 기기가 가진 한국어 목소리 전부 (고를 수 있었던 후보들) */
   korean: VoiceRef[]
+  /**
+   * 마지막으로 실제 읽을 때 쓴 목소리와 속도. 아직 한 번도 안 읽었으면 null.
+   * voice 가 null 이면 그때 목소리를 못 정해서 **브라우저가 알아서 골라** 읽었다는 뜻이다.
+   */
+  last: { voice: VoiceRef | null; rate: number } | null
 }
 
 const toRef = (v: SpeechSynthesisVoice): VoiceRef => ({
@@ -168,12 +179,13 @@ const toRef = (v: SpeechSynthesisVoice): VoiceRef => ({
 })
 
 export function getVoiceInfo(): VoiceInfo {
-  if (!hasTTS()) return { supported: false, picked: null, korean: [] }
+  if (!hasTTS()) return { supported: false, picked: null, korean: [], last: null }
   const voice = currentVoice()
   return {
     supported: true,
     picked: voice ? toRef(voice) : null,
     korean: window.speechSynthesis.getVoices().filter(isKorean).map(toRef),
+    last: lastSpoken,
   }
 }
 
