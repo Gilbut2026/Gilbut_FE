@@ -263,6 +263,8 @@ button { color: inherit; }
 .voice-list { list-style: none; margin: 8px 0 0; padding: 0; display: grid; gap: 5px; }
 .voice-list li { padding: 9px 12px; border-radius: 11px; background: rgba(255, 255, 255, 0.55); border: 1px solid rgba(100, 116, 139, 0.14); font-size: 15px; font-weight: 700; color: var(--ink-3); word-break: keep-all; overflow-wrap: anywhere; }
 .voice-list li.on { border-color: var(--violet); background: var(--violet-soft); color: var(--violet-deep); font-weight: 850; }
+/* 언어 코드 — 이름만으로는 코카니어(kok)와 한국어(ko)를 구별할 수 없다 */
+.voice-list li em { display: block; margin-top: 2px; font-size: 13px; font-style: normal; font-weight: 650; opacity: 0.72; }
 .range { width: 100%; margin: 13px 0 1px; accent-color: var(--violet); }
 .setting-link { width: 100%; min-height: 66px; padding: 11px 13px; border-radius: 18px; border: 1px solid rgba(255, 255, 255, 0.9); display: flex; align-items: center; gap: 11px; cursor: pointer; text-align: left; background: rgba(255, 255, 255, 0.67); box-shadow: 0 10px 26px -25px rgba(21, 33, 59, 0.75); }
 .setting-link + .setting-link { margin-top: 8px; }

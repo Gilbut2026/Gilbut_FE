@@ -259,9 +259,10 @@ export function SettingsScreen({
                 </button>
                 {voiceListOpen && (
                   <ul className="voice-list">
-                    {voice.korean.map((n) => (
-                      <li key={n} className={n === voice.name ? 'on' : undefined}>
-                        {n}
+                    {voice.korean.map((v) => (
+                      <li key={`${v.name}-${v.lang}`} className={v.name === voice.name ? 'on' : undefined}>
+                        {v.name}
+                        <em>{v.lang}</em>
                       </li>
                     ))}
                   </ul>

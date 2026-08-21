@@ -129,14 +129,17 @@ export interface VoiceInfo {
   /** 지금 고른 목소리 이름. null 이면 못 골라서 **기기 기본 목소리**로 읽고 있다는 뜻. */
   name: string | null
   lang: string | null
-  /** 이 기기가 가진 한국어 목소리 이름 전부 (고를 수 있었던 후보들) */
-  korean: string[]
+  /** 이 기기가 가진 한국어 목소리 전부 (고를 수 있었던 후보들) */
+  korean: { name: string; lang: string }[]
 }
 
 export function getVoiceInfo(): VoiceInfo {
   if (!hasTTS()) return { supported: false, name: null, lang: null, korean: [] }
   const voice = currentVoice()
-  const korean = window.speechSynthesis.getVoices().filter(isKorean).map((v) => v.name)
+  const korean = window.speechSynthesis
+    .getVoices()
+    .filter(isKorean)
+    .map((v) => ({ name: v.name, lang: v.lang }))
   return { supported: true, name: voice?.name ?? null, lang: voice?.lang ?? null, korean }
 }
 
