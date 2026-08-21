@@ -263,6 +263,8 @@ button { color: inherit; }
 .voice-list { list-style: none; margin: 8px 0 0; padding: 0; display: grid; gap: 5px; }
 .voice-list li { padding: 9px 12px; border-radius: 11px; background: rgba(255, 255, 255, 0.55); border: 1px solid rgba(100, 116, 139, 0.14); font-size: 15px; font-weight: 700; color: var(--ink-3); word-break: keep-all; overflow-wrap: anywhere; }
 .voice-list li.on { border-color: var(--violet); background: var(--violet-soft); color: var(--violet-deep); font-weight: 850; }
+/* voiceURI — 이름이 같아도 이게 다르면 다른 목소리다. 공백 없이 길게 와서 anywhere 가 필요하다 */
+.voice-uri { font-size: 13px !important; opacity: 0.72; word-break: keep-all; overflow-wrap: anywhere; }
 /* 언어 코드 — 이름만으로는 코카니어(kok)와 한국어(ko)를 구별할 수 없다 */
 .voice-list li em { display: block; margin-top: 2px; font-size: 13px; font-style: normal; font-weight: 650; opacity: 0.72; }
 .range { width: 100%; margin: 13px 0 1px; accent-color: var(--violet); }

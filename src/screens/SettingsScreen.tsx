@@ -242,10 +242,15 @@ export function SettingsScreen({
               <span>
                 {!voice.supported
                   ? '이 기기에서는 음성 안내를 쓸 수 없어요'
-                  : voice.name
-                    ? `${voice.name}${voice.lang ? ` · ${voice.lang}` : ''}`
+                  : voice.picked
+                    ? `${voice.picked.name} · ${voice.picked.lang}`
                     : '한국어 목소리를 찾지 못해 기기 기본 목소리로 읽어요'}
               </span>
+              {voice.picked && (
+                <span className="voice-uri">
+                  {voice.picked.local ? '기기 내장' : '네트워크'} · {voice.picked.uri}
+                </span>
+              )}
             </div>
             {voice.korean.length > 1 && (
               <>
@@ -260,9 +265,11 @@ export function SettingsScreen({
                 {voiceListOpen && (
                   <ul className="voice-list">
                     {voice.korean.map((v) => (
-                      <li key={`${v.name}-${v.lang}`} className={v.name === voice.name ? 'on' : undefined}>
+                      <li key={v.uri} className={v.uri === voice.picked?.uri ? 'on' : undefined}>
                         {v.name}
-                        <em>{v.lang}</em>
+                        <em>
+                          {v.lang} · {v.local ? '기기 내장' : '네트워크'} · {v.uri}
+                        </em>
                       </li>
                     ))}
                   </ul>

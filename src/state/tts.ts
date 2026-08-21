@@ -123,24 +123,48 @@ export function whenSpeakingEnds(cb: () => void): () => void {
  *  찾아낼 수도 있다(기종이 아니라 목소리를 맞춰야 한다).
  * ------------------------------------------------------------ */
 
+/**
+ * 목소리 하나를 가리키는 값들.
+ *
+ * name 만으로는 부족하다 — 이름은 엔진이 붙인 라벨일 뿐이라 **서로 다른 목소리가 같은
+ * 이름을 달고 나올 수 있다.** 크롬으로 설치한 앱과 APK 가 둘 다 「한국어 대한민국」이라고
+ * 표시하면서 실제로는 다른 소리를 냈다(갤럭시 폴드 8, 2026-08-21). 진짜 식별자는
+ * voiceURI 고, 소리가 갈리는 흔한 이유가 하나 더 있어서 local 도 같이 본다 —
+ * 기기 안에 든 음성과 서버에서 받아 오는 음성은 같은 이름이어도 소리가 다르다.
+ */
+export interface VoiceRef {
+  name: string
+  lang: string
+  /** 진짜 식별자. 이름이 같아도 이게 다르면 다른 목소리다. */
+  uri: string
+  /** true = 기기에 설치된 음성, false = 네트워크로 받아 오는 음성 */
+  local: boolean
+}
+
 export interface VoiceInfo {
   /** 이 기기에서 음성 안내를 쓸 수 있는가 */
   supported: boolean
-  /** 지금 고른 목소리 이름. null 이면 못 골라서 **기기 기본 목소리**로 읽고 있다는 뜻. */
-  name: string | null
-  lang: string | null
+  /** 지금 고른 목소리. null 이면 못 골라서 **기기 기본 목소리**로 읽고 있다는 뜻. */
+  picked: VoiceRef | null
   /** 이 기기가 가진 한국어 목소리 전부 (고를 수 있었던 후보들) */
-  korean: { name: string; lang: string }[]
+  korean: VoiceRef[]
 }
 
+const toRef = (v: SpeechSynthesisVoice): VoiceRef => ({
+  name: v.name,
+  lang: v.lang,
+  uri: v.voiceURI,
+  local: v.localService,
+})
+
 export function getVoiceInfo(): VoiceInfo {
-  if (!hasTTS()) return { supported: false, name: null, lang: null, korean: [] }
+  if (!hasTTS()) return { supported: false, picked: null, korean: [] }
   const voice = currentVoice()
-  const korean = window.speechSynthesis
-    .getVoices()
-    .filter(isKorean)
-    .map((v) => ({ name: v.name, lang: v.lang }))
-  return { supported: true, name: voice?.name ?? null, lang: voice?.lang ?? null, korean }
+  return {
+    supported: true,
+    picked: voice ? toRef(voice) : null,
+    korean: window.speechSynthesis.getVoices().filter(isKorean).map(toRef),
+  }
 }
 
 /**
