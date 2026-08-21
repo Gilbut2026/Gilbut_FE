@@ -250,7 +250,7 @@ export function SettingsScreen({
                * 같은 목소리 이름이어도 브라우저가 다르면 소리가 다르다 — 목소리를 실제로
                * 만들어 내는 건 브라우저다. 이름만 봐서는 왜 다른지 알 수 없으니 같이 적는다.
                */}
-              {voice.supported && <span>{browserLabel()}로 실행 중</span>}
+              {voice.supported && <span>{browserLabel()} 사용 중</span>}
             </div>
             {voice.korean.length > 1 && (
               <>
