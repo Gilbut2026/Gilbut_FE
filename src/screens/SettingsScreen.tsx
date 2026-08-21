@@ -6,6 +6,7 @@ import { HomeAddressSheet } from '../components/HomeAddressSheet'
 import { getSettings, saveAccessibility } from '../api/user'
 import { withdraw } from '../state/account'
 import { FONT_SIZES, type Settings } from '../state/settings'
+import { getVoiceInfo, subscribeVoices, type VoiceInfo } from '../state/tts'
 import { useScrollMemory } from '../state/scrollMemory'
 import type {
   FontSize,
@@ -87,6 +88,13 @@ export function SettingsScreen({
   const [withdrawing, setWithdrawing] = useState(false)
   // 한 번만 본다 — 설정 화면을 보는 중에 설치 여부가 바뀔 일은 없다
   const [installed] = useState(isInstalled)
+  /*
+   * 지금 읽고 있는 목소리. 처음엔 비어 있을 수 있다 — 브라우저가 목소리 목록을 늦게
+   * 채우기 때문이다. subscribeVoices 가 채워지는 걸 보고 알려주면 다시 그린다.
+   */
+  const [voice, setVoice] = useState<VoiceInfo>(getVoiceInfo)
+  const [voiceListOpen, setVoiceListOpen] = useState(false)
+  useEffect(() => subscribeVoices(() => setVoice(getVoiceInfo())), [])
 
   function reloadSettings() {
     getSettings().then(setData)
@@ -220,6 +228,46 @@ export function SettingsScreen({
               onChange={(e) => apply({ voiceSpeed: Number(e.target.value) })}
               aria-label="음성 속도"
             />
+          </div>
+
+          {/*
+           * 목소리는 기기와 브라우저가 정한다 — 우리가 소리를 만들어 보내는 게 아니라
+           * 글자만 넘기고 기기에 깔린 음성이 읽는다. 그래서 같은 앱이라도 폰마다,
+           * 심지어 같은 폰의 브라우저마다 다른 목소리가 난다. 어느 목소리가 걸렸는지
+           * 여기 적어 두지 않으면 확인할 방법이 없다.
+           */}
+          <div className="setting-row" style={{ display: 'block' }}>
+            <div className="setting-copy">
+              <b>지금 목소리</b>
+              <span>
+                {!voice.supported
+                  ? '이 기기에서는 음성 안내를 쓸 수 없어요'
+                  : voice.name
+                    ? `${voice.name}${voice.lang ? ` · ${voice.lang}` : ''}`
+                    : '한국어 목소리를 찾지 못해 기기 기본 목소리로 읽어요'}
+              </span>
+            </div>
+            {voice.korean.length > 1 && (
+              <>
+                <button
+                  className={`font-option${voiceListOpen ? ' on' : ''}`}
+                  style={{ marginTop: 10, width: '100%', minHeight: 46 }}
+                  onClick={() => setVoiceListOpen(!voiceListOpen)}
+                  aria-expanded={voiceListOpen}
+                >
+                  {voiceListOpen ? '접기' : `이 기기의 한국어 목소리 ${voice.korean.length}개 보기`}
+                </button>
+                {voiceListOpen && (
+                  <ul className="voice-list">
+                    {voice.korean.map((n) => (
+                      <li key={n} className={n === voice.name ? 'on' : undefined}>
+                        {n}
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </>
+            )}
           </div>
         </div>
 

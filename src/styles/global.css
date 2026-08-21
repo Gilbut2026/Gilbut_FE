@@ -257,6 +257,12 @@ button { color: inherit; }
 .font-options { display: grid; grid-template-columns: repeat(5, 1fr); gap: 5px; margin-top: 10px; }
 .font-option { min-height: 58px; padding: 5px 2px; border-radius: 13px; border: 1px solid rgba(100, 116, 139, 0.18); background: rgba(255, 255, 255, 0.68); font-family: inherit; font-size: 16px; line-height: 1.25; font-weight: 820; color: var(--ink-2); cursor: pointer; }
 .font-option.on { border-color: var(--violet); background: var(--violet-soft); color: var(--violet-deep); }
+
+/* 목소리 이름 목록 — 「ko-kr-x-ism#female_1-local」처럼 공백 없이 긴 이름이 와서
+   anywhere 없이는 칸 밖으로 나간다. 지금 쓰는 목소리는 색으로 표시한다. */
+.voice-list { list-style: none; margin: 8px 0 0; padding: 0; display: grid; gap: 5px; }
+.voice-list li { padding: 9px 12px; border-radius: 11px; background: rgba(255, 255, 255, 0.55); border: 1px solid rgba(100, 116, 139, 0.14); font-size: 15px; font-weight: 700; color: var(--ink-3); word-break: keep-all; overflow-wrap: anywhere; }
+.voice-list li.on { border-color: var(--violet); background: var(--violet-soft); color: var(--violet-deep); font-weight: 850; }
 .range { width: 100%; margin: 13px 0 1px; accent-color: var(--violet); }
 .setting-link { width: 100%; min-height: 66px; padding: 11px 13px; border-radius: 18px; border: 1px solid rgba(255, 255, 255, 0.9); display: flex; align-items: center; gap: 11px; cursor: pointer; text-align: left; background: rgba(255, 255, 255, 0.67); box-shadow: 0 10px 26px -25px rgba(21, 33, 59, 0.75); }
 .setting-link + .setting-link { margin-top: 8px; }

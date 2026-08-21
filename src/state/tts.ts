@@ -27,10 +27,13 @@ function currentVoice(): SpeechSynthesisVoice | null {
   return cachedVoice
 }
 
+const voiceListeners = new Set<() => void>()
+
 // 크롬 등은 getVoices() 가 비동기라 처음 호출 때 빈 배열일 수 있다 → 목록이 로드되면 다시 고른다.
 if (hasTTS()) {
   window.speechSynthesis.onvoiceschanged = () => {
     cachedVoice = pickKoreanVoice()
+    voiceListeners.forEach((l) => l())
   }
 }
 
@@ -93,4 +96,66 @@ export function whenSpeakingEnds(cb: () => void): () => void {
     }
   }, 180)
   return () => window.clearInterval(id)
+}
+
+/* ------------------------------------------------------------
+ *  지금 무슨 목소리로 읽고 있는가 — 설정 화면에서 눈으로 확인하기 위한 것.
+ *
+ *  왜 필요한가 — 목소리를 고르는 규칙(pickKoreanVoice)은 이름에 「google」이 들어가는지
+ *  하나로 갈린다. 그런데 getVoices() 가 주는 목록은 브라우저가 안드로이드 TTS 에 저마다
+ *  다른 방식으로 물어본 결과라, **같은 폰에서도** 크롬과 삼성인터넷이 서로 다른 목소리를
+ *  냈다(갤럭시 폴드 8, 2026-08-21). 규칙이 걸리지 않으면 조용히 ko[0] 으로 떨어지는데
+ *  화면에는 아무 흔적이 없어서, 발표 무대에서야 목소리가 바뀐 걸 알게 된다.
+ *  이름을 띄워 두면 시연 직전에 확인할 수 있고, 예비 기기에서 같은 목소리를 다시
+ *  찾아낼 수도 있다(기종이 아니라 목소리를 맞춰야 한다).
+ * ------------------------------------------------------------ */
+
+export interface VoiceInfo {
+  /** 이 기기에서 음성 안내를 쓸 수 있는가 */
+  supported: boolean
+  /** 지금 고른 목소리 이름. null 이면 못 골라서 **기기 기본 목소리**로 읽고 있다는 뜻. */
+  name: string | null
+  lang: string | null
+  /** 이 기기가 가진 한국어 목소리 이름 전부 (고를 수 있었던 후보들) */
+  korean: string[]
+}
+
+export function getVoiceInfo(): VoiceInfo {
+  if (!hasTTS()) return { supported: false, name: null, lang: null, korean: [] }
+  const voice = currentVoice()
+  const korean = window.speechSynthesis
+    .getVoices()
+    .filter((v) => /^ko/i.test(v.lang))
+    .map((v) => v.name)
+  return { supported: true, name: voice?.name ?? null, lang: voice?.lang ?? null, korean }
+}
+
+/**
+ * 목소리 목록이 채워지면 알려준다. 화면을 떠날 때 돌려받은 함수를 부른다.
+ *
+ * onvoiceschanged 만 믿을 수는 없다 — 목록을 늦게 채우면서 이 신호를 끝내 주지 않는
+ * 브라우저가 있다. 그러면 설정 화면에 「기기 기본 목소리」라고 영영 떠 있어서, 확인하러
+ * 들어온 사람이 잘못된 답을 보고 나간다. 그래서 구독하는 동안 잠깐(3초) 목록 길이를
+ * 지켜보다가 달라지면 다시 고르고 알린다. 3초면 충분하고, 그 뒤로는 타이머를 놓는다.
+ */
+export function subscribeVoices(cb: () => void): () => void {
+  voiceListeners.add(cb)
+  if (!hasTTS()) return () => voiceListeners.delete(cb)
+
+  let seen = window.speechSynthesis.getVoices().length
+  const started = performance.now()
+  const id = window.setInterval(() => {
+    const now = window.speechSynthesis.getVoices().length
+    if (now !== seen) {
+      seen = now
+      cachedVoice = pickKoreanVoice()
+      cb()
+    }
+    if (performance.now() - started > 3000) window.clearInterval(id)
+  }, 300)
+
+  return () => {
+    voiceListeners.delete(cb)
+    window.clearInterval(id)
+  }
 }
