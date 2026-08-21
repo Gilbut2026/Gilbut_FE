@@ -60,9 +60,6 @@ if (hasTTS()) {
   cachedVoice = pickKoreanVoice()
 }
 
-/** speak() 가 마지막으로 실제 사용한 목소리와 속도. 설정 화면에서 대조용. */
-let lastSpoken: { voice: VoiceRef | null; rate: number } | null = null
-
 export interface SpeakOptions {
   /** true=자동 발화(음성 안내 off 면 읽지 않음). 생략/false=사용자가 직접 요청 → 설정과 무관하게 재생. */
   auto?: boolean
@@ -83,9 +80,6 @@ export function speak(text: string, opts: SpeakOptions = {}): boolean {
   utter.rate = settings.voiceSpeed || 1
   const voice = currentVoice()
   if (voice) utter.voice = voice
-  // 실제로 무엇으로 읽었는지 남긴다 — 설정 화면이 보여주는 건 '그 화면에 들어온 순간'
-  // 고른 목소리라, 말할 때 정말 그게 쓰였는지는 따로 적어 두지 않으면 알 수 없다.
-  lastSpoken = { voice: voice ? toRef(voice) : null, rate: utter.rate }
   window.speechSynthesis.speak(utter)
   return true
 }
@@ -142,19 +136,17 @@ export function whenSpeakingEnds(cb: () => void): () => void {
 /**
  * 목소리 하나를 가리키는 값들.
  *
- * name 만으로는 부족하다 — 이름은 엔진이 붙인 라벨일 뿐이라 **서로 다른 목소리가 같은
- * 이름을 달고 나올 수 있다.** 크롬으로 설치한 앱과 APK 가 둘 다 「한국어 대한민국」이라고
- * 표시하면서 실제로는 다른 소리를 냈다(갤럭시 폴드 8, 2026-08-21). 진짜 식별자는
- * voiceURI 고, 소리가 갈리는 흔한 이유가 하나 더 있어서 local 도 같이 본다 —
- * 기기 안에 든 음성과 서버에서 받아 오는 음성은 같은 이름이어도 소리가 다르다.
+ * ⚠️ 이 값들로 **엔진을 구별할 수는 없다.** 안드로이드에서는 name 이 엔진 이름이 아니라
+ *    로케일 이름(ko_KR → 「한국어 대한민국」)이고 uri 도 거기서 나온다. 그래서 크롬과
+ *    삼성인터넷이 서로 다른 엔진으로 읽으면서도 여기 값은 전부 똑같이 나왔다
+ *    (갤럭시 폴드 8, 2026-08-21). 소리를 정하는 건 결국 브라우저다 — install.ts 의
+ *    browserLabel() 을 같이 보라.
  */
 export interface VoiceRef {
   name: string
   lang: string
-  /** 진짜 식별자. 이름이 같아도 이게 다르면 다른 목소리다. */
+  /** 같은 목록 안에서 하나를 가리키는 값. 화면 key 와 「지금 이것」 표시에 쓴다. */
   uri: string
-  /** true = 기기에 설치된 음성, false = 네트워크로 받아 오는 음성 */
-  local: boolean
 }
 
 export interface VoiceInfo {
@@ -164,28 +156,17 @@ export interface VoiceInfo {
   picked: VoiceRef | null
   /** 이 기기가 가진 한국어 목소리 전부 (고를 수 있었던 후보들) */
   korean: VoiceRef[]
-  /**
-   * 마지막으로 실제 읽을 때 쓴 목소리와 속도. 아직 한 번도 안 읽었으면 null.
-   * voice 가 null 이면 그때 목소리를 못 정해서 **브라우저가 알아서 골라** 읽었다는 뜻이다.
-   */
-  last: { voice: VoiceRef | null; rate: number } | null
 }
 
-const toRef = (v: SpeechSynthesisVoice): VoiceRef => ({
-  name: v.name,
-  lang: v.lang,
-  uri: v.voiceURI,
-  local: v.localService,
-})
+const toRef = (v: SpeechSynthesisVoice): VoiceRef => ({ name: v.name, lang: v.lang, uri: v.voiceURI })
 
 export function getVoiceInfo(): VoiceInfo {
-  if (!hasTTS()) return { supported: false, picked: null, korean: [], last: null }
+  if (!hasTTS()) return { supported: false, picked: null, korean: [] }
   const voice = currentVoice()
   return {
     supported: true,
     picked: voice ? toRef(voice) : null,
     korean: window.speechSynthesis.getVoices().filter(isKorean).map(toRef),
-    last: lastSpoken,
   }
 }
 

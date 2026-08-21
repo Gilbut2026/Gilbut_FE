@@ -246,20 +246,6 @@ export function SettingsScreen({
                     ? `${voice.picked.name} · ${voice.picked.lang}`
                     : '한국어 목소리를 찾지 못해 기기 기본 목소리로 읽어요'}
               </span>
-              {voice.picked && (
-                <span className="voice-uri">
-                  {voice.picked.local ? '기기 내장' : '네트워크'} · {voice.picked.uri}
-                </span>
-              )}
-              {/* 고른 것과 실제로 읽은 것이 같은지 — 다르면 여기서만 드러난다 */}
-              {voice.supported && (
-                <span className="voice-uri">
-                  마지막으로 읽은 목소리:{' '}
-                  {!voice.last
-                    ? '아직 없음 (아무 말이나 들어본 뒤 다시 보세요)'
-                    : `${voice.last.voice?.name ?? '지정 못 함 — 브라우저가 골랐음'} · 속도 ${voice.last.rate}`}
-                </span>
-              )}
             </div>
             {voice.korean.length > 1 && (
               <>
@@ -276,9 +262,7 @@ export function SettingsScreen({
                     {voice.korean.map((v) => (
                       <li key={v.uri} className={v.uri === voice.picked?.uri ? 'on' : undefined}>
                         {v.name}
-                        <em>
-                          {v.lang} · {v.local ? '기기 내장' : '네트워크'} · {v.uri}
-                        </em>
+                        <em>{v.lang}</em>
                       </li>
                     ))}
                   </ul>
