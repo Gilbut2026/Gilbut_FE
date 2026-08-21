@@ -55,6 +55,36 @@ export function platform(): InstallPlatform {
   return 'desktop'
 }
 
+/**
+ * 어느 브라우저로 보고 있는가 — 사람이 읽을 수 있는 이름으로.
+ *
+ * 목소리를 정하는 건 결국 이쪽이다. 같은 폰, 같은 목소리 이름(ko_KR · 「한국어
+ * 대한민국」)인데 크롬과 삼성인터넷 소리가 달랐다 — 브라우저마다 안드로이드 TTS 를
+ * 부르는 방식이 달라서다. 목소리 이름으로는 이걸 알 수 없으니 브라우저를 적는다.
+ *
+ * ⚠️ 순서가 중요하다. 삼성인터넷·엣지·웨일은 UA 에 Chrome 도 같이 달고 다녀서,
+ *    Chrome 을 먼저 보면 전부 크롬이 된다. 좁은 것부터 본다.
+ *
+ * ⚠️ 아이폰은 어떤 앱으로 열든 속이 사파리다(애플이 다른 엔진을 금지한다). 그래서
+ *    「크롬」이라고만 적으면 안드로이드 크롬과 같은 것으로 오해하게 된다 — 엔진을 밝힌다.
+ */
+export function browserLabel(): string {
+  const u = ua()
+  if (/KAKAOTALK/i.test(u)) return '카카오톡 안의 브라우저'
+  if (/NAVER\(inapp/i.test(u)) return '네이버 앱 안의 브라우저'
+  if (/SamsungBrowser/i.test(u)) return '삼성 인터넷'
+  if (/Whale/i.test(u)) return '웨일'
+  if (/EdgiOS/i.test(u)) return '엣지 · 아이폰이라 속은 사파리'
+  if (/CriOS/i.test(u)) return '크롬 · 아이폰이라 속은 사파리'
+  if (/FxiOS/i.test(u)) return '파이어폭스 · 아이폰이라 속은 사파리'
+  if (/Edg\//i.test(u)) return '엣지'
+  if (/OPR\//i.test(u)) return '오페라'
+  if (/Firefox\//i.test(u)) return '파이어폭스'
+  if (/Chrome\//i.test(u)) return '크롬'
+  if (/Safari\//i.test(u)) return '사파리'
+  return '알 수 없는 브라우저'
+}
+
 /** 홈 화면 안내 카드를 닫으신 적이 있는가 */
 const DISMISS_KEY = 'gilbet.installDismissed'
 

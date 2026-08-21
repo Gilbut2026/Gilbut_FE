@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { TopBar } from '../components/TopBar'
 import { InstallSheet } from '../components/InstallSheet'
-import { isInstalled } from '../state/install'
+import { browserLabel, isInstalled } from '../state/install'
 import { HomeAddressSheet } from '../components/HomeAddressSheet'
 import { getSettings, saveAccessibility } from '../api/user'
 import { withdraw } from '../state/account'
@@ -246,6 +246,11 @@ export function SettingsScreen({
                     ? `${voice.picked.name} · ${voice.picked.lang}`
                     : '한국어 목소리를 찾지 못해 기기 기본 목소리로 읽어요'}
               </span>
+              {/*
+               * 같은 목소리 이름이어도 브라우저가 다르면 소리가 다르다 — 목소리를 실제로
+               * 만들어 내는 건 브라우저다. 이름만 봐서는 왜 다른지 알 수 없으니 같이 적는다.
+               */}
+              {voice.supported && <span>{browserLabel()}로 실행 중</span>}
             </div>
             {voice.korean.length > 1 && (
               <>
