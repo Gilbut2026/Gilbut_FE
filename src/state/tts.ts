@@ -48,6 +48,16 @@ if (hasTTS()) {
     cachedVoice = pickKoreanVoice()
     voiceListeners.forEach((l) => l())
   }
+  /*
+   * 앱이 뜰 때 목록을 미리 부른다.
+   *
+   * getVoices() 를 한 번 불러 줘야 브라우저가 목록을 채우기 시작한다. 첫 발화 때가
+   * 되어서야 부르면 그 순간엔 아직 비어 있어서 목소리를 못 고르고, utter.voice 를
+   * 비운 채 내보내게 된다. 그러면 **그 한 마디만 브라우저가 알아서 고른 목소리**로
+   * 나간다 — 같은 폰, 같은 설정인데 크롬과 APK 소리가 달랐던 이유일 수 있다.
+   * 여기서 미리 불러 두면 사용자가 말을 걸 때쯤엔 목록이 준비돼 있다.
+   */
+  cachedVoice = pickKoreanVoice()
 }
 
 export interface SpeakOptions {
