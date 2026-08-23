@@ -31,13 +31,29 @@ button:focus-visible, a:focus-visible, input:focus-visible {
 }
 button { color: inherit; }
 
-/* ---------- 앱 셸: 데스크톱에선 430px 프레임을 중앙 정렬 ---------- */
+/* ---------- 앱 셸: 데스크톱·태블릿에선 430px 프레임을 화면 한가운데 ---------- */
+/*
+ * 높이는 #root 가 정한다.
+ *
+ * 셸에 직접 100dvh 를 주고 body 에 위아래 20px 여백을 얹었더니 합이 100dvh + 40px 이
+ * 되어, 넘친 만큼 페이지가 스크롤되고 프레임 아래 모서리와 「다음」 버튼 밑이 화면
+ * 밖으로 잘려 나갔다(태블릿, 2026-08-23). 여백을 #root 안쪽에 두면 셸은 100% 로
+ * 남은 자리에 딱 들어간다.
+ *
+ * 가운데 정렬하는 이유 — 세로로 긴 태블릿에서는 max-height 940px 에 걸려 셸이 화면보다
+ * 짧아지는데, 그대로 두면 위에 붙고 아래에만 빈 공간이 남아 떨어뜨린 것처럼 보인다.
+ */
+#root {
+  height: 100dvh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
 #app-shell {
   width: 430px;
   max-width: 100%;
-  height: 100dvh;
+  height: 100%;
   max-height: 940px;
-  margin: 0 auto;
   border-radius: 34px;
   overflow: hidden;
   display: flex;
@@ -50,9 +66,9 @@ button { color: inherit; }
     radial-gradient(circle at 5% 28%, rgba(124, 102, 255, 0.22), transparent 15rem),
     linear-gradient(165deg, #F8F7FF 0%, #EEF6FF 44%, #F6FAFF 100%);
 }
-@media (min-width: 480px) { body { padding: 20px 0; } }
+@media (min-width: 480px) { #root { padding: 20px 0; } }
 @media (max-width: 479px) {
-  #app-shell { width: 100%; height: 100dvh; max-height: none; border-radius: 0; }
+  #app-shell { width: 100%; max-height: none; border-radius: 0; }
 }
 
 /* ---------- 화면 전환 ---------- */
