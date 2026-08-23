@@ -25,6 +25,7 @@ import { getMobilityProfile } from './api/user'
 import { warmUpAi } from './api/warmup'
 import { ApiError } from './api/client'
 import { isLoggedIn, onSessionExpired } from './state/auth'
+import { stopSpeaking } from './state/tts'
 import { TAB_SCREENS, type ChatOutcome, type Screen } from './types/nav'
 import type { DrtGuideResponse, DrtReasonCode, LatLng, RouteOption, StairComparison } from './types/dto'
 
@@ -287,6 +288,26 @@ export default function App() {
   useEffect(() => {
     if (!useMock('chat')) warmUpAi()
   }, [])
+
+  /*
+   * 화면을 떠나면 읽던 말을 끊는다.
+   *
+   * 자동 안내는 화면이 뜨면 알아서 읽기 시작하는데, 다 읽기 전에 다음으로 넘어가면
+   * 지난 화면 문장이 새 화면 위에서 계속 들렸다. 보이는 것과 들리는 것이 어긋나면
+   * 어르신은 자기가 뭘 잘못 눌렀다고 생각한다.
+   *
+   * 여기 App 에 두는 이유 — 화면마다 각자 정리하게 하면 하나라도 빠뜨렸을 때
+   * 그 화면에서만 소리가 새고, 그건 눈으로 찾기 어렵다. 화면 전환은 여기 한 곳에서
+   * 일어나니 끊는 것도 여기서 한다.
+   *
+   * **정리(cleanup) 자리인 것이 중요하다.** React 는 한 번의 갱신에서 정리를 모두
+   * 끝낸 뒤에 새 효과를 실행한다. 그래서 이 순서대로 — 끊고, 새 화면이 읽기 시작.
+   * 효과 본문에 두면 순서가 뒤집혀 새 화면이 막 읽기 시작한 것을 곧바로 끊어 버린다.
+   *
+   * 화면 안에서 내용만 바뀌는 경우(대화 말풍선, 길안내 다음 단계)는 screen 값이
+   * 그대로라 끊기지 않는다 — 끊어야 할 것은 화면을 떠날 때뿐이다.
+   */
+  useEffect(() => stopSpeaking, [screen])
 
   // 토큰이 만료되고 재발급도 실패하면 로그인 화면으로 되돌린다.
   // 화면마다 제각기 실패해서 사용자가 원인을 못 알아채는 것이 가장 나쁘다.
