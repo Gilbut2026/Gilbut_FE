@@ -89,8 +89,12 @@ button { color: inherit; }
     max-height: none;
     border-radius: 0;
     box-shadow: none;
+    /* 넓어진 만큼 글자·버튼도 키운다 — 폭만 늘리면 한 줄이 길어지고 사이가 벌어져서
+       화면은 커졌는데 오히려 읽기 어려워진다. 설정의 글자 크기와 곱해진다(tokens.css) */
+    --ui-fit: 1.35;
   }
 }
+@media (pointer: coarse) and (min-width: 820px) { #app-shell { --ui-fit: 1.55; } }
 
 /* ---------- 화면 전환 ---------- */
 .screen { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; animation: screenIn 0.22s ease both; }

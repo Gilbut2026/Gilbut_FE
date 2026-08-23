@@ -36,11 +36,24 @@
   --glass-strong: #fff;
 }
 
-/* 글자 크기 5단계 — 와이어프레임 --ui-scale 과 BE FontSize enum 을 일치시킴.
-   EXTRA_SMALL / SMALL / NORMAL / LARGE / EXTRA_LARGE */
-#app-shell { --ui-scale: 1.0; }
-#app-shell.font-EXTRA_SMALL { --ui-scale: 0.92; }
-#app-shell.font-SMALL { --ui-scale: 0.96; }
-#app-shell.font-NORMAL { --ui-scale: 1.0; }
-#app-shell.font-LARGE { --ui-scale: 1.07; }
-#app-shell.font-EXTRA_LARGE { --ui-scale: 1.14; }
+/*
+ * 최종 배율 --ui-scale 은 두 가지를 곱한 값이다.
+ *
+ *  --ui-font  어르신이 설정에서 고른 글자 크기 (BE FontSize enum 과 값을 맞춘다)
+ *  --ui-fit   화면 넓이에 따른 배율. 폰은 1, 태블릿은 global.css 가 올린다.
+ *
+ * 왜 나눠 두는가 — 태블릿에서 셸이 화면을 가득 채우게 되면서 폰 기준(430px)으로 잡은
+ * 글자·버튼이 그대로 남아 휑해졌다. 그렇다고 --ui-scale 을 통째로 덮어쓰면 어르신이
+ * 고른 글자 크기가 태블릿에서만 무시된다. 두 값을 곱해야 둘 다 살아 있다.
+ */
+#app-shell {
+  --ui-font: 1.0;
+  --ui-fit: 1;
+  --ui-scale: calc(var(--ui-font) * var(--ui-fit));
+}
+/* 글자 크기 5단계 — EXTRA_SMALL / SMALL / NORMAL / LARGE / EXTRA_LARGE */
+#app-shell.font-EXTRA_SMALL { --ui-font: 0.92; }
+#app-shell.font-SMALL { --ui-font: 0.96; }
+#app-shell.font-NORMAL { --ui-font: 1.0; }
+#app-shell.font-LARGE { --ui-font: 1.07; }
+#app-shell.font-EXTRA_LARGE { --ui-font: 1.14; }
