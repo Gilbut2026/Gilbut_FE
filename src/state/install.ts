@@ -31,10 +31,24 @@ export function isInstalled(): boolean {
 }
 
 /**
- * 어떤 기기·브라우저인가.
+ * 아이패드인가.
+ *
+ * 안내 문구가 갈린다 — 공유 버튼이 아이폰은 화면 아래 가운데, 아이패드는 오른쪽 위에
+ * 있다. 「아래 가운데」라고만 적어 두면 아이패드로 여신 분은 없는 곳을 계속 찾는다.
  *
  * ⚠️ 아이패드는 iPadOS 13 부터 스스로를 「Macintosh」라고 말한다. 손가락이 닿는
- *    맥은 없으니 maxTouchPoints 로 가른다 — 이걸 빼면 아이패드가 데스크톱이 된다.
+ *    맥은 없으니 maxTouchPoints 로 가른다.
+ */
+export function isIPad(): boolean {
+  const u = ua()
+  if (/iPad/.test(u)) return true
+  return /Macintosh/.test(u) && typeof navigator !== 'undefined' && navigator.maxTouchPoints > 1
+}
+
+/**
+ * 어떤 기기·브라우저인가.
+ *
+ * ⚠️ 아이패드 판별은 isIPad() 에 있다 — 그걸 빼면 아이패드가 데스크톱이 된다.
  *
  * ⚠️ 카톡으로 링크를 받아 그 안에서 열면 「홈 화면에 추가」 메뉴 자체가 없다.
  *    우리는 링크를 카톡으로 주고받는 팀이라 이 경우가 실제로 흔하다.
@@ -46,7 +60,7 @@ export function platform(): InstallPlatform {
   // 앱 안의 브라우저부터 걸러낸다 — 기기 종류보다 이게 먼저다
   if (/KAKAOTALK|NAVER\(inapp|Instagram|FBAN|FBAV|Line\//i.test(u)) return 'inapp'
 
-  const iOS = /iPad|iPhone|iPod/.test(u) || (/Macintosh/.test(u) && navigator.maxTouchPoints > 1)
+  const iOS = /iPhone|iPod/.test(u) || isIPad()
   if (iOS) {
     // 아이폰은 어떤 브라우저를 써도 속은 사파리다. 이건 엔진이 아니라 「어느 앱인가」다.
     return /CriOS|FxiOS|EdgiOS|OPT\//.test(u) ? 'ios-other' : 'ios-safari'
