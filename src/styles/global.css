@@ -71,6 +71,27 @@ button { color: inherit; }
   #app-shell { width: 100%; max-height: none; border-radius: 0; }
 }
 
+/*
+ * 손가락으로 보는 기기는 화면을 가득 채운다.
+ *
+ * 430px 프레임은 **데스크톱에서 미리 보기 위한 것**이다. 태블릿에까지 그대로 적용돼서,
+ * 아이패드로 열면 큰 화면 한가운데 폰 그림을 얹어 둔 꼴이 됐다(2026-08-23).
+ * 태블릿은 브라우저 창이 곧 기기 화면이라 안에 또 기기를 그릴 이유가 없다.
+ *
+ * 폭이 아니라 pointer 로 가른다 — 화면 폭으로 자르면 창을 줄인 데스크톱이 같이 걸리고,
+ * 반대로 가로로 눕힌 태블릿은 빠져나간다. 「손가락인가 마우스인가」가 우리가 물어보고
+ * 싶은 것이다.
+ */
+@media (pointer: coarse) and (min-width: 480px) {
+  #root { padding: 0; }
+  #app-shell {
+    width: 100%;
+    max-height: none;
+    border-radius: 0;
+    box-shadow: none;
+  }
+}
+
 /* ---------- 화면 전환 ---------- */
 .screen { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; animation: screenIn 0.22s ease both; }
 @keyframes screenIn { from { opacity: 0.25; transform: translateY(5px); } to { opacity: 1; transform: none; } }
