@@ -119,7 +119,18 @@ button { color: inherit; }
 
 /* ---------- 하단 탭 ---------- */
 .bottom-nav {
-  height: 76px; display: flex; align-items: flex-start; padding: 8px 10px 12px; gap: 4px; flex: 0 0 auto;
+  /*
+   * 높이를 고정하지 않는다.
+   *
+   * 76px 로 박아 뒀더니 안의 글자가 커질 때 아래가 잘렸다. .bottom-nav > * 는
+   * --ui-scale 만큼 zoom 되는데(어르신이 고른 글자 크기 × 태블릿 배율) 정작 담는
+   * 그릇은 그대로였다. 아이패드에서 「홈·대화·가는 길·내 정보」 글씨가 반쯤 잘려
+   * 나갔다(2026-08-23). 글자 크기를 가장 크게 둔 폰에서도 이미 아슬아슬했다
+   * (54 × 1.14 + 여백 20 = 81.5px > 76px).
+   *
+   * min-height 로 두면 평소에는 76px 그대로이고, 커질 때만 따라 늘어난다.
+   */
+  min-height: 76px; display: flex; align-items: flex-start; padding: 8px 10px 12px; gap: 4px; flex: 0 0 auto;
   position: relative; z-index: 4; background: rgba(255, 255, 255, 0.78); border-top: 1px solid rgba(255, 255, 255, 0.86); backdrop-filter: blur(24px);
 }
 .nav-item { flex: 1; min-height: 54px; border: 0; border-radius: 16px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; background: transparent; color: #7A849B; font-size: 14px; font-weight: 820; cursor: pointer; }
